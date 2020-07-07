@@ -184,9 +184,9 @@
           <p id="values"></p>
 
           <h2>Filter criteria</h2>
-          <input placeholder="<id> regex" name="id_regex"/>
-          <p/>
-          <input placeholder="any text regex" name="txt_regex"/>
+          <input placeholder="search regex" name="txt_regex"/><br>
+          <input type="checkbox" id="id_chk" name="id_chk" value="Bike">
+          <label for="id_chk">Search &lt;id&gt; only</label>
           <p/>
           <input placeholder="excluded <id>s" name="txt_regex"/>
           <p/>
@@ -421,6 +421,48 @@
     }
     input.click();
   }
+
+  var my_palette =
+  {
+    "assumptions": "#FF8000",
+    "creq": "#FDB1D0",
+    "faou": "#FFE6CC",
+    "fea": "#B1E6FD",
+    "hazop": "#DC8AFF",
+    "hw_featurespec": "#FFCC99",
+    "hw_safetydocs": "#FFC95E",
+    "impl": "#7075FF",
+    "kernelconf": "#E828EF",
+    "kernelconfspec": "#9999FF",
+    "kernelconfts": "#E5CCFF",
+    "nonfunctional": "#F838FF",
+    "pdoc": "#CEB1FD",
+    "preq": "#FCFDB1",
+    "reqspec1": "#00CC66",
+    "reqspec2": "#00BB00",
+    "review": "#FFCCFF",
+    "safetymandoc": "#B35900",
+    "saou": "#FFB685",
+    "swad": "#99FF99",
+    "swdd": "#E08F97",
+    "swdda": "#FFA3AC",
+    "swddats": "#EEFFB5",
+    "swintts": "#CCCC00",
+    "swrs": "#00DD00",
+    "swts": "#BBBB11",
+    "swuts": "#FFFF33",
+    "systemfunction": "#A5CFA5",
+    "udoc": "#D3FDB1"
+  };
+
+  function filter_graph() {
+    // Collect filter criteria and generate .dot data
+    var selection_function = select_all;
+    graph = oreqm_main.create_graph(selection_function, "reqspec1", "a dummy title", [], my_palette)
+    console.log(graph)
+    updateGraph();
+  }
+
 /*
   var xmlDoc;
   function parse(content) {

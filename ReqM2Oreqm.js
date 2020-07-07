@@ -8,11 +8,12 @@ class ReqM2Oreqm {
     this.color = new Map();        // {id:[color]}
     this.linksto = new Map();      // {id:{id}} -- map to set of linked ids
     this.linksto_rev = new Map();  // {id:{id}} -- reverse direction of linksto. i.e. top-down
-    this.fulfilledby = new Set();  // {(from,to)}
+    this.fulfilledby = new Map();  // {id:{id}}
     this.excluded_doctypes = excluded_doctypes; // [doctype]
     this.excluded_ids = excluded_ids; // [id]
     this.new_reqs = [];            // List of new requirements (from comparison)
     this.updated_reqs = [];        // List of updated requirements (from comparison)
+    this.dot = "digraph foo {\nno -> data\nno -> yet\n}\n"
 
     // Initialization logic
     this.process_oreqm_content();
@@ -147,10 +148,14 @@ class ReqM2Oreqm {
           this.linksto_rev[req_id] = new Set()
         }
         this.linksto_rev[req_id].add(ffb_link)
-        let ffb = []
+        /* let ffb = []
         ffb.push(req_id)
-        ffb.push(ffb_link)
-        this.fulfilledby.add(ffb)
+        ffb.push(ffb_link) */
+        if (!this.fulfilledby.hasOwnProperty(ffb_link)) {
+          this.fulfilledby[ffb_link] = new Set()
+        }
+        this.fulfilledby[ffb_link].add(req_id)
+        //this.fulfilledby.add(ffb)
         // bottom-up
         if (!this.linksto.hasOwnProperty(ffb_link)) {
           this.linksto[ffb_link] = new Set()
@@ -222,7 +227,7 @@ class ReqM2Oreqm {
           this.requirements[req_id] == old_reqs.requirements[req_id]) {
         continue // skip unchanged reqs
       }
-      if (req_id in self.requirements) {
+      if (req_id in this.requirements) {
         const rec = this.requirements[req_id]
         // Ignore requirements with no description, such as 'impl'
         if (rec.description.length || rec.shortdesc.length) {
@@ -268,7 +273,6 @@ class ReqM2Oreqm {
 
   find_reqs_with_text(regex) {
     // Check requirement texts against regex
-    ids = list(self.requirements.keys())
     const ids = Object.keys(this.requirements)
     let matches = []
     const re = new RegExp(regex, RegExp.prototype.ignoreCase)
@@ -289,7 +293,92 @@ class ReqM2Oreqm {
 
   get_dot() {
     // return a dummy graph
-    return "digraph foo {\na -> b\na -> c\n}\n"
+    return this.dot
+  }
+
+  // Fixed texts that form part of dot file
+  static get DOT_PREAMBLE() {
+    const preamble =
+`digraph requirements {
+  rankdir="RL"
+  node [shape=plaintext fontname="Arial" fontsize=16]
+  edge [color="blue",dir="forward",arrowhead="normal",arrowtail="normal"];
+
+`;
+    return preamble;
+  }
+
+  static get DOT_EPILOGUE() {
+    const epilogue = '\n}\n';
+    return epilogue;
+  }
+
+  create_graph(selection_function, top_doctype, title, highlights, palette) {
+    // Return a 'dot' compatible graph with the subset of nodes nodes
+    // accepted by the selection_function.
+    // The 'TOP' node forces a sensible layout for highest level requirements
+    // (some level of visual proximity and aligned to the left of the graph)
+    let graph = ReqM2Oreqm.DOT_PREAMBLE;
+    let subset = []
+    const ids = Object.keys(this.requirements)
+    let node_count = 0
+    let edge_count = 0
+    for (const req_id of ids) {
+      if (selection_function(req_id, this.requirements[req_id], this.color[req_id])) {
+        subset.push(req_id)
+      }
+    }
+    let show_top = true ? top_doctype in this.doctypes : false
+    if (show_top) {
+      graph += '  "TOP" [fontcolor=lightgray];\n\n'
+    }
+    for (const req_id of subset) {
+        // nodes
+        let node = format_node(req_id, this.requirements[req_id], palette)
+        if (req_id in highlights) {
+          let dot_id = req_id.replace('.', '_').replace(' ', '_')
+          if (req_id in this.new_reqs) {
+            node = 'subgraph "cluster_{}" {{ color=green penwidth=2 label="new" fontname="Arial" labelloc="t"\n{}}}\n'.format(dot_id, node)
+          } else if (req_id in this.updated_reqs) {
+            node = 'subgraph "cluster_{}" {{ color=red penwidth=2 label="changed" fontname="Arial" labelloc="t"\n{}}}\n'.format(dot_id, node)
+          } else {
+            node = 'subgraph "cluster_{}" {{ color=red penwidth=2 label=""\n{}}}\n'.format(dot_id, node)
+          }
+        }
+        graph += node + '\n'
+        node_count += 1
+    }
+    graph += '\n  # Edges\n'
+    if (show_top) {
+      for (const req_id of subset) {
+        rec = this.requirements[req_id]
+        if (rec.doctype == top_doctype) {
+          graph += format_edge(req_id, 'TOP')
+        }
+      }
+    }
+    let kind = ''
+    for (const req_id of subset) {
+      // edges
+      if (this.linksto.hasOwnProperty(req_id)) {
+        for (const link of this.linksto[req_id]) {
+          // Do not reference non-selected specobjets
+          if (subset.includes(link)) {
+            if (this.fulfilledby.hasOwnProperty(req_id) && this.fulfilledby[req_id].has(link)) {
+              kind = "fulfilledby"
+            } else {
+              kind = null
+            }
+            graph += format_edge(req_id, link, kind)
+            edge_count += 1
+          }
+        }
+      }
+    }
+    graph += '\n  label="{}"\n  labelloc=b\n  fontsize=18\n  fontcolor=black\n  fontname="Arial"\n'.format(title)
+    graph += ReqM2Oreqm.DOT_EPILOGUE
+    this.dot = graph
+    return [graph, node_count, edge_count]
   }
 
 }
