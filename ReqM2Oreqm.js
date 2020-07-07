@@ -1,7 +1,6 @@
 class ReqM2Oreqm {
   // This class reads and manages information in ReqM2 .oreqm files
   constructor(content, excluded_doctypes, excluded_ids) {
-    this.content = content;
     this.root = null;              // xml tree
     this.doctypes = new Map();     // { doctype : [id] }  List of ids of a specific doctype
     this.requirements = new Map(); // { id : Requirement}
@@ -16,15 +15,15 @@ class ReqM2Oreqm {
     this.dot = "digraph foo {\nno -> data\nno -> yet\n}\n"
 
     // Initialization logic
-    this.process_oreqm_content();
+    this.process_oreqm_content(content);
     this.get_req_descriptions();
     this.add_fulfilledby_nodes();
     this.find_links();
   }
 
-  process_oreqm_content() {
+  process_oreqm_content(content) {
     var parser = new DOMParser();
-    this.root = parser.parseFromString(this.content, "text/xml");
+    this.root = parser.parseFromString(content, "text/xml");
   }
 
   get_req_descriptions() {
@@ -247,10 +246,11 @@ class ReqM2Oreqm {
   find_reqs_with_name(regex) {
     // Check <id> against regex
     const ids = Object.keys(this.requirements)
+    let rx = new RegExp(regex, 'i')
     let matches = []
     const re = new RegExp(regex, RegExp.prototype.ignoreCase)
     for (const id of ids) {
-      if (re.search(id) >= 0)
+      if (id.search(rx) >= 0)
         matches.push(id)
     }
     return matches
@@ -274,10 +274,11 @@ class ReqM2Oreqm {
   find_reqs_with_text(regex) {
     // Check requirement texts against regex
     const ids = Object.keys(this.requirements)
+    let rx = new RegExp(regex, 'i')
     let matches = []
     const re = new RegExp(regex, RegExp.prototype.ignoreCase)
     for (const id of ids) {
-      if (re.search(get_all_text(id)) >= 0)
+      if (this.get_all_text(id).search(rx) >= 0)
         matches.push(id)
     }
     return matches
@@ -288,6 +289,14 @@ class ReqM2Oreqm {
     for (const res of id_list) {
       this.color_down(color_down_value, res)
       this.color_up(color_up_value, res)
+    }
+  }
+
+  clear_colors() {
+    // Clear the 'color' tags on the requirements
+    const ids = Object.keys(this.color)
+    for (const id of ids) {
+      this.color[id] = new Set()
     }
   }
 
@@ -324,7 +333,10 @@ class ReqM2Oreqm {
     let node_count = 0
     let edge_count = 0
     for (const req_id of ids) {
-      if (selection_function(req_id, this.requirements[req_id], this.color[req_id])) {
+      const rec = this.requirements[req_id]
+      if (selection_function(req_id, rec, this.color[req_id]) &&
+          !this.excluded_doctypes.includes(rec.doctype) &&
+          !this.excluded_ids.includes(req_id)) {
         subset.push(req_id)
       }
     }
@@ -335,14 +347,14 @@ class ReqM2Oreqm {
     for (const req_id of subset) {
         // nodes
         let node = format_node(req_id, this.requirements[req_id], palette)
-        if (req_id in highlights) {
-          let dot_id = req_id.replace('.', '_').replace(' ', '_')
-          if (req_id in this.new_reqs) {
-            node = 'subgraph "cluster_{}" {{ color=green penwidth=2 label="new" fontname="Arial" labelloc="t"\n{}}}\n'.format(dot_id, node)
-          } else if (req_id in this.updated_reqs) {
-            node = 'subgraph "cluster_{}" {{ color=red penwidth=2 label="changed" fontname="Arial" labelloc="t"\n{}}}\n'.format(dot_id, node)
+        if (highlights.includes(req_id)) {
+          let dot_id = req_id.replace(/\./g, '_').replace(' ', '_')
+          if (this.new_reqs.includes(req_id)) {
+            node = 'subgraph "cluster_{}" { color=green penwidth=3 label="new" fontname="Arial" labelloc="t"\n{}}\n'.format(dot_id, node)
+          } else if (this.updated_reqs.includes(req_id)) {
+            node = 'subgraph "cluster_{}" { color=red penwidth=3 label="changed" fontname="Arial" labelloc="t"\n{}}\n'.format(dot_id, node)
           } else {
-            node = 'subgraph "cluster_{}" {{ color=red penwidth=2 label=""\n{}}}\n'.format(dot_id, node)
+            node = 'subgraph "cluster_{}" { color=red penwidth=3 label=""\n{}}\n'.format(dot_id, node)
           }
         }
         graph += node + '\n'
@@ -378,6 +390,16 @@ class ReqM2Oreqm {
     graph += ReqM2Oreqm.DOT_EPILOGUE
     this.dot = graph
     return [graph, node_count, edge_count]
+  }
+
+  set_excluded_doctypes(doctypes) {
+    // Set excluded doctypes
+    this.excluded_doctypes = doctypes
+  }
+
+  set_excluded_ids(ids) {
+    // Set excluded doctypes
+    this.excluded_ids = ids
   }
 
 }

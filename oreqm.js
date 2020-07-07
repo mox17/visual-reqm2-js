@@ -5,6 +5,13 @@ String.prototype.format = function () {
   });
 };
 
+if (typeof(String.prototype.trim) === "undefined")
+{
+    String.prototype.trim = function()
+    {
+        return String(this).replace(/^\s+|\s+$/g, '');
+    };
+}
 
 function get_xml_text(node, tag_name) {
   var result = ""

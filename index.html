@@ -184,21 +184,22 @@
           <p id="values"></p>
 
           <h2>Filter criteria</h2>
-          <input placeholder="search regex" name="txt_regex"/><br>
-          <input type="checkbox" id="id_chk" name="id_chk" value="Bike">
-          <label for="id_chk">Search &lt;id&gt; only</label>
+          <textarea id="search_regex" rows="3" cols="25"
+                    wrap="off" placeholder="search regex" ></textarea>
+          <br>
+          <label id="id_checkbox">
+            <input type="checkbox"> Search &lt;id&gt; only
+          </label>
           <p/>
-          <input placeholder="excluded <id>s" name="txt_regex"/>
+          <textarea id="excluded_ids" rows="3" cols="25"
+                    wrap="off" placeholder="excluded <id>s" ></textarea>
           <p/>
-          <input placeholder="excluded doctypes" name="txt_regex"/>
+          <textarea id="excluded_doctypes" rows="3" cols="25"
+                    wrap="off" placeholder="excluded doctypes" ></textarea>
           <p/>
-
           <button type="button" onclick="filter_graph()">Filter graph</button>
           <p/>
-          <button type="button" onclick="save_svg()">save svg</button>
-          <p/>
-          <button type="button" onclick="save_png()">save png</button>
-          <p/>
+          <button type="button" onclick="save_svg()">save graph</button>
         </div>
         <div id="graph" class="split">
           <div id="options">
@@ -237,7 +238,7 @@
     </div>
   </div>
 
-  <script src="./tmp/viz-js.com/js/ace/ace.js"></script>
+  <!--<script src="./tmp/viz-js.com/js/ace/ace.js"></script>-->
   <script src="./tmp/viz-js.com/bower_components/viz.js/viz.js"></script>
   <script src="./tmp/viz-js.com/bower_components/fabric.js/dist/fabric.min.js"></script>
   <script src="./tmp/viz-js.com/bower_components/Split.js/split.min.js"></script>
@@ -263,6 +264,11 @@
   var worker;
   var result;
   var oreqm_main
+  var title
+  var oreqm_main_filename = 'no file selected'
+  var oreqm_main_timestamp = 'no time'
+  var oreqm_ref_filename = ''
+  var oreqm_ref_timestamp = ''
 
   function updateGraph() {
     if (worker) {
@@ -305,7 +311,8 @@
       src: dot_source, //editor.getSession().getDocument().getValue(),
       options: {
         engine: document.querySelector("#engine select").value,
-        format: document.querySelector("#format select").value
+        format: document.querySelector("#format select").value,
+        totalMemory: 3 * 16 * 1024 *1024
       }
     };
 
@@ -347,11 +354,13 @@
       graph.appendChild(svg);
 
       panZoom = svgPanZoom(svg, {
+        panEnabled: true,
         zoomEnabled: true,
         controlIconsEnabled: true,
         fit: true,
         center: true,
         minZoom: 0.02,
+        maxZoom: 200,
         zoomScaleSensitivity: 0.3
       });
 
@@ -409,13 +418,14 @@
       reader.readAsText(file,'UTF-8');
       // here we tell the reader what to do when it's done reading...
       reader.onload = readerEvent => {
-        var content = readerEvent.target.result; // this is the content!
+        //var content = readerEvent.target.result; // this is the content!
         //console.log( file );
-        document.getElementById('name').innerHTML = file.name
+        oreqm_main = new ReqM2Oreqm(readerEvent.target.result, [], [])
+        oreqm_main_filename = file.name
+        oreqm_main_timestamp = oreqm_main.get_time()
+        document.getElementById('name').innerHTML = oreqm_main_filename
         document.getElementById('size').innerHTML = file.size+" bytes"
-        //parse(content);
-        oreqm_main = new ReqM2Oreqm(content, [], [])
-        document.getElementById('timestamp').innerHTML = oreqm_main.get_time()
+        document.getElementById('timestamp').innerHTML = oreqm_main_timestamp
         //console.log(oreqm_main)
         updateGraph();
       }
@@ -456,59 +466,72 @@
     "udoc": "#D3FDB1"
   };
 
+  function save_svg() {
+    //var search_pattern = document.querySelector("#search_regex input").value
+    var search_pattern = document.getElementById("search_regex").value
+    var id_checkbox = document.querySelector("#id_checkbox input").checked
+    console.log(search_pattern, id_checkbox)
+  }
+
   function filter_graph() {
     // Collect filter criteria and generate .dot data
-    var selection_function = select_all;
-    graph = oreqm_main.create_graph(selection_function, "reqspec1", "a dummy title", [], my_palette)
-    console.log(graph)
+    var search_pattern = document.getElementById("search_regex").value
+    var id_checkbox = document.querySelector("#id_checkbox input").checked
+    console.log(search_pattern, id_checkbox)
+    search_pattern = search_pattern.trim()
+    make_title()
+    if (search_pattern) {
+      if (id_checkbox) {
+        id_search(search_pattern)
+      } else {
+        txt_search(search_pattern)
+      }
+    } else {
+      // no pattern specified
+      graph = oreqm_main.create_graph(select_all, "reqspec1", title, [], my_palette)
+    }
+    console.log(graph[1], graph[2])
     updateGraph();
   }
 
-/*
-  var xmlDoc;
-  function parse(content) {
-    //Create a parser
-    var parser = new DOMParser();
-    xmlDoc = parser.parseFromString(content,"text/xml");
-    //Parse!
-    document.getElementById("timestamp").innerText = "timestamp: " + xmlDoc.evaluate("//timestamp",xmlDoc).iterateNext().textContent;
-    find_doctypes2(xmlDoc)
-  }
-
-  function find_doctypes2(xml) {
-    var message = "The list of specobjects sections:<br />";
-    var specobjects = xml.getElementsByTagName("specobjects")
-    var doctypes = new Set()
-    var i;
-    for (i = 0; i < specobjects.length; i++) {
-      var doctype = specobjects[i].getAttributeNode("doctype").value;
-      //console.log( doctype );
-      if (! doctypes.has(doctype)) {
-          message += "<b>" + doctype + "</b><br />";
-          doctypes.add(doctype)
-        }
-        get_specobject_list(specobjects[i], doctype)
+  function handle_pruning() {
+    const excluded_ids = document.getElementById("excluded_ids").value.trim()
+    let ex_id_list = excluded_ids.split(/[\s\n,]+/)
+    oreqm_main.set_excluded_ids(ex_id_list)
+    if (excluded_ids) {
+      title += "\\lDiagram excludes <id>s:\\l - {}\\l".format(ex_id_list.join("\\l - "))
+      console.log(ex_id_list)
     }
-    var info = document.getElementById ("info");
-    info.innerHTML = message;
+    const excluded_doctypes = document.getElementById("excluded_doctypes").value.trim()
+    let ex_dt_list = excluded_doctypes.split(/[\s\n,]+/)
+    oreqm_main.set_excluded_doctypes(ex_dt_list)
+    if (excluded_doctypes) {
+      title += "\\lDiagram excludes doctypes: {}\\l".format(ex_dt_list.join(", "))
+      console.log(ex_dt_list)
+    }
   }
-  */
-    </script>
-  <!--
-  <span class="level1">Span 1</span>
-  <div id="container">
-      <span class="level2">Span 2</span>
-      <div>
-          <span class="level3">Span 3</span>
-          <span class="level3">Span 4</span>
-      </div>
-      <span class="level2">Span 5</span>
-      <span class="level2">Span 6</span>
-  </div>
-  <span class="level1">Span 7</span>
-  <br /><br />
-  <div id="info" style="background-color:#e0b0b0; width:400px"></div>
--->
 
-</body>
+  function make_title() {
+    title = "Analysis of: {} from: {}".format(oreqm_main_filename, oreqm_main_timestamp)
+    handle_pruning()
+  }
+
+  function id_search(regex) {
+    title += "\\lSearch <id>: '{}'\\l".format(regex.replace('\\', '\\\\'))
+    var results = oreqm_main.find_reqs_with_name(regex)
+    oreqm_main.clear_colors()
+    oreqm_main.color_up_down(results, COLOR_UP, COLOR_DOWN)
+    graph = oreqm_main.create_graph(select_color, "reqspec1", title, results, my_palette)
+  }
+
+  function txt_search(regex) {
+    title += "\\lSearch text: '{}'\\l".format(regex.replace('\\', '\\\\'))
+    var results = oreqm_main.find_reqs_with_text(regex)
+    oreqm_main.clear_colors()
+    oreqm_main.color_up_down(results, COLOR_UP, COLOR_DOWN)
+    graph = oreqm_main.create_graph(select_color, "reqspec1", title, results, my_palette)
+  }
+
+    </script>
+  </body>
 </html>
