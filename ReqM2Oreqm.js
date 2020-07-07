@@ -207,7 +207,7 @@ class ReqM2Oreqm {
 
   get_time() {
     // Extract execution timestamp from oreqm report
-    time = get_xml_text(this.root, "timestamp")
+    const time = get_xml_text(this.root, "timestamp")
     return time
   }
 
@@ -285,6 +285,11 @@ class ReqM2Oreqm {
       this.color_down(color_down_value, res)
       this.color_up(color_up_value, res)
     }
+  }
+
+  get_dot() {
+    // return a dummy graph
+    return "digraph foo {\na -> b\na -> c\n}\n"
   }
 
 }
