@@ -46,7 +46,7 @@ function dot_format(txt) {
   const re_xml_comments = new RegExp(/<!--.*?-->/g, 'm')
   const re_unwanted_mu  = new RegExp(/<!\[CDATA\[\s*/g, 'm')
   const re_amp_quote    = new RegExp(/&/g, 'm')
-  const re_list_heurist = new RegExp(/<li>[\s\n]*|<listitem>[\s\n]*/)
+  const re_list_heurist = new RegExp(/<li>[\s\n]*|<listitem>[\s\n]*/g, 'm')
   const re_tag_text     = new RegExp(/<a\s+type="xref"\s+href="[A-Z]+_([^"]+)"\s*\/>/g, 'm')
   const re_newlines     = new RegExp(/<br\/>|<BR\/>/g, 'm')
   const re_xml_remove   = new RegExp(/<\S.*?>/g, 'm')
@@ -61,19 +61,20 @@ function dot_format(txt) {
     txt = txt.replace(re_xml_comments, '') // remove XML comments
     txt = txt.replace(re_unwanted_mu, '')  // Remove unwanted markup
     txt = txt.replace(re_amp_quote, '&amp;')        // escape stray '&' characters
-    new_txt = txt.replace(re_list_heurist, '&nbsp;&nbsp;* ') // heuristic for bulleted lists
+    //new_txt = txt.replace(re_list_heurist, '&nbsp;&nbsp;* ') // heuristic for bulleted lists
+    new_txt = txt.split(/<li>[\s\n]*|<listitem>[\s\n]*/).join('&nbsp;&nbsp;* ') // heuristic for bulleted lists
     // Dig out meaningful text from items like:
     // <a type="xref" href="TERM_UNAUTHORIZED_EXECUTABLE_ENTITIES"/>
     new_txt = new_txt.replace(re_tag_text, '$1')
-    new_txt = new_txt.replace(re_newlines, '&nbsp;\n') // keep deliberate newlines
-    new_txt = new_txt.replace(re_xml_remove, '') // remove xml markup
+    new_txt = new_txt.split(/<br\/>|<BR\/>/).join('&nbsp;\n') // keep deliberate newlines
+    new_txt = new_txt.split(/<\S.*?>/).join('') // remove xml markup
     new_txt = new_txt.replace(re_whitespace, '') // remove leading and trailing whitespace
     new_txt = new_txt.replace(/"/g, '&quot;')
     new_txt = new_txt.replace(/</g, '&lt;')
     new_txt = new_txt.replace(/>/g, '&gt;')
     new_txt = new_txt.replace(re_nbr_list, '\n&nbsp;&nbsp;$1') // heuristic for numbered lists
     new_txt = new_txt.replace(re_line_length, '$1\n') // limit line length
-    new_txt = new_txt.replace(re_keep_nl, '<BR ALIGN="LEFT"/>') // preserve newlines
+    new_txt = new_txt.split(/\s*\n\s*/).join('<BR ALIGN="LEFT"/>') // preserve newlines
     new_txt = new_txt.replace(re_empty_lines, '<BR ALIGN="LEFT"/>&nbsp;<BR ALIGN="LEFT"/>') // Limit empty lines
     if (!new_txt.endsWith('<BR ALIGN="LEFT"/>')) {
       new_txt += '<BR ALIGN="LEFT"/>'
@@ -82,7 +83,7 @@ function dot_format(txt) {
   return new_txt
 }
 
-function format_edge(from_node, to_node, kind=None) {
+function format_edge(from_node, to_node, kind) {
   // Format graph edge according to coverage type
   let formatting = ""
   if (kind == "fulfilledby") {
