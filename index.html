@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="oreqm.js"></script>
+    <script src="ReqM2Oreqm.js"></script>
+    <script>
+      function get_date() {
+        document.getElementById('demo').innerHTML = Date()
+      }
+
+      function get_file() {
+        var input = document.createElement('input');
+        input.type = 'file';
+
+        input.onchange = e => {
+          // getting a hold of the file reference
+          var file = e.target.files[0];
+          // setting up the reader
+          var reader = new FileReader();
+          reader.readAsText(file,'UTF-8');
+          // here we tell the reader what to do when it's done reading...
+          reader.onload = readerEvent => {
+            var content = readerEvent.target.result; // this is the content!
+            //console.log( file );
+            document.getElementById('name').innerHTML = file.name
+            document.getElementById('size').innerHTML = file.size+" bytes"
+            //parse(content);
+            var oreqm_main = new ReqM2Oreqm(content, [], [])
+            console.log(oreqm_main)
+          }
+        }
+        input.click();
+      }
+
+      var xmlDoc;
+      function parse(content) {
+        //Create a parser
+        var parser = new DOMParser();
+        xmlDoc = parser.parseFromString(content,"text/xml");
+        //Parse!
+        document.getElementById("timestamp").innerText = "timestamp: " + xmlDoc.evaluate("//timestamp",xmlDoc).iterateNext().textContent;
+        find_doctypes2(xmlDoc)
+      }
+
+      function find_doctypes2(xml) {
+        var message = "The list of specobjects sections:<br />";
+        var specobjects = xml.getElementsByTagName("specobjects")
+        var doctypes = new Set()
+        var i;
+        for (i = 0; i < specobjects.length; i++) {
+          var doctype = specobjects[i].getAttributeNode("doctype").value;
+          //console.log( doctype );
+          if (! doctypes.has(doctype)) {
+              message += "<b>" + doctype + "</b><br />";
+              doctypes.add(doctype)
+            }
+            get_specobject_list(specobjects[i], doctype)
+        }
+        var info = document.getElementById ("info");
+        info.innerHTML = message;
+      }
+
+</script>
+  </head>
+  <body>
+    <h1>ReqM2 file</h1>
+    <button type="button" onclick="get_file()">Select main .oreqm file</button>
+    <p/>
+    <table border="1">
+      <tr><td>name</td><td><p id="name"></p></td></tr>
+      <tr><td>size</td><td><p id="size"></p></td></tr>
+      <tr><td>timestamp</td><td><p id="timestamp"></p></td></tr>
+  </table>
+
+  <span class="level1">Span 1</span>
+  <div id="container">
+      <span class="level2">Span 2</span>
+      <div>
+          <span class="level3">Span 3</span>
+          <span class="level3">Span 4</span>
+      </div>
+      <span class="level2">Span 5</span>
+      <span class="level2">Span 6</span>
+  </div>
+  <span class="level1">Span 7</span>
+  <br /><br />
+  <div id="info" style="background-color:#e0b0b0; width:400px"></div>
+
+  </body>
+</html>
