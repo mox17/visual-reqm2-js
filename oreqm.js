@@ -13,6 +13,12 @@ if (typeof(String.prototype.trim) === "undefined")
     };
 }
 
+function stringEqual(a, b) {
+  const a_s = JSON.stringify(a)
+  const b_s = JSON.stringify(b)
+  return a_s === b_s
+}
+
 function get_xml_text(node, tag_name) {
   var result = ""
   var item = node.getElementsByTagName(tag_name)
@@ -186,7 +192,15 @@ function select_color(node_id, rec, node_color) {
 function compare_oreqm() {
   // Both main and reference oreqm have been read.
   // Highlight new and changed nodes in main oreqm
-  let result = oreqm_main.compare_requirements(oreqm_ref)
-  console.log(result)
+  let results = oreqm_main.compare_requirements(oreqm_ref)
+  console.log(results)
+  oreqm_main.color_up_down(results[0], COLOR_UP, COLOR_DOWN)
+  oreqm_main.color_up_down(results[1], COLOR_UP, COLOR_DOWN)
+  let ref_title = title
+  ref_title += "\\lReference oreqm: '{}' from: {}\\l".format(oreqm_ref_filename, oreqm_ref_timestamp)
+  ref_title += "\\lNew requirements are:\\l - {}\\l".format(results[0].join("\\l - "))
+  ref_title += "\\lUpdated requirements are:\\l - {}\\l".format(results[1].join("\\l - "))
+  const all_highlight = results[0].concat(results[1])
+  graph = oreqm_main.create_graph(select_color, "reqspec1", ref_title, all_highlight)
 }
 

@@ -152,10 +152,12 @@
     .table.oreqm, td {
       width: 120px;
       table-layout: fixed;
+      font-size: 80%;
+      /*height: 15px;*/
     }
 
     table {
-      table-layout: fixed;
+      table-layout: auto;
       border-collapse: collapse;
     }
 
@@ -167,62 +169,114 @@
       padding: 10px;
     }
 
+    td {
+      width:0.1%;
+      white-space: nowrap;
+    }
     html, body {
         font-family: arial;
     }
 
     #oreqm {
+      margin-top: 8px;
       margin-left: 8px;
+    }
+
+    .table.gridview,
+    #reffile,
+    #gridview {
+      font-family: arial, sans-serif;
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    .table.gridview th,
+    #reffile th
+    #gridview th {
+      background-color: #808080;
+      border: 1px solid #dddddd;
+      text-align: center;
+      padding: 0px 0px 0px 0px;
+      margin:0px;
+      height: 0px;
+    }
+
+    .table.gridview td,
+    #reffile td,
+    #gridview td {
+      border: 0px solid #dddddd;
+      text-align: left;
+      padding: 0px 0px 0px 0px;
+      margin:0px;
+      height: 0px;
+    }
+
+    .table.gridview tr:nth-child(even),
+    #reffile tr:nth-child(even),
+    #gridview tr:nth-child(even) {
+      background-color: #dddddd;
+    }
+
+    .table.gridview table th,
+    #reffile table th,
+    #gridview table th {
+      color:#ffffff;
+    }
+
+    table p
+    {
+      padding:0px;
+      margin:0px;
     }
     </style>
   </head>
   <body>
     <div id="app">
+      <!--
       <div id="header">
         <b>Visual ReqM2</b> Read more at <a href="https://github.com/mox17/">the GitHub repository</a>.
       </div>
+      -->
       <div id="panes" class="split split-horizontal">
         <div id="oreqm" class="split">
           <b>ReqM2 file</b><br/>
-          <table class="table.oreqm" >
+          <table class="table.gridview" id="gridview">
             <tr><td width="1%">name</td><td id="name" class="absorbing-column"></td></tr>
             <tr><td width="1%">size</td><td id="size"></td></tr>
-            <tr><td width="1%">timestamp</td><td id="timestamp"></td></tr>
+            <tr><td width="1%">timestamp&nbsp;&nbsp;</td><td id="timestamp"></td></tr>
           </table>
           <p/>
           <button type="button" onclick="get_main_oreqm_file()">Select main .oreqm file</button>
           <p/>
+          <div id="ref_oreqm">
+            <b>Reference file</b>
+            <table class="table.gridview" id="reffile">
+              <tr><td width="1%">name</td><td id="ref_name" class="absorbing-column"></td></tr>
+              <tr><td width="1%">size</td><td id="ref_size"></td></tr>
+              <tr><td width="1%">timestamp&nbsp;&nbsp;</td><td id="ref_timestamp"></td></tr>
+            </table>
+          </div>
+          <p/>
           <button type="button" onclick="get_ref_oreqm_file()">Select reference .oreqm file</button>
           <p id="values"></p>
 
-          <h2>Filter criteria</h2>
+          <b>Filter criteria</b><br/>
           <textarea id="search_regex" rows="3" cols="25"
                     wrap="off" placeholder="search regex" ></textarea>
           <br>
           <label id="id_checkbox">
-            <input type="checkbox"> Search &lt;id&gt; only
+            <input type="checkbox">Search &lt;id&gt; only
           </label>
           <p/>
           <textarea id="excluded_ids" rows="3" cols="25"
                     wrap="off" placeholder="excluded <id>s" ></textarea>
           <p/>
-          <textarea id="excluded_doctypes" rows="3" cols="25"
-                    wrap="off" placeholder="excluded doctypes" ></textarea>
-          <p/>
           <button type="button" onclick="filter_graph()">Update graph</button>
           <p/>
           <button type="button" onclick="save_svg()">save graph</button>
+          <button type="button" onclick="toggle_exclude()">toggle exclude</button>
           <p/>
-          <h4>doctypes</h4>
           <div id="doctype_table"></div>
-          <div id="ref_oreqm">
-            <h3>Ref. file</h3>
-            <table class="table.oreqm" >
-              <tr><td width="1%">name</td><td id="ref_name" class="absorbing-column"></td></tr>
-              <tr><td width="1%">size</td><td id="ref_size"></td></tr>
-              <tr><td width="1%">timestamp</td><td id="ref_timestamp"></td></tr>
-            </table>
-          </div>
         </div>
         <div id="graph" class="split">
           <div id="options">
@@ -254,6 +308,7 @@
             <label id="raw">
               <input type="checkbox"> Show raw output
             </label>
+            <label id="download_image"></label>
           </div>
         <div id="output">
           <div id="error"></div>
@@ -288,12 +343,17 @@
   var parser = new DOMParser();
   var worker;
   var result;
-  var oreqm_main
   var title
+  var oreqm_main
   var oreqm_main_filename = 'no file selected'
   var oreqm_main_timestamp = 'no time'
+  var oreqm_ref
   var oreqm_ref_filename = ''
   var oreqm_ref_timestamp = ''
+  var image_type = 'none'
+  var image_mime = ''
+  var image_data = ''
+  var image_data_url = ''
 
   function updateGraph() {
     if (worker) {
@@ -395,46 +455,91 @@
       window.addEventListener('resize', function(e) {
         panZoom.resize();
       });
+      image_type = 'svg'
+      image_mime = 'image/svg+xml'
+      image_data = result
     } else if (document.querySelector("#format select").value == "png-image-element") {
       var image = Viz.svgXmlToPngImageElement(result);
       graph.appendChild(image);
+      image_type = 'png'
+      image_mime = 'image/png'
+      image_data = image
     } else {
       var text = document.createElement("div");
       text.id = "text";
       text.appendChild(document.createTextNode(result));
       graph.appendChild(text);
+      image_type = 'txt'
+      image_mime = 'text/plain'
+      image_data = result
     }
+    set_download_link()
   }
 
   window.addEventListener("beforeunload", function(e) {
     return beforeUnloadMessage;
   });
 
-
+  /*
   document.querySelector("#engine select").addEventListener("change", function() {
       updateGraph();
-    });
+    }); */
 
-    document.querySelector("#format select").addEventListener("change", function() {
-      if (document.querySelector("#format select").value === "svg") {
-        document.querySelector("#raw").classList.remove("disabled");
-        document.querySelector("#raw input").disabled = false;
-      } else {
-        document.querySelector("#raw").classList.add("disabled");
-        document.querySelector("#raw input").disabled = true;
-      }
+  document.querySelector("#format select").addEventListener("change", function() {
+    if (document.querySelector("#format select").value === "svg") {
+      document.querySelector("#raw").classList.remove("disabled");
+      document.querySelector("#raw input").disabled = false;
+    } else {
+      document.querySelector("#raw").classList.add("disabled");
+      document.querySelector("#raw input").disabled = true;
+    }
 
-      updateGraph();
-    });
+    updateGraph();
+  });
 
-    document.querySelector("#raw input").addEventListener("change", function() {
-      updateOutput();
-    });
+  document.querySelector("#raw input").addEventListener("change", function() {
+    updateOutput();
+  });
 
   function display_doctypes_with_count(doctype_dict) {
     let doctype_names = Object.keys(doctype_dict)
     doctype_names.sort()
-    console.log(doctype_names)
+    //console.log(doctype_names)
+
+    const element = document.getElementById("dyn_doctype_table");
+    if (element) {
+      element.parentNode.removeChild(element);
+    }
+    let table = document.createElement("table")
+    table.id = "dyn_doctype_table"
+    let row = table.insertRow();
+    let cell
+    table.className = 'table.gridview'
+    cell = row.insertCell();
+    cell.innerHTML = "<b>doctype</b>";
+    cell = row.insertCell();
+    cell.innerHTML = "<b>count</b>";
+    cell = row.insertCell();
+    cell.innerHTML = "<b>exclude</b>";
+    for (var i of doctype_names) {
+      row = table.insertRow();
+      row.style.backgroundColor = get_color(i)
+      cell = row.insertCell();
+      cell.innerHTML = i;
+
+      cell = row.insertCell();
+      cell.innerHTML = doctype_dict[i].length;
+
+      cell = row.insertCell();
+      //cell.innerHTML = '<label id="doctype_{}"><input type="checkbox"></label>'.format(i)
+      cell.innerHTML = '<input type="checkbox" id="doctype_{}">'.format(i)
+      /* You can also attach a click listener if you want
+      cell.addEventListener("click", function(){
+        alert("FOO!");
+      });
+      */
+    }
+    document.getElementById("doctype_table").appendChild(table);
   }
 
   function get_main_oreqm_file() {
@@ -493,11 +598,56 @@
     input.click();
   }
 
-  function save_svg() {
-    //var search_pattern = document.querySelector("#search_regex input").value
-    var search_pattern = document.getElementById("search_regex").value
-    var id_checkbox = document.querySelector("#id_checkbox input").checked
-    console.log(search_pattern, id_checkbox)
+  function set_download_link() {
+    let download = document.getElementById('download_image')
+    let link = document.getElementById('a_link_id')
+    if (!link) {
+      link = document.createElement("a"); // Or maybe get it from the current document
+      link.id = "a_link_id"
+      download.appendChild(link); // Or append it whereever you want
+      link.innerHTML = "download image";
+    }
+    var image_blob = new Blob([image_data], {type: image_mime})
+    image_data_url = URL.createObjectURL(image_blob);
+    link.href = image_data_url;
+    link.download = "visual_reqm2.{}".format(image_type);
+  }
+
+  function get_excluded_doctypes() {
+    // Get the list of doctypes with checked 'excluded' status
+    let excluded_list = []
+    if (oreqm_main) {
+      const doctypes = oreqm_main.get_doctypes()
+      const names = Object.keys(doctypes)
+      for (const doctype of names) {
+        //const cb_name = "#doctype_{} input".format(doctype)
+        //const status = document.querySelector(cb_name).checked
+        const cb_name = "doctype_{}".format(doctype)
+        const status = document.getElementById(cb_name);
+        if (status.checked) {
+          excluded_list.push(doctype)
+        }
+        //console.log(doctype, status)
+      }
+    }
+    return excluded_list
+  }
+
+  function toggle_exclude() {
+    if (oreqm_main) {
+      const doctypes = oreqm_main.get_doctypes()
+      const names = Object.keys(doctypes)
+      let ex_list = get_excluded_doctypes()
+      for (const doctype of names) {
+        const checkbox_id = "doctype_{}".format(doctype)
+        const new_state = ex_list.length==0
+        var elm = document.getElementById(checkbox_id);
+        if (new_state != elm.checked) {
+          elm.click();
+        }
+        //document.getElementById(checkbox_id).checked = new_state;
+      }
+    }
   }
 
   function filter_graph() {
@@ -529,10 +679,9 @@
       title += "\\lDiagram excludes <id>s:\\l - {}\\l".format(ex_id_list.join("\\l - "))
       console.log(ex_id_list)
     }
-    const excluded_doctypes = document.getElementById("excluded_doctypes").value.trim()
-    let ex_dt_list = excluded_doctypes.split(/[\s\n,]+/)
+    let ex_dt_list = get_excluded_doctypes()
     oreqm_main.set_excluded_doctypes(ex_dt_list)
-    if (excluded_doctypes) {
+    if (ex_dt_list) {
       title += "\\lDiagram excludes doctypes: {}\\l".format(ex_dt_list.join(", "))
       console.log(ex_dt_list)
     }

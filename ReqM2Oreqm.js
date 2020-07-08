@@ -3,7 +3,7 @@ class ReqM2Oreqm {
   constructor(content, excluded_doctypes, excluded_ids) {
     this.root = null;              // xml tree
     this.doctypes = new Map();     // { doctype : [id] }  List of ids of a specific doctype
-    this.requirements = new Map(); // { id : Requirement}
+    this.requirements = Object.create(null); // { id : Requirement}
     this.color = new Map();        // {id:[color]}
     this.linksto = new Map();      // {id:{id}} -- map to set of linked ids
     this.linksto_rev = new Map();  // {id:{id}} -- reverse direction of linksto. i.e. top-down
@@ -219,8 +219,8 @@ class ReqM2Oreqm {
     let new_reqs = []
     let updated_reqs = []
     for (const req_id of new_ids) {
-      if (old_reqs.requirements.hasOwnProperty(req_id) &&
-          this.requirements[req_id] == old_reqs.requirements[req_id]) {
+      if (req_id in old_reqs.requirements &&
+        stringEqual(this.requirements[req_id], old_reqs.requirements[req_id])) {
         continue // skip unchanged reqs
       }
       if (req_id in this.requirements) {
@@ -237,7 +237,7 @@ class ReqM2Oreqm {
     }
     this.new_reqs = new_reqs
     this.updated_reqs = updated_reqs
-    return new_reqs, updated_reqs
+    return [new_reqs, updated_reqs]
   }
 
   find_reqs_with_name(regex) {
@@ -346,7 +346,7 @@ class ReqM2Oreqm {
         doctype_dict[rec.doctype]++
       }
     }
-    let show_top = true ? top_doctype in this.doctypes : false
+    let show_top = this.doctypes.hasOwnProperty(top_doctype) && !this.excluded_doctypes.includes(top_doctype)
     if (show_top) {
       graph += '  "TOP" [fontcolor=lightgray];\n\n'
     }
