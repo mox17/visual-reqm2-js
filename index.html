@@ -239,7 +239,7 @@
       -->
       <div id="panes" class="split split-horizontal">
         <div id="oreqm" class="split">
-          <b>ReqM2 file</b><br/>
+          <b>ReqM2 .oreqm file</b><br/>
           <table class="table.gridview" id="gridview">
             <tr><td width="1%">name</td><td id="name" class="absorbing-column"></td></tr>
             <tr><td width="1%">size</td><td id="size"></td></tr>
@@ -249,7 +249,7 @@
           <button type="button" onclick="get_main_oreqm_file()">Select main .oreqm file</button>
           <p/>
           <div id="ref_oreqm">
-            <b>Reference file</b>
+            <b>Reference .oreqm file</b>
             <table class="table.gridview" id="reffile">
               <tr><td width="1%">name</td><td id="ref_name" class="absorbing-column"></td></tr>
               <tr><td width="1%">size</td><td id="ref_size"></td></tr>
@@ -257,7 +257,7 @@
             </table>
           </div>
           <p/>
-          <button type="button" onclick="get_ref_oreqm_file()">Select reference .oreqm file</button>
+          <button id="get_ref_oreqm" type="button" disabled="true" onclick="get_ref_oreqm_file()">Select reference .oreqm file</button>
           <p id="values"></p>
 
           <b>Filter criteria</b><br/>
@@ -268,8 +268,9 @@
             <input type="checkbox">Search &lt;id&gt; only
           </label>
           <p/>
+          <b>Excluded &lt;id&gt;s</b><br/>
           <textarea id="excluded_ids" rows="3" cols="25"
-                    wrap="off" placeholder="excluded <id>s" ></textarea>
+                    wrap="off" placeholder="excluded <id>s&#13;&#10;separate with space,&#13;&#10;',' or newline" ></textarea>
           <p/>
           <button type="button" onclick="filter_graph()">Update graph</button>
           <p/>
@@ -308,6 +309,8 @@
               <input type="checkbox"> Show raw output
             </label>
             <label id="download_image"></label>
+              Text in image is selectable for copy/paste.
+              Use <b></b>Alt-mouse-drag</b> to pan image
           </div>
         <div id="output">
           <div id="error"></div>
@@ -316,11 +319,10 @@
     </div>
   </div>
 
-  <!--<script src="./tmp/viz-js.com/js/ace/ace.js"></script>-->
-  <script src="./tmp/viz-js.com/bower_components/viz.js/viz.js"></script>
-  <script src="./tmp/viz-js.com/bower_components/fabric.js/dist/fabric.min.js"></script>
-  <script src="./tmp/viz-js.com/bower_components/Split.js/split.min.js"></script>
-  <script src="./tmp/viz-js.com/bower_components/svg-pan-zoom/dist/svg-pan-zoom.min.js"></script>
+  <script src="./modules/viz.js/viz.js"></script>
+  <script src="./modules/fabric.js/dist/fabric.min.js"></script>
+  <script src="./modules/Split.js/split.min.js"></script>
+  <script src="./modules/svg-pan-zoom/svg-pan-zoom-es.js"></script>
   <script src="color.js"></script>
   <script src="oreqm.js"></script>
   <script src="ReqM2Oreqm.js"></script>
@@ -441,6 +443,7 @@
         panEnabled: true,
         zoomEnabled: true,
         controlIconsEnabled: true,
+        preventMouseEventsDefault: false,
         fit: true,
         center: true,
         minZoom: 0.02,
@@ -564,6 +567,8 @@
         display_doctypes_with_count(oreqm_main.get_doctypes())
         //console.log(oreqm_main)
         updateGraph();
+        let ref_button = document.getElementById('get_ref_oreqm')
+        ref_button.disabled = false
       }
     }
     input.click();
@@ -653,7 +658,7 @@
     // Collect filter criteria and generate .dot data
     var search_pattern = document.getElementById("search_regex").value
     var id_checkbox = document.querySelector("#id_checkbox input").checked
-    console.log(search_pattern, id_checkbox)
+    //console.log(search_pattern, id_checkbox)
     search_pattern = search_pattern.trim()
     make_title()
     if (search_pattern) {
@@ -666,7 +671,7 @@
       // no pattern specified
       graph = oreqm_main.create_graph(select_all, "reqspec1", title, [])
     }
-    console.log(graph[1], graph[2])
+    //console.log(graph[1], graph[2])
     updateGraph();
   }
 
@@ -676,13 +681,13 @@
     oreqm_main.set_excluded_ids(ex_id_list)
     if (excluded_ids) {
       title += "\\lDiagram excludes <id>s:\\l - {}\\l".format(ex_id_list.join("\\l - "))
-      console.log(ex_id_list)
+      //console.log(ex_id_list)
     }
     let ex_dt_list = get_excluded_doctypes()
     oreqm_main.set_excluded_doctypes(ex_dt_list)
-    if (ex_dt_list) {
+    if (ex_dt_list.length) {
       title += "\\lDiagram excludes doctypes: {}\\l".format(ex_dt_list.join(", "))
-      console.log(ex_dt_list)
+      //console.log(ex_dt_list)
     }
   }
 

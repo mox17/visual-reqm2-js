@@ -193,7 +193,7 @@ function compare_oreqm() {
   // Both main and reference oreqm have been read.
   // Highlight new and changed nodes in main oreqm
   let results = oreqm_main.compare_requirements(oreqm_ref)
-  console.log(results)
+  //console.log(results)
   oreqm_main.color_up_down(results[0], COLOR_UP, COLOR_DOWN)
   oreqm_main.color_up_down(results[1], COLOR_UP, COLOR_DOWN)
   let ref_title = title

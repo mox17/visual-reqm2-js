@@ -1,0 +1,52 @@
+--- ./node_modules/svg-pan-zoom/dist/svg-pan-zoom.js	1985-10-26 10:15:00.000000000 +0200
++++ ./modules/svg-pan-zoom/svg-pan-zoom-es.js	2020-07-08 21:05:21.000000000 +0300
+@@ -1076,11 +1076,11 @@
+       evt.preventDefault();
+     } else {
+       evt.returnValue = false;
+     }
+   }
+-
++  if (evt.altKey) {
+   Utils.mouseAndTouchNormalize(evt, this.svg);
+ 
+   // Double click detection; more consistent than ondblclick
+   if (this.options.dblClickZoomEnabled && Utils.isDblClick(evt, prevEvt)) {
+     this.handleDblClick(evt);
+@@ -1090,10 +1090,11 @@
+     this.firstEventCTM = this.viewport.getCTM();
+     this.stateOrigin = SvgUtils.getEventPoint(evt, this.svg).matrixTransform(
+       this.firstEventCTM.inverse()
+     );
+   }
++  }
+ };
+ 
+ /**
+  * Handle mouse move event
+  *
+@@ -1105,11 +1106,11 @@
+       evt.preventDefault();
+     } else {
+       evt.returnValue = false;
+     }
+   }
+-
++  if (evt.altKey) {
+   if (this.state === "pan" && this.options.panEnabled) {
+     // Pan mode
+     var point = SvgUtils.getEventPoint(evt, this.svg).matrixTransform(
+         this.firstEventCTM.inverse()
+       ),
+@@ -1118,10 +1119,11 @@
+         point.y - this.stateOrigin.y
+       );
+ 
+     this.viewport.setCTM(viewportCTM);
+   }
++  }
+ };
+ 
+ /**
+  * Handle mouse button release event
+  *
