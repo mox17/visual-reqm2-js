@@ -16,28 +16,28 @@ class ReqM2Oreqm {
 
     // Initialization logic
     this.process_oreqm_content(content);
-    this.get_req_descriptions();
+    this.read_req_descriptions();
     this.add_fulfilledby_nodes();
     this.find_links();
   }
 
   process_oreqm_content(content) {
-    var parser = new DOMParser();
+    let parser = new DOMParser();
     this.root = parser.parseFromString(content, "text/xml");
   }
 
-  get_req_descriptions() {
+  read_req_descriptions() {
     let specobjects = this.root.getElementsByTagName("specobjects");
     for (const specobject of specobjects) {
       let doctype = specobject.getAttributeNode("doctype").value;
       if (!this.doctypes.hasOwnProperty(doctype)) {
         this.doctypes[doctype] = [];
       }
-      this.get_specobject_list(specobject, doctype);
+      this.read_specobject_list(specobject, doctype);
     }
   }
 
-  get_specobject_list(node, doctype) {
+  read_specobject_list(node, doctype) {
     let specobject_list = node.getElementsByTagName("specobject");
     for (const comp of specobject_list) {
       let req = new Object();
@@ -65,6 +65,7 @@ class ReqM2Oreqm {
       req.version         = get_xml_text(comp, 'version');
 
       this.requirements[req.id] = req;
+      this.doctypes[doctype].push(req.id) // keep status per doctype
       //console.log(req);
     }
   }
@@ -147,14 +148,10 @@ class ReqM2Oreqm {
           this.linksto_rev[req_id] = new Set()
         }
         this.linksto_rev[req_id].add(ffb_link)
-        /* let ffb = []
-        ffb.push(req_id)
-        ffb.push(ffb_link) */
         if (!this.fulfilledby.hasOwnProperty(ffb_link)) {
           this.fulfilledby[ffb_link] = new Set()
         }
         this.fulfilledby[ffb_link].add(req_id)
-        //this.fulfilledby.add(ffb)
         // bottom-up
         if (!this.linksto.hasOwnProperty(ffb_link)) {
           this.linksto[ffb_link] = new Set()
@@ -222,7 +219,7 @@ class ReqM2Oreqm {
     let new_reqs = []
     let updated_reqs = []
     for (const req_id of new_ids) {
-      if (req_id in old_reqs.requirements &&
+      if (old_reqs.requirements.hasOwnProperty(req_id) &&
           this.requirements[req_id] == old_reqs.requirements[req_id]) {
         continue // skip unchanged reqs
       }
@@ -257,7 +254,7 @@ class ReqM2Oreqm {
   }
 
   get_all_text(req_id) {
-    // Get all text fields
+    // Get all text fields as combined string
     const rec = this.requirements[req_id]
     let all_text = req_id
       + '\n' + rec.description
@@ -300,8 +297,12 @@ class ReqM2Oreqm {
     }
   }
 
+  get_doctypes() {
+    return this.doctypes
+  }
+
   get_dot() {
-    // return a dummy graph
+    // return current graph
     return this.dot
   }
 
@@ -332,12 +333,17 @@ class ReqM2Oreqm {
     const ids = Object.keys(this.requirements)
     let node_count = 0
     let edge_count = 0
+    let doctype_dict = new Map()
     for (const req_id of ids) {
       const rec = this.requirements[req_id]
       if (selection_function(req_id, rec, this.color[req_id]) &&
           !this.excluded_doctypes.includes(rec.doctype) &&
           !this.excluded_ids.includes(req_id)) {
         subset.push(req_id)
+        if (!doctype_dict.hasOwnProperty(rec.doctype)) {
+          doctype_dict[rec.doctype] = 0
+        }
+        doctype_dict[rec.doctype]++
       }
     }
     let show_top = true ? top_doctype in this.doctypes : false
@@ -389,7 +395,7 @@ class ReqM2Oreqm {
     graph += '\n  label="{}"\n  labelloc=b\n  fontsize=18\n  fontcolor=black\n  fontname="Arial"\n'.format(title)
     graph += ReqM2Oreqm.DOT_EPILOGUE
     this.dot = graph
-    return [graph, node_count, edge_count]
+    return [graph, node_count, edge_count, doctype_dict]
   }
 
   set_excluded_doctypes(doctypes) {

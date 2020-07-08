@@ -183,3 +183,10 @@ function select_color(node_id, rec, node_color) {
   return node_color.has(COLOR_UP) || node_color.has(COLOR_DOWN)
 }
 
+function compare_oreqm() {
+  // Both main and reference oreqm have been read.
+  // Highlight new and changed nodes in main oreqm
+  let result = oreqm_main.compare_requirements(oreqm_ref)
+  console.log(result)
+}
+

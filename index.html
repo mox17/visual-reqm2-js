@@ -49,7 +49,7 @@
     }
 
 
-    #editor {
+    #oreqm {
       border-right: 1px solid #ccc;
     }
 
@@ -149,20 +149,30 @@
       float: left;
     }
 
-    .table.oreqm, tr, td {
+    .table.oreqm, td {
+      width: 120px;
       table-layout: fixed;
     }
 
-    .table.table.oreqm, td {
-      width: 120px;
-    }
-
     table {
+      table-layout: fixed;
       border-collapse: collapse;
     }
 
+    table .absorbing-column {
+      width: 100%;
+    }
     table, th, td {
       border: 1px solid black;
+      padding: 10px;
+    }
+
+    html, body {
+        font-family: arial;
+    }
+
+    #oreqm {
+      margin-left: 8px;
     }
     </style>
   </head>
@@ -172,15 +182,17 @@
         <b>Visual ReqM2</b> Read more at <a href="https://github.com/mox17/">the GitHub repository</a>.
       </div>
       <div id="panes" class="split split-horizontal">
-        <div id="editor" class="split">
-          <h2>ReqM2 file</h2>
+        <div id="oreqm" class="split">
+          <b>ReqM2 file</b><br/>
+          <table class="table.oreqm" >
+            <tr><td width="1%">name</td><td id="name" class="absorbing-column"></td></tr>
+            <tr><td width="1%">size</td><td id="size"></td></tr>
+            <tr><td width="1%">timestamp</td><td id="timestamp"></td></tr>
+          </table>
+          <p/>
           <button type="button" onclick="get_main_oreqm_file()">Select main .oreqm file</button>
           <p/>
-          <table class="table.oreqm" >
-            <tr><td>name</td><td id="name"></td></tr>
-            <tr><td>size</td><td id="size"></td></tr>
-            <tr><td>timestamp</td><td id="timestamp"></td></tr>
-          </table>
+          <button type="button" onclick="get_ref_oreqm_file()">Select reference .oreqm file</button>
           <p id="values"></p>
 
           <h2>Filter criteria</h2>
@@ -197,12 +209,24 @@
           <textarea id="excluded_doctypes" rows="3" cols="25"
                     wrap="off" placeholder="excluded doctypes" ></textarea>
           <p/>
-          <button type="button" onclick="filter_graph()">Filter graph</button>
+          <button type="button" onclick="filter_graph()">Update graph</button>
           <p/>
           <button type="button" onclick="save_svg()">save graph</button>
+          <p/>
+          <h4>doctypes</h4>
+          <div id="doctype_table"></div>
+          <div id="ref_oreqm">
+            <h3>Ref. file</h3>
+            <table class="table.oreqm" >
+              <tr><td width="1%">name</td><td id="ref_name" class="absorbing-column"></td></tr>
+              <tr><td width="1%">size</td><td id="ref_size"></td></tr>
+              <tr><td width="1%">timestamp</td><td id="ref_timestamp"></td></tr>
+            </table>
+          </div>
         </div>
         <div id="graph" class="split">
           <div id="options">
+            <!--
             <label id="engine">
               Engine:
               <select>
@@ -214,7 +238,7 @@
                 <option>twopi</option>
               </select>
             </label>
-
+            -->
             <label id="format">
               Format:
               <select>
@@ -251,7 +275,7 @@
   var beforeUnloadMessage = null;
 
   var resizeEvent = new Event("paneresize");
-  Split(['#editor', '#graph'], {
+  Split(['#oreqm', '#graph'], {
     sizes: [15, 85],
     onDragEnd: function() {
       var svgOutput = document.getElementById("svg_output");
@@ -309,9 +333,9 @@
 
     let dot_source = oreqm_main != null ? oreqm_main.get_dot() : "digraph foo {\nfoo -> bar\nfoo -> baz\n}\n"
     var params = {
-      src: dot_source, //editor.getSession().getDocument().getValue(),
+      src: dot_source,
       options: {
-        engine: document.querySelector("#engine select").value,
+        engine: "dot", //document.querySelector("#engine select").value,
         format: document.querySelector("#format select").value,
         totalMemory: 3 * 16 * 1024 *1024
       }
@@ -407,19 +431,25 @@
       updateOutput();
     });
 
+  function display_doctypes_with_count(doctype_dict) {
+    let doctype_names = Object.keys(doctype_dict)
+    doctype_names.sort()
+    console.log(doctype_names)
+  }
+
   function get_main_oreqm_file() {
-    var input = document.createElement('input');
+    let input = document.createElement('input');
     input.type = 'file';
+    input.accept = '.oreqm,.reqm,.reqm2,.xml'
 
     input.onchange = e => {
       // getting a hold of the file reference
-      var file = e.target.files[0];
+      let file = e.target.files[0];
       // setting up the reader
-      var reader = new FileReader();
+      let reader = new FileReader();
       reader.readAsText(file,'UTF-8');
       // here we tell the reader what to do when it's done reading...
       reader.onload = readerEvent => {
-        //var content = readerEvent.target.result; // this is the content!
         //console.log( file );
         oreqm_main = new ReqM2Oreqm(readerEvent.target.result, [], [])
         oreqm_main_filename = file.name
@@ -427,7 +457,36 @@
         document.getElementById('name').innerHTML = oreqm_main_filename
         document.getElementById('size').innerHTML = file.size+" bytes"
         document.getElementById('timestamp').innerHTML = oreqm_main_timestamp
+        display_doctypes_with_count(oreqm_main.get_doctypes())
         //console.log(oreqm_main)
+        updateGraph();
+      }
+    }
+    input.click();
+  }
+
+  function get_ref_oreqm_file() {
+    let input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.oreqm,.reqm,.reqm2,.xml'
+
+    input.onchange = e => {
+      // getting a hold of the file reference
+      let file = e.target.files[0];
+      // setting up the reader
+      let reader = new FileReader();
+      reader.readAsText(file,'UTF-8');
+      // here we tell the reader what to do when it's done reading...
+      reader.onload = readerEvent => {
+        //console.log( file );
+        oreqm_ref = new ReqM2Oreqm(readerEvent.target.result, [], [])
+        oreqm_ref_filename = file.name
+        oreqm_ref_timestamp = oreqm_main.get_time()
+        document.getElementById('ref_name').innerHTML = oreqm_ref_filename
+        document.getElementById('ref_size').innerHTML = file.size+" bytes"
+        document.getElementById('ref_timestamp').innerHTML = oreqm_ref_timestamp
+        //console.log(oreqm_main)
+        compare_oreqm()
         updateGraph();
       }
     }

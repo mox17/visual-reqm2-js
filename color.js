@@ -36,7 +36,7 @@
   function get_color(key) {
     color = 'wheat'
     if (key in my_palette) {
-      color = palette[key]
+      color = my_palette[key]
     }
     return color
   }
