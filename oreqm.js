@@ -64,8 +64,8 @@ function dot_format(txt) {
   const re_newlines     = new RegExp(/<br\/>|<BR\/>/g, 'm')
   const re_xml_remove   = new RegExp(/<\S.*?>/g, 'm')
   const re_whitespace   = new RegExp(/^[\s\n]*|\s\n]*$/)
-  const re_nbr_list     = new RegExp(/\n\s+(\d+)/)
-  const re_line_length  = new RegExp(/([^\n]{90,110}(;| ))/)
+  const re_nbr_list     = new RegExp(/\n\s+(\d+)/g)
+  const re_line_length  = new RegExp(/([^\n]{90,500}?(;| ))/g)
   const re_keep_nl      = new RegExp(/\s*\n\s*/)
   const re_empty_lines  = new RegExp(/<BR ALIGN="LEFT"\/>(&nbsp;<BR ALIGN="LEFT"\/>)+/, 'm')
 
