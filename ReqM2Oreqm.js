@@ -322,7 +322,7 @@ class ReqM2Oreqm {
     return epilogue;
   }
 
-  create_graph(selection_function, top_doctype, title, highlights, palette) {
+  create_graph(selection_function, top_doctype, title, highlights) {
     // Return a 'dot' compatible graph with the subset of nodes nodes
     // accepted by the selection_function.
     // The 'TOP' node forces a sensible layout for highest level requirements
@@ -346,7 +346,7 @@ class ReqM2Oreqm {
     }
     for (const req_id of subset) {
         // nodes
-        let node = format_node(req_id, this.requirements[req_id], palette)
+        let node = format_node(req_id, this.requirements[req_id])
         if (highlights.includes(req_id)) {
           let dot_id = req_id.replace(/\./g, '_').replace(' ', '_')
           if (this.new_reqs.includes(req_id)) {

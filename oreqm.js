@@ -119,15 +119,7 @@ function tags_line(tags, platforms) {
   }
 }
 
-function get_color(palette, key) {
-  color = 'wheat'
-  if (key in palette) {
-    color = palette[key]
-  }
-  return color
-}
-
-function format_node(node_id, rec, palette) {
+function format_node(node_id, rec) {
   // Create 'dot' style 'html' table entry for the specobject. Rows without data are left out
   let node_table = ""
   let furtherinfo = ""
@@ -150,7 +142,7 @@ function format_node(node_id, rec, palette) {
       <TABLE BGCOLOR="{}" BORDER="1" CELLSPACING="0" CELLBORDER="1" >
         <TR><TD CELLSPACING="0" >{}</TD><TD>{}</TD><TD>{}</TD></TR>
         <TR><TD COLSPAN="2" ALIGN="LEFT">{}</TD><TD>{}</TD></TR>\n{}{}{}{}{}{}{}{}      </TABLE>`.format(
-                        get_color(palette, rec.doctype),
+                        get_color(rec.doctype),
                         node_id, rec.version, rec.doctype,
                         dot_format(rec.description), rec.needsobj.join('<BR/>'),
                         shortdesc,

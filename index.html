@@ -243,6 +243,7 @@
   <script src="./tmp/viz-js.com/bower_components/fabric.js/dist/fabric.min.js"></script>
   <script src="./tmp/viz-js.com/bower_components/Split.js/split.min.js"></script>
   <script src="./tmp/viz-js.com/bower_components/svg-pan-zoom/dist/svg-pan-zoom.min.js"></script>
+  <script src="color.js"></script>
   <script src="oreqm.js"></script>
   <script src="ReqM2Oreqm.js"></script>
   <script>
@@ -433,39 +434,6 @@
     input.click();
   }
 
-  var my_palette =
-  {
-    "assumptions": "#FF8000",
-    "creq": "#FDB1D0",
-    "faou": "#FFE6CC",
-    "fea": "#B1E6FD",
-    "hazop": "#DC8AFF",
-    "hw_featurespec": "#FFCC99",
-    "hw_safetydocs": "#FFC95E",
-    "impl": "#7075FF",
-    "kernelconf": "#E828EF",
-    "kernelconfspec": "#9999FF",
-    "kernelconfts": "#E5CCFF",
-    "nonfunctional": "#F838FF",
-    "pdoc": "#CEB1FD",
-    "preq": "#FCFDB1",
-    "reqspec1": "#00CC66",
-    "reqspec2": "#00BB00",
-    "review": "#FFCCFF",
-    "safetymandoc": "#B35900",
-    "saou": "#FFB685",
-    "swad": "#99FF99",
-    "swdd": "#E08F97",
-    "swdda": "#FFA3AC",
-    "swddats": "#EEFFB5",
-    "swintts": "#CCCC00",
-    "swrs": "#00DD00",
-    "swts": "#BBBB11",
-    "swuts": "#FFFF33",
-    "systemfunction": "#A5CFA5",
-    "udoc": "#D3FDB1"
-  };
-
   function save_svg() {
     //var search_pattern = document.querySelector("#search_regex input").value
     var search_pattern = document.getElementById("search_regex").value
@@ -488,7 +456,7 @@
       }
     } else {
       // no pattern specified
-      graph = oreqm_main.create_graph(select_all, "reqspec1", title, [], my_palette)
+      graph = oreqm_main.create_graph(select_all, "reqspec1", title, [])
     }
     console.log(graph[1], graph[2])
     updateGraph();
@@ -521,7 +489,7 @@
     var results = oreqm_main.find_reqs_with_name(regex)
     oreqm_main.clear_colors()
     oreqm_main.color_up_down(results, COLOR_UP, COLOR_DOWN)
-    graph = oreqm_main.create_graph(select_color, "reqspec1", title, results, my_palette)
+    graph = oreqm_main.create_graph(select_color, "reqspec1", title, results)
   }
 
   function txt_search(regex) {
@@ -529,7 +497,7 @@
     var results = oreqm_main.find_reqs_with_text(regex)
     oreqm_main.clear_colors()
     oreqm_main.color_up_down(results, COLOR_UP, COLOR_DOWN)
-    graph = oreqm_main.create_graph(select_color, "reqspec1", title, results, my_palette)
+    graph = oreqm_main.create_graph(select_color, "reqspec1", title, results)
   }
 
     </script>
