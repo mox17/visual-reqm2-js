@@ -130,7 +130,7 @@
         <status>proposed</status>
         <version>1</version>
         <description>
-            CC shall be a collosal game.
+            CC shall be a colossal game.
         </description>
         <safetyclass>QM</safetyclass>
         <violations/>
@@ -380,7 +380,7 @@
           This province of Frobozz corresponds roughly to the
           Kingdom of Quendor during the reign of Entharion.
         </description>
-        <furtherinfo>Frobozz is not actually part of Collosal Cave, but features
+        <furtherinfo>Frobozz is not actually part of Colossal Cave, but features
         in the related series of Zork adventures</furtherinfo>
         <shortdesc>Northern Westlands</shortdesc>
         <safetyclass>QM</safetyclass>
