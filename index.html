@@ -288,7 +288,7 @@
     @keyframes fadeIn {
       from {opacity: 0;}
       to {opacity:1 ;}
-    } 
+    }
     </style>
   </head>
   <body>
@@ -357,8 +357,7 @@
               <input type="checkbox"> Show raw output
             </label>
             <label id="download_image"></label>
-              Text in image is selectable for copy/paste.
-              Use <b></b>Alt-mouse-drag</b> to pan image
+              Select text in image with mouse+Alt.
           </div>
           <div id="output">
             <div id="error"></div>
@@ -445,8 +444,8 @@
       src: dot_source,
       options: {
         engine: "dot", //document.querySelector("#engine select").value,
-        format: document.querySelector("#format select").value 
-        , totalMemory: 3 * 16 * 1024 *1024 
+        format: document.querySelector("#format select").value
+        , totalMemory: 3 * 16 * 1024 *1024
       }
     };
 
@@ -557,7 +556,9 @@
     for (const doctype of doctypes) {
       const cell_name = "doctype_shown_{}".format(doctype)
       let cell = document.getElementById(cell_name)
-      cell.innerHTML = visible_nodes[doctype].length
+      if (cell) {
+        cell.innerHTML = visible_nodes[doctype].length
+      }
     }
   }
 

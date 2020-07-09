@@ -1078,7 +1078,7 @@ SvgPanZoom.prototype.handleMouseDown = function(evt, prevEvt) {
       evt.returnValue = false;
     }
   }
-  if (evt.altKey) {
+  if (!evt.altKey) {
     Utils.mouseAndTouchNormalize(evt, this.svg);
 
     // Double click detection; more consistent than ondblclick
@@ -1108,7 +1108,7 @@ SvgPanZoom.prototype.handleMouseMove = function(evt) {
       evt.returnValue = false;
     }
   }
-  if (evt.altKey) {
+  if (!evt.altKey) {
     if (this.state === "pan" && this.options.panEnabled) {
       // Pan mode
       var point = SvgUtils.getEventPoint(evt, this.svg).matrixTransform(

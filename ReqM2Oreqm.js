@@ -114,6 +114,10 @@ class ReqM2Oreqm {
             !this.requirements[req_id].needsobj.includes(ff_doctype+'*')) {
           this.requirements[req_id].needsobj.push(ff_doctype+'*')
         }
+        if (!this.doctypes.hasOwnProperty(ff_doctype)) {
+          this.doctypes[ff_doctype] = []
+        }
+        this.doctypes[ff_doctype].push(ff_id)
       }
     }
     const new_keys = Object.keys(new_nodes)
