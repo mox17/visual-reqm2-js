@@ -125,30 +125,24 @@ function tags_line(tags, platforms) {
   }
 }
 
-function format_node(node_id, rec) {
+function format_node(node_id, rec, ghost) {
   // Create 'dot' style 'html' table entry for the specobject. Rows without data are left out
   let node_table = ""
-  let furtherinfo = ""
-  let safetyrationale = ""
-  let shortdesc = ""
-  let rationale = ""
-  let verifycrit = ""
-  let comment = ""
-  let source = ""
-  let status = ""
-  if (rec.furtherinfo)     {furtherinfo     = '        <TR><TD COLSPAN="3" ALIGN="LEFT">furtherinfo: {}</TD></TR>\n'.format(dot_format(rec.furtherinfo));}
-  if (rec.safetyrationale) {safetyrationale = '        <TR><TD COLSPAN="3" ALIGN="LEFT">safetyrationale: {}</TD></TR>\n'.format(dot_format(rec.safetyrationale));}
-  if (rec.shortdesc)       {shortdesc       = '        <TR><TD COLSPAN="3" ALIGN="LEFT">shortdesc: {}</TD></TR>\n'.format(dot_format(rec.shortdesc));}
-  if (rec.rationale)       {rationale       = '        <TR><TD COLSPAN="3" ALIGN="LEFT">rationale: {}</TD></TR>\n'.format(dot_format(rec.rationale));}
-  if (rec.verifycrit)      {verifycrit      = '        <TR><TD COLSPAN="3" ALIGN="LEFT">{}</TD></TR>\n'.format(dot_format(rec.verifycrit));}
-  if (rec.comment)         {comment         = '        <TR><TD COLSPAN="3" ALIGN="LEFT">comment: {}</TD></TR>\n'.format(dot_format(rec.comment));}
-  if (rec.source)          {source          = '        <TR><TD COLSPAN="3" ALIGN="LEFT">source: {}</TD></TR>\n'.format(dot_format(rec.source));}
-  if (rec.status)          {status          = '        <TR><TD>{}</TD><TD>{}</TD><TD>{}</TD></TR>\n'.format(tags_line(rec.tags, rec.platform), rec.safetyclass, rec.status);}
+  furtherinfo     = rec.furtherinfo     ? '        <TR><TD COLSPAN="3" ALIGN="LEFT">furtherinfo: {}</TD></TR>\n'.format(dot_format(rec.furtherinfo)) : ''
+  safetyrationale = rec.safetyrationale ? '        <TR><TD COLSPAN="3" ALIGN="LEFT">safetyrationale: {}</TD></TR>\n'.format(dot_format(rec.safetyrationale)) : ''
+  shortdesc       = rec.shortdesc       ? '        <TR><TD COLSPAN="3" ALIGN="LEFT">shortdesc: {}</TD></TR>\n'.format(dot_format(rec.shortdesc)) : ''
+  rationale       = rec.rationale       ? '        <TR><TD COLSPAN="3" ALIGN="LEFT">rationale: {}</TD></TR>\n'.format(dot_format(rec.rationale)) : ''
+  verifycrit      = rec.verifycrit      ? '        <TR><TD COLSPAN="3" ALIGN="LEFT">{}</TD></TR>\n'.format(dot_format(rec.verifycrit)) : ''
+  comment         = rec.comment         ? '        <TR><TD COLSPAN="3" ALIGN="LEFT">comment: {}</TD></TR>\n'.format(dot_format(rec.comment)) : ''
+  source          = rec.source          ? '        <TR><TD COLSPAN="3" ALIGN="LEFT">source: {}</TD></TR>\n'.format(dot_format(rec.source)) : ''
+  status          = rec.status          ? '        <TR><TD>{}</TD><TD>{}</TD><TD>{}</TD></TR>\n'.format(tags_line(rec.tags, rec.platform), rec.safetyclass, rec.status) : ''
   node_table     = `
-      <TABLE BGCOLOR="{}" BORDER="1" CELLSPACING="0" CELLBORDER="1" >
+      <TABLE BGCOLOR="{}{}" BORDER="1" CELLSPACING="0" CELLBORDER="1" COLOR="{}" >
         <TR><TD CELLSPACING="0" >{}</TD><TD>{}</TD><TD>{}</TD></TR>
         <TR><TD COLSPAN="2" ALIGN="LEFT">{}</TD><TD>{}</TD></TR>\n{}{}{}{}{}{}{}{}      </TABLE>`.format(
                         get_color(rec.doctype),
+                        ghost ? ':white' : '',
+                        ghost ? 'grey' : 'black',
                         node_id, rec.version, rec.doctype,
                         dot_format(rec.description), rec.needsobj.join('<BR/>'),
                         shortdesc,
@@ -194,14 +188,16 @@ function compare_oreqm() {
   // Highlight new and changed nodes in main oreqm
   let results = oreqm_main.compare_requirements(oreqm_ref)
   //console.log(results)
-  oreqm_main.color_up_down(results[0], COLOR_UP, COLOR_DOWN)
-  oreqm_main.color_up_down(results[1], COLOR_UP, COLOR_DOWN)
+  oreqm_main.color_up_down(results.new_reqs, COLOR_UP, COLOR_DOWN)
+  oreqm_main.color_up_down(results.updated_reqs, COLOR_UP, COLOR_DOWN)
+  oreqm_main.color_up_down(results.removed_reqs, COLOR_UP, COLOR_DOWN)
   let ref_title = title
   ref_title += "\\lReference oreqm: '{}' from: {}\\l".format(oreqm_ref_filename, oreqm_ref_timestamp)
-  ref_title += "\\lNew requirements are:\\l - {}\\l".format(results[0].join("\\l - "))
-  ref_title += "\\lUpdated requirements are:\\l - {}\\l".format(results[1].join("\\l - "))
-  const all_highlight = results[0].concat(results[1])
-  graph = oreqm_main.create_graph(select_color, "reqspec1", ref_title, all_highlight)
+  ref_title += "\\lNew requirements are:\\l - {}\\l".format(results.new_reqs.join("\\l - "))
+  ref_title += "\\lUpdated requirements are:\\l - {}\\l".format(results.updated_reqs.join("\\l - "))
+  ref_title += "\\lRemoved requirements are:\\l - {}\\l".format(results.removed_reqs.join("\\l - "))
+  //const all_highlight = results.updated_reqs.concat(results.removed_reqs, results.new_reqs)
+  graph = oreqm_main.create_graph(select_color, "reqspec1", ref_title, [])
   set_doctype_count_shown(graph.doctype_dict)
 }
 

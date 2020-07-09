@@ -319,6 +319,7 @@
           </div>
           <p/>
           <button id="get_ref_oreqm" type="button" disabled="true" onclick="get_ref_oreqm_file()">Select reference .oreqm file</button>
+          <button id="clear_ref_oreqm" type="button" disabled="true" onclick="clear_reference()">Clear reference</button>
           <p id="values"></p>
 
           <b>Filter criteria</b><br/>
@@ -630,6 +631,8 @@
         updateGraph();
         let ref_button = document.getElementById('get_ref_oreqm')
         ref_button.disabled = false
+        let clear_button = document.getElementById('clear_ref_oreqm')
+        clear_button.disabled = false
       }
     }
     input.click();
@@ -772,6 +775,14 @@
     oreqm_main.color_up_down(results, COLOR_UP, COLOR_DOWN)
     graph = oreqm_main.create_graph(select_color, "reqspec1", title, results)
     set_doctype_count_shown(graph.doctype_dict)
+  }
+
+  function clear_reference()
+  {
+    if (oreqm_ref) {
+      oreqm_ref = null
+      oreqm_main.remove_ghost_requirements(true)
+    }
   }
 
     </script>

@@ -3,7 +3,7 @@ class ReqM2Oreqm {
   constructor(content, excluded_doctypes, excluded_ids) {
     this.root = null;              // xml tree
     this.doctypes = new Map();     // { doctype : [id] }  List of ids of a specific doctype
-    this.requirements = Object.create(null); // { id : Requirement}
+    this.requirements = new Map(); // { id : Requirement}
     this.color = new Map();        // {id:[color]}
     this.linksto = new Map();      // {id:{id}} -- map to set of linked ids
     this.linksto_rev = new Map();  // {id:{id}} -- reverse direction of linksto. i.e. top-down
@@ -12,6 +12,7 @@ class ReqM2Oreqm {
     this.excluded_ids = excluded_ids; // [id]
     this.new_reqs = [];            // List of new requirements (from comparison)
     this.updated_reqs = [];        // List of updated requirements (from comparison)
+    this.removed_reqs = [];        // List of removed requirements (copies taken from older(?) version of oreqm)
     this.visible_nodes = new Map(); // {doctype:[id]}
     this.dot = 'digraph intro_tips {label="Select filter criteria and exclusions, then click\\l                    [Update graph]\\l(Unfiltered graphs may be too large to render)"\n  labelloc=b\n  fontsize=24\n  fontcolor=grey\n  fontname="Arial"\n}\n'
 
@@ -131,6 +132,9 @@ class ReqM2Oreqm {
     // Populate the linksto and reverse linksto_rev dicts with the linkages in the requirements.
     // Ensure that color dict has all valid ids
     const ids = Object.keys(this.requirements)
+    // Clear any previous results
+    this.linksto = new Map()
+    this.linksto_rev = new Map()
     for (const req_id of ids) {
       const rec = this.requirements[req_id]
       for (const link of rec.linksto) {
@@ -217,18 +221,33 @@ class ReqM2Oreqm {
     return time
   }
 
+  remove_ghost_requirements(find_again) {
+    // A comparison may add 'ghost' requirements, which represent deleted
+    // requirements. Remove these 'ghost' requirements
+
+    for (const ghost_id of this.removed_reqs) {
+      this.requirements[].delete(ghost_id)
+    }.bind(this));
+    this.removed_reqs = []
+    if (find_again) {
+      this.find_links()
+    }
+  }
+
   compare_requirements(old_reqs) {
     // Compare two sets of requirements (instances of ReqM2Oreqm)
     // and return lists of new and modified <id>s"""
     const new_ids = Object.keys(this.requirements)
     let new_reqs = []
     let updated_reqs = []
+    let removed_reqs = []
+    this.remove_ghost_requirements(false)
     for (const req_id of new_ids) {
       if (req_id in old_reqs.requirements &&
         stringEqual(this.requirements[req_id], old_reqs.requirements[req_id])) {
         continue // skip unchanged reqs
       }
-      if (req_id in this.requirements) {
+      if (this.requirements.hasOwnProperty(req_id)) {
         const rec = this.requirements[req_id]
         // Ignore requirements with no description, such as 'impl'
         if (rec.description.length || rec.shortdesc.length) {
@@ -240,9 +259,22 @@ class ReqM2Oreqm {
         }
       }
     }
+    const old_ids = Object.keys(old_reqs.requirements)
+    for (const req_id of old_ids) {
+      if (!new_ids.includes(req_id)) {
+        removed_reqs.push(req_id)
+        this.requirements[req_id] = old_reqs.requirements[req_id]
+      }
+    }
+    this.find_links()
     this.new_reqs = new_reqs
     this.updated_reqs = updated_reqs
-    return [new_reqs, updated_reqs]
+    this.removed_reqs = removed_reqs
+    let result = new Object()
+    result.new_reqs = new_reqs
+    result.updated_reqs = updated_reqs
+    result.removed_reqs = removed_reqs
+    return result
   }
 
   find_reqs_with_name(regex) {
@@ -288,6 +320,7 @@ class ReqM2Oreqm {
 
   color_up_down(id_list, color_up_value, color_down_value) {
     // Color from all nodes in id_list both up and down
+    console.log(id_list)
     for (const res of id_list) {
       this.color_down(color_down_value, res)
       this.color_up(color_up_value, res)
@@ -357,16 +390,17 @@ class ReqM2Oreqm {
     }
     for (const req_id of subset) {
         // nodes
-        let node = format_node(req_id, this.requirements[req_id])
-        if (highlights.includes(req_id)) {
-          let dot_id = req_id.replace(/\./g, '_').replace(' ', '_')
-          if (this.new_reqs.includes(req_id)) {
-            node = 'subgraph "cluster_{}" { color=green penwidth=3 label="new" fontname="Arial" labelloc="t"\n{}}\n'.format(dot_id, node)
-          } else if (this.updated_reqs.includes(req_id)) {
-            node = 'subgraph "cluster_{}" { color=red penwidth=3 label="changed" fontname="Arial" labelloc="t"\n{}}\n'.format(dot_id, node)
-          } else {
-            node = 'subgraph "cluster_{}" { color=red penwidth=3 label=""\n{}}\n'.format(dot_id, node)
-          }
+        const ghost = this.removed_reqs.includes(req_id)
+        let node = format_node(req_id, this.requirements[req_id], ghost)
+        let dot_id = req_id.replace(/\./g, '_').replace(' ', '_')
+        if (this.new_reqs.includes(req_id)) {
+          node = 'subgraph "cluster_{}" { color=limegreen penwidth=3 label="new" fontname="Arial" labelloc="t"\n{}}\n'.format(dot_id, node)
+        } else if (this.updated_reqs.includes(req_id)) {
+          node = 'subgraph "cluster_{}" { color=goldenrod1 penwidth=3 label="changed" fontname="Arial" labelloc="t"\n{}}\n'.format(dot_id, node)
+        } else if (this.removed_reqs.includes(req_id)) {
+          node = 'subgraph "cluster_{}" { color=red penwidth=3 label="removed" fontname="Arial" labelloc="t"\n{}}\n'.format(dot_id, node)
+        } else if (highlights.includes(req_id)) {
+          node = 'subgraph "cluster_{}" { color=maroon3 penwidth=3 label=""\n{}}\n'.format(dot_id, node)
         }
         graph += node + '\n'
         node_count += 1
