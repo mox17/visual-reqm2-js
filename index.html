@@ -553,18 +553,18 @@
 
   function set_doctype_count_shown(visible_nodes) {
     // Update doctype table with counts of nodes actually displayed
-    const doctypes = Object.keys(visible_nodes)
+    const doctypes = visible_nodes.keys()
     for (const doctype of doctypes) {
       const cell_name = "doctype_shown_{}".format(doctype)
       let cell = document.getElementById(cell_name)
       if (cell) {
-        cell.innerHTML = visible_nodes[doctype].length
+        cell.innerHTML = visible_nodes.get(doctype).length
       }
     }
   }
 
   function display_doctypes_with_count(doctype_dict) {
-    let doctype_names = Object.keys(doctype_dict)
+    let doctype_names = Array.from(doctype_dict.keys())
     doctype_names.sort()
     //console.log(doctype_names)
 
@@ -592,7 +592,7 @@
       cell.innerHTML = i;
 
       cell = row.insertCell();
-      cell.innerHTML = doctype_dict[i].length;
+      cell.innerHTML = doctype_dict.get(i).length;
 
       cell = row.insertCell();
       cell.innerHTML = '<div id="doctype_shown_{}">0</div>'.format(i)
@@ -684,7 +684,7 @@
     let excluded_list = []
     if (oreqm_main) {
       const doctypes = oreqm_main.get_doctypes()
-      const names = Object.keys(doctypes)
+      const names = doctypes.keys()
       for (const doctype of names) {
         const cb_name = "doctype_{}".format(doctype)
         const status = document.getElementById(cb_name);
@@ -700,7 +700,7 @@
   function toggle_exclude() {
     if (oreqm_main) {
       const doctypes = oreqm_main.get_doctypes()
-      const names = Object.keys(doctypes)
+      const names = doctypes.keys()
       let ex_list = get_excluded_doctypes()
       for (const doctype of names) {
         const checkbox_id = "doctype_{}".format(doctype)
@@ -782,6 +782,9 @@
     if (oreqm_ref) {
       oreqm_ref = null
       oreqm_main.remove_ghost_requirements(true)
+      document.getElementById('ref_name').innerHTML = ''
+      document.getElementById('ref_size').innerHTML = ''
+      document.getElementById('ref_timestamp').innerHTML = ''
     }
   }
 

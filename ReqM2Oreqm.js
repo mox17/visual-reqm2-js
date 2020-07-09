@@ -32,8 +32,8 @@ class ReqM2Oreqm {
     let specobjects = this.root.getElementsByTagName("specobjects");
     for (const specobject of specobjects) {
       let doctype = specobject.getAttributeNode("doctype").value;
-      if (!this.doctypes.hasOwnProperty(doctype)) {
-        this.doctypes[doctype] = [];
+      if (!this.doctypes.has(doctype)) {
+        this.doctypes.set(doctype, []);
       }
       this.read_specobject_list(specobject, doctype);
     }
@@ -66,8 +66,10 @@ class ReqM2Oreqm {
       req.verifycrit      = get_xml_text(comp, 'verifycrit'),
       req.version         = get_xml_text(comp, 'version');
 
-      this.requirements[req.id] = req;
-      this.doctypes[doctype].push(req.id) // keep status per doctype
+      this.requirements.set(req.id, req)
+      let dt_arr = this.doctypes.get(doctype)
+      dt_arr.push(req.id)
+      this.doctypes.set(doctype, dt_arr) // keep status per doctype
       //console.log(req);
     }
   }
@@ -75,15 +77,15 @@ class ReqM2Oreqm {
   add_fulfilledby_nodes() {
     // Create placeholders for absent fulfilledby requirements.
     // add doctype to needsobj if not present
-    const ids = Object.keys(this.requirements)
+    const ids = this.requirements.keys()
     let new_nodes = new Map()
     for (const req_id of ids) {
-      const rec = this.requirements[req_id]
+      const rec = this.requirements.get(req_id)
       for (const ff_arr of rec.fulfilledby) {
         const ff_id = ff_arr[0]
         const ff_doctype = ff_arr[1]
         const ff_version = ff_arr[2]
-        if (!ids.includes(ff_id)) {
+        if (!this.requirements.has(ff_id)) {
             // Create dummy node
             let new_node = {
               "comment": '',
@@ -109,85 +111,106 @@ class ReqM2Oreqm {
               "verifycrit": '',
               "version": ff_version
             }
-            new_nodes[ff_id] = new_node
+            new_nodes.set(ff_id, new_node)
         }
-        if (!this.requirements[req_id].needsobj.includes(ff_doctype) &&
-            !this.requirements[req_id].needsobj.includes(ff_doctype+'*')) {
-          this.requirements[req_id].needsobj.push(ff_doctype+'*')
+        if (!rec.needsobj.includes(ff_doctype) &&
+            !rec.needsobj.includes(ff_doctype+'*')) {
+          rec.needsobj.push(ff_doctype+'*')
+          this.requirements.set(req_id, rec)
         }
-        if (!this.doctypes.hasOwnProperty(ff_doctype)) {
-          this.doctypes[ff_doctype] = []
+        if (!this.doctypes.has(ff_doctype)) {
+          this.doctypes.set(ff_doctype, [])
         }
-        this.doctypes[ff_doctype].push(ff_id)
+        let dt_arr = this.doctypes.get(ff_doctype)
+        dt_arr.push(ff_id)
+        this.doctypes.set(ff_doctype, dt_arr)
       }
     }
-    const new_keys = Object.keys(new_nodes)
+    const new_keys = new_nodes.keys()
     for (const key of new_keys) {
       //console.log(key, new_nodes[key])
-      this.requirements[key] = new_nodes[key]
+      this.requirements.set(key, new_nodes.get(key))
     }
   }
 
   find_links() {
     // Populate the linksto and reverse linksto_rev dicts with the linkages in the requirements.
     // Ensure that color dict has all valid ids
-    const ids = Object.keys(this.requirements)
+    const ids = this.requirements.keys()
     // Clear any previous results
     this.linksto = new Map()
     this.linksto_rev = new Map()
+    let lt_set
+    // Check all requirements
     for (const req_id of ids) {
-      const rec = this.requirements[req_id]
+      const rec = this.requirements.get(req_id)
       for (const link of rec.linksto) {
         //console.log(req_id, link)
         // bottom-up
-        if (!this.linksto.hasOwnProperty(req_id)) {
-            this.linksto[req_id] = new Set()
+        if (!this.linksto.has(req_id)) {
+            this.linksto.set(req_id, new Set())
         }
-        this.linksto[req_id].add(link)
+        //lt_set = this.linksto.get(req_id)
+        //lt_set.add(link)
+        //this.linksto.set(req_id, lt_set)
+        this.linksto.set(req_id, this.linksto.get(req_id).add(link))
+
         // top-down
-        if (!this.linksto_rev.hasOwnProperty(link)) {
-          this.linksto_rev[link] = new Set()
+        if (!this.linksto_rev.has(link)) {
+          this.linksto_rev.set(link, new Set())
         }
-        this.linksto_rev[link].add(req_id)
+        lt_set = this.linksto_rev.get(link)
+        lt_set.add(req_id)
+        this.linksto_rev.set(link, lt_set)
       }
       for (const ffb_arr of rec.fulfilledby) {
         const ffb_link = ffb_arr[0]
         // top-down
-        if (!this.linksto_rev.hasOwnProperty(req_id)) {
-          this.linksto_rev[req_id] = new Set()
+        if (!this.linksto_rev.has(req_id)) {
+          this.linksto_rev.set(req_id, new Set())
         }
-        this.linksto_rev[req_id].add(ffb_link)
-        if (!this.fulfilledby.hasOwnProperty(ffb_link)) {
-          this.fulfilledby[ffb_link] = new Set()
+        let ffb_set = this.linksto_rev.get(req_id)
+        ffb_set.add(ffb_link)
+        this.linksto_rev.set(req_id, ffb_set)
+
+        if (!this.fulfilledby.has(ffb_link)) {
+          this.fulfilledby.set(ffb_link, new Set())
         }
-        this.fulfilledby[ffb_link].add(req_id)
+        ffb_set = this.fulfilledby.get(ffb_link)
+        ffb_set.add(req_id)
+        this.fulfilledby.set(ffb_link, ffb_set)
+
         // bottom-up
-        if (!this.linksto.hasOwnProperty(ffb_link)) {
-          this.linksto[ffb_link] = new Set()
+        if (!this.linksto.has(ffb_link)) {
+          this.linksto.set(ffb_link, new Set())
         }
-        this.linksto[ffb_link].add(req_id)
+        lt_set = this.linksto.get(ffb_link)
+        lt_set.add(req_id)
+        this.linksto.set(ffb_link, lt_set)
       }
-      this.color[req_id] = new Set()
+      this.color.set(req_id, new Set())
     }
   }
 
   color_down(color, req_id) {
     //Color this id and linksto_rev referenced nodes with color
-    if (!this.color.hasOwnProperty(req_id)) {
+    if (!this.color.has(req_id)) {
       return // unknown <id> (bug)
     }
-    if (this.color[req_id].hasOwnProperty(color)) {
+    if (this.color.get(req_id).has(color)) {
       return // already visited
     }
-    if (this.excluded_doctypes.includes(this.requirements[req_id].doctype)) {
+    if (this.excluded_doctypes.includes(this.requirements.get(req_id).doctype)) {
       return // blacklisted doctype
     }
     if (this.excluded_ids.includes(req_id)) {
       return // blacklisted id
     }
-    this.color[req_id].add(color)
-    if (this.linksto_rev.hasOwnProperty(req_id)) {
-      for (const child of this.linksto_rev[req_id]) {
+    let col_set = this.color.get(req_id)
+    col_set.add(color)
+    this.color.set(req_id, col_set)
+    if (this.linksto_rev.has(req_id)) {
+      for (const child of this.linksto_rev.get(req_id)) {
         this.color_down(color, child)
       }
     }
@@ -195,21 +218,23 @@ class ReqM2Oreqm {
 
   color_up(color, req_id) {
     //Color this id and linksto referenced nodes with color
-    if (!this.color.hasOwnProperty(req_id)) {
+    if (!this.color.has(req_id)) {
       return // unknown <id> (bug)
     }
-    if (this.color[req_id].hasOwnProperty(color)) {
+    if (this.color.get(req_id).has(color)) {
       return // already visited
     }
-    if (this.excluded_doctypes.includes(this.requirements[req_id].doctype)) {
+    if (this.excluded_doctypes.includes(this.requirements.get(req_id).doctype)) {
       return // blacklisted doctype
     }
     if (this.excluded_ids.includes(req_id)) {
       return // blacklisted id
     }
-    this.color[req_id].add(color)
-    if (this.linksto.hasOwnProperty(req_id)) {
-      for (const child of this.linksto[req_id]) {
+    let col_set = this.color.get(req_id)
+    col_set.add(color)
+    this.color.set(req_id, col_set)
+    if (this.linksto.has(req_id)) {
+      for (const child of this.linksto.get(req_id)) {
         this.color_up(color, child)
       }
     }
@@ -224,11 +249,12 @@ class ReqM2Oreqm {
   remove_ghost_requirements(find_again) {
     // A comparison may add 'ghost' requirements, which represent deleted
     // requirements. Remove these 'ghost' requirements
-
     for (const ghost_id of this.removed_reqs) {
-      this.requirements[].delete(ghost_id)
-    }.bind(this));
+      this.requirements.delete(ghost_id)
+    }
     this.removed_reqs = []
+    this.new_reqs = []
+    this.updated_reqs = []
     if (find_again) {
       this.find_links()
     }
@@ -237,21 +263,21 @@ class ReqM2Oreqm {
   compare_requirements(old_reqs) {
     // Compare two sets of requirements (instances of ReqM2Oreqm)
     // and return lists of new and modified <id>s"""
-    const new_ids = Object.keys(this.requirements)
+    const new_ids = Array.from(this.requirements.keys())
     let new_reqs = []
     let updated_reqs = []
     let removed_reqs = []
     this.remove_ghost_requirements(false)
     for (const req_id of new_ids) {
-      if (req_id in old_reqs.requirements &&
-        stringEqual(this.requirements[req_id], old_reqs.requirements[req_id])) {
+      if (old_reqs.requirements.has(req_id) &&
+        stringEqual(this.requirements.get(req_id), old_reqs.requirements.get(req_id))) {
         continue // skip unchanged reqs
       }
-      if (this.requirements.hasOwnProperty(req_id)) {
-        const rec = this.requirements[req_id]
+      if (this.requirements.has(req_id)) {
+        const rec = this.requirements.get(req_id)
         // Ignore requirements with no description, such as 'impl'
         if (rec.description.length || rec.shortdesc.length) {
-          if (req_id in old_reqs.requirements) {
+          if (old_reqs.requirements.has(req_id)) {
               updated_reqs.push(req_id)
           } else {
               new_reqs.push(req_id)
@@ -259,11 +285,11 @@ class ReqM2Oreqm {
         }
       }
     }
-    const old_ids = Object.keys(old_reqs.requirements)
+    const old_ids = old_reqs.requirements.keys()
     for (const req_id of old_ids) {
       if (!new_ids.includes(req_id)) {
         removed_reqs.push(req_id)
-        this.requirements[req_id] = old_reqs.requirements[req_id]
+        this.requirements.set(req_id, old_reqs.requirements.get(req_id))
       }
     }
     this.find_links()
@@ -279,7 +305,7 @@ class ReqM2Oreqm {
 
   find_reqs_with_name(regex) {
     // Check <id> against regex
-    const ids = Object.keys(this.requirements)
+    const ids = this.requirements.keys()
     let rx = new RegExp(regex, 'i')
     let matches = []
     const re = new RegExp(regex, RegExp.prototype.ignoreCase)
@@ -292,7 +318,7 @@ class ReqM2Oreqm {
 
   get_all_text(req_id) {
     // Get all text fields as combined string
-    const rec = this.requirements[req_id]
+    const rec = this.requirements.get(req_id)
     let all_text = req_id
       + '\n' + rec.description
       + '\n' + rec.furtherinfo
@@ -307,7 +333,7 @@ class ReqM2Oreqm {
 
   find_reqs_with_text(regex) {
     // Check requirement texts against regex
-    const ids = Object.keys(this.requirements)
+    const ids = this.requirements.keys()
     let rx = new RegExp(regex, 'i')
     let matches = []
     const re = new RegExp(regex, RegExp.prototype.ignoreCase)
@@ -320,7 +346,7 @@ class ReqM2Oreqm {
 
   color_up_down(id_list, color_up_value, color_down_value) {
     // Color from all nodes in id_list both up and down
-    console.log(id_list)
+    //console.log(id_list)
     for (const res of id_list) {
       this.color_down(color_down_value, res)
       this.color_up(color_up_value, res)
@@ -329,9 +355,9 @@ class ReqM2Oreqm {
 
   clear_colors() {
     // Clear the 'color' tags on the requirements
-    const ids = Object.keys(this.color)
+    const ids = this.color.keys()
     for (const id of ids) {
-      this.color[id] = new Set()
+      this.color.set(id, new Set())
     }
   }
 
@@ -368,30 +394,32 @@ class ReqM2Oreqm {
     // (some level of visual proximity and aligned to the left of the graph)
     let graph = ReqM2Oreqm.DOT_PREAMBLE;
     let subset = []
-    const ids = Object.keys(this.requirements)
+    const ids = this.requirements.keys()
     let node_count = 0
     let edge_count = 0
     let doctype_dict = new Map()
     for (const req_id of ids) {
-      const rec = this.requirements[req_id]
-      if (!doctype_dict.hasOwnProperty(rec.doctype)) {
-        doctype_dict[rec.doctype] = []
+      const rec = this.requirements.get(req_id)
+      if (!doctype_dict.has(rec.doctype)) {
+        doctype_dict.set(rec.doctype, [])
       }
-      if (selection_function(req_id, rec, this.color[req_id]) &&
+      if (selection_function(req_id, rec, this.color.get(req_id)) &&
           !this.excluded_doctypes.includes(rec.doctype) &&
           !this.excluded_ids.includes(req_id)) {
         subset.push(req_id)
-        doctype_dict[rec.doctype].push(req_id)
+        let dt = doctype_dict.get(rec.doctype)
+        dt.push(req_id)
+        doctype_dict.set(rec.doctype, dt)
       }
     }
-    let show_top = this.doctypes.hasOwnProperty(top_doctype) && !this.excluded_doctypes.includes(top_doctype)
+    let show_top = this.doctypes.has(top_doctype) && !this.excluded_doctypes.includes(top_doctype)
     if (show_top) {
       graph += '  "TOP" [fontcolor=lightgray];\n\n'
     }
     for (const req_id of subset) {
         // nodes
         const ghost = this.removed_reqs.includes(req_id)
-        let node = format_node(req_id, this.requirements[req_id], ghost)
+        let node = format_node(req_id, this.requirements.get(req_id), ghost)
         let dot_id = req_id.replace(/\./g, '_').replace(' ', '_')
         if (this.new_reqs.includes(req_id)) {
           node = 'subgraph "cluster_{}" { color=limegreen penwidth=3 label="new" fontname="Arial" labelloc="t"\n{}}\n'.format(dot_id, node)
@@ -408,7 +436,7 @@ class ReqM2Oreqm {
     graph += '\n  # Edges\n'
     if (show_top) {
       for (const req_id of subset) {
-        if (this.requirements[req_id].doctype == top_doctype) {
+        if (this.requirements.get(req_id).doctype == top_doctype) {
           graph += format_edge(req_id, 'TOP')
         }
       }
@@ -416,11 +444,11 @@ class ReqM2Oreqm {
     let kind = ''
     for (const req_id of subset) {
       // edges
-      if (this.linksto.hasOwnProperty(req_id)) {
-        for (const link of this.linksto[req_id]) {
+      if (this.linksto.has(req_id)) {
+        for (const link of this.linksto.get(req_id)) {
           // Do not reference non-selected specobjets
           if (subset.includes(link)) {
-            if (this.fulfilledby.hasOwnProperty(req_id) && this.fulfilledby[req_id].has(link)) {
+            if (this.fulfilledby.has(req_id) && this.fulfilledby.get(req_id).has(link)) {
               kind = "fulfilledby"
             } else {
               kind = null

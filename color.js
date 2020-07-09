@@ -110,7 +110,7 @@ function add_color(palette, doctype) {
     "hazop": "#DC8AFF",
     "hw_featurespec": "#FFCC99",
     "hw_safetydocs": "#FFC95E",
-    "impl": "#7075FF",
+    "impl": "#B0B5FF",
     "kernelconf": "#E828EF",
     "kernelconfspec": "#9999FF",
     "kernelconfts": "#E5CCFF",
