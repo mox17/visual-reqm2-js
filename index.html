@@ -566,6 +566,7 @@
   function display_doctypes_with_count(doctype_dict) {
     let doctype_names = Array.from(doctype_dict.keys())
     doctype_names.sort()
+    let excluded = get_excluded_doctypes() // so we can tick them again
     //console.log(doctype_names)
 
     const element = document.getElementById("dyn_doctype_table");
@@ -596,14 +597,10 @@
 
       cell = row.insertCell();
       cell.innerHTML = '<div id="doctype_shown_{}">0</div>'.format(i)
-
+     
       cell = row.insertCell();
-      cell.innerHTML = '<input type="checkbox" id="doctype_{}">'.format(i)
-      /* You can also attach a click listener if you want
-      cell.addEventListener("click", function(){
-        alert("FOO!");
-      });
-      */
+      let checked = excluded.includes(i)
+      cell.innerHTML = '<input type="checkbox" id="doctype_{}" {}>'.format(i, checked ? 'checked' : '')
     }
     document.getElementById("doctype_table").appendChild(table);
   }
@@ -658,6 +655,7 @@
         document.getElementById('ref_size').innerHTML = file.size+" bytes"
         document.getElementById('ref_timestamp').innerHTML = oreqm_ref_timestamp
         compare_oreqm()
+        display_doctypes_with_count(oreqm_main.get_doctypes())
         updateGraph();
       }
     }
@@ -688,7 +686,7 @@
       for (const doctype of names) {
         const cb_name = "doctype_{}".format(doctype)
         const status = document.getElementById(cb_name);
-        if (status.checked) {
+        if (status && status.checked) {
           excluded_list.push(doctype)
         }
         //console.log(doctype, status)
@@ -729,7 +727,13 @@
       }
     } else {
       // no pattern specified
-      graph = oreqm_main.create_graph(select_all, "reqspec1", title, [])
+      if (oreqm_ref) {
+        // If reference file exist use differences as filter
+        oreqm_main.color_up_down([], COLOR_UP, COLOR_DOWN) 
+        graph = oreqm_main.create_graph(select_color, "reqspec1", title, [])
+      } else {
+        graph = oreqm_main.create_graph(select_all, "reqspec1", title, [])
+      }
       set_doctype_count_shown(graph.doctype_dict)
     }
     //console.log(graph[1], graph[2])

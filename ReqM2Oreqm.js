@@ -289,7 +289,14 @@ class ReqM2Oreqm {
     for (const req_id of old_ids) {
       if (!new_ids.includes(req_id)) {
         removed_reqs.push(req_id)
-        this.requirements.set(req_id, old_reqs.requirements.get(req_id))
+        let req = old_reqs.requirements.get(req_id)
+        this.requirements.set(req_id, req)
+        if (!this.doctypes.has(req.doctype)) {
+          this.doctypes.set(req.doctype, [])
+        }
+        let dt_arr = this.doctypes.get(req.doctype)
+        dt_arr.push(req_id)
+        this.doctypes.set(req.doctype, dt_arr)
       }
     }
     this.find_links()
@@ -347,7 +354,8 @@ class ReqM2Oreqm {
   color_up_down(id_list, color_up_value, color_down_value) {
     // Color from all nodes in id_list both up and down
     //console.log(id_list)
-    for (const res of id_list) {
+    let full_list = id_list.concat(this.new_reqs, this.updated_reqs, this.removed_reqs)
+    for (const res of full_list) {
       this.color_down(color_down_value, res)
       this.color_up(color_up_value, res)
     }

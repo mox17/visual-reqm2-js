@@ -1,3 +1,4 @@
+// Some utility functions
 String.prototype.format = function () {
   var i = 0, args = arguments;
   return this.replace(/{}/g, function () {
@@ -13,12 +14,27 @@ if (typeof(String.prototype.trim) === "undefined")
     };
 }
 
+if (typeof(Array.prototype.remove) === "undefined")
+{
+  Array.prototype.remove = function() {
+    var what, a = arguments, L = a.length, ax;
+    while (L && this.length) {
+        what = a[--L];
+        while ((ax = this.indexOf(what)) !== -1) {
+            this.splice(ax, 1);
+        }
+    }
+    return this;
+  };
+}
+
 function stringEqual(a, b) {
   const a_s = JSON.stringify(a)
   const b_s = JSON.stringify(b)
   return a_s === b_s
 }
 
+// XML extract utilities
 function get_xml_text(node, tag_name) {
   var result = ""
   var item = node.getElementsByTagName(tag_name)
@@ -54,6 +70,7 @@ function get_fulfilledby(node) {
   return ff_list
 }
 
+// Regexes for "make requirements readable" heuristics
 const re_xml_comments = new RegExp(/<!--.*?-->/g, 'm')
 const re_unwanted_mu  = new RegExp(/<!\[CDATA\[\s*/g, 'm')
 const re_amp_quote    = new RegExp(/&/g, 'm')
@@ -163,18 +180,6 @@ function select_all(node_id, rec, node_color) {
   return true
 }
 
-function select_some(node_id, rec, node_color) {
-  // A random heuristic to select a subset of nodes
-  return ['kernelconf'].includes(rec.doctype)
-}
-
-var SELECTED_DOCTYPES = []
-
-function select_doctype(node_id, rec, node_color) {
-  // Select based on doctype
-  return SELECTED_DOCTYPES.includes(rec.doctype)
-}
-
 const COLOR_UP = 1
 const COLOR_DOWN = 2
 
@@ -185,7 +190,7 @@ function select_color(node_id, rec, node_color) {
 
 function compare_oreqm() {
   // Both main and reference oreqm have been read.
-  // Highlight new and changed nodes in main oreqm
+  // Highlight new, changed and removed nodes in main oreqm (removed are added as 'ghosts')
   let results = oreqm_main.compare_requirements(oreqm_ref)
   //console.log(results)
   oreqm_main.color_up_down(results.new_reqs, COLOR_UP, COLOR_DOWN)
