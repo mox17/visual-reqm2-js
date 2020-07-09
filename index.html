@@ -223,11 +223,68 @@
       color:#ffffff;
     }
 
+    #dyn_doctype_table tr,
+    #dyn_doctype_table td,
+    #dyn_doctype_table p,
     table p
     {
       padding:0px;
       margin:0px;
     }
+
+    /* --------------- */
+    /* Popup container */
+    .popup {
+      position: relative;
+      display: inline-block;
+      cursor: pointer;
+    }
+
+    /* The actual popup (appears on top) */
+    .popup .popuptext {
+      visibility: hidden;
+      width: 160px;
+      background-color: #555;
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 8px 0;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      margin-left: -80px;
+    }
+
+    /* Popup arrow */
+    .popup .popuptext::after {
+      content: "";
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      margin-left: -5px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: #555 transparent transparent transparent;
+    }
+
+    /* Toggle this class when clicking on the popup container (hide and show the popup) */
+    .popup .show {
+      visibility: visible;
+      -webkit-animation: fadeIn 1s;
+      animation: fadeIn 1s
+    }
+
+    /* Add animation (fade in the popup) */
+    @-webkit-keyframes fadeIn {
+      from {opacity: 0;}
+      to {opacity: 1;}
+    }
+
+    @keyframes fadeIn {
+      from {opacity: 0;}
+      to {opacity:1 ;}
+    } 
     </style>
   </head>
   <body>
@@ -280,19 +337,6 @@
         </div>
         <div id="graph" class="split">
           <div id="options">
-            <!--
-            <label id="engine">
-              Engine:
-              <select>
-                <option>circo</option>
-                <option selected>dot</option>
-                <option>fdp</option>
-                <option>neato</option>
-                <option>osage</option>
-                <option>twopi</option>
-              </select>
-            </label>
-            -->
             <label id="format">
               Format:
               <select>
@@ -312,12 +356,12 @@
               Text in image is selectable for copy/paste.
               Use <b></b>Alt-mouse-drag</b> to pan image
           </div>
-        <div id="output">
-          <div id="error"></div>
+          <div id="output">
+            <div id="error"></div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
   <script src="./modules/viz.js/viz.js"></script>
   <script src="./modules/fabric.js/dist/fabric.min.js"></script>
@@ -397,8 +441,8 @@
       src: dot_source,
       options: {
         engine: "dot", //document.querySelector("#engine select").value,
-        format: document.querySelector("#format select").value,
-        totalMemory: 3 * 16 * 1024 *1024
+        format: document.querySelector("#format select").value 
+        , totalMemory: 3 * 16 * 1024 *1024 
       }
     };
 
@@ -522,6 +566,8 @@
     cell = row.insertCell();
     cell.innerHTML = "<b>count</b>";
     cell = row.insertCell();
+    cell.innerHTML = "<b>shown</b>";
+    cell = row.insertCell();
     cell.innerHTML = "<b>exclude</b>";
     for (var i of doctype_names) {
       row = table.insertRow();
@@ -533,7 +579,9 @@
       cell.innerHTML = doctype_dict[i].length;
 
       cell = row.insertCell();
-      //cell.innerHTML = '<label id="doctype_{}"><input type="checkbox"></label>'.format(i)
+      cell.innerHTML = '<div id="doctype_shown_{}">0</div>'.format(i)
+
+      cell = row.insertCell();
       cell.innerHTML = '<input type="checkbox" id="doctype_{}">'.format(i)
       /* You can also attach a click listener if you want
       cell.addEventListener("click", function(){
@@ -555,7 +603,6 @@
       // setting up the reader
       let reader = new FileReader();
       reader.readAsText(file,'UTF-8');
-      // here we tell the reader what to do when it's done reading...
       reader.onload = readerEvent => {
         //console.log( file );
         oreqm_main = new ReqM2Oreqm(readerEvent.target.result, [], [])
@@ -565,7 +612,6 @@
         document.getElementById('size').innerHTML = file.size+" bytes"
         document.getElementById('timestamp').innerHTML = oreqm_main_timestamp
         display_doctypes_with_count(oreqm_main.get_doctypes())
-        //console.log(oreqm_main)
         updateGraph();
         let ref_button = document.getElementById('get_ref_oreqm')
         ref_button.disabled = false
@@ -585,7 +631,6 @@
       // setting up the reader
       let reader = new FileReader();
       reader.readAsText(file,'UTF-8');
-      // here we tell the reader what to do when it's done reading...
       reader.onload = readerEvent => {
         //console.log( file );
         oreqm_ref = new ReqM2Oreqm(readerEvent.target.result, [], [])
@@ -594,7 +639,6 @@
         document.getElementById('ref_name').innerHTML = oreqm_ref_filename
         document.getElementById('ref_size').innerHTML = file.size+" bytes"
         document.getElementById('ref_timestamp').innerHTML = oreqm_ref_timestamp
-        //console.log(oreqm_main)
         compare_oreqm()
         updateGraph();
       }
@@ -624,8 +668,6 @@
       const doctypes = oreqm_main.get_doctypes()
       const names = Object.keys(doctypes)
       for (const doctype of names) {
-        //const cb_name = "#doctype_{} input".format(doctype)
-        //const status = document.querySelector(cb_name).checked
         const cb_name = "doctype_{}".format(doctype)
         const status = document.getElementById(cb_name);
         if (status.checked) {
@@ -676,18 +718,20 @@
   }
 
   function handle_pruning() {
-    const excluded_ids = document.getElementById("excluded_ids").value.trim()
-    let ex_id_list = excluded_ids.split(/[\s\n,]+/)
-    oreqm_main.set_excluded_ids(ex_id_list)
-    if (excluded_ids) {
-      title += "\\lDiagram excludes <id>s:\\l - {}\\l".format(ex_id_list.join("\\l - "))
-      //console.log(ex_id_list)
-    }
-    let ex_dt_list = get_excluded_doctypes()
-    oreqm_main.set_excluded_doctypes(ex_dt_list)
-    if (ex_dt_list.length) {
-      title += "\\lDiagram excludes doctypes: {}\\l".format(ex_dt_list.join(", "))
-      //console.log(ex_dt_list)
+    if (oreqm_main) {
+      const excluded_ids = document.getElementById("excluded_ids").value.trim()
+      let ex_id_list = excluded_ids.split(/[\s\n,]+/)
+      oreqm_main.set_excluded_ids(ex_id_list)
+      if (excluded_ids) {
+        title += "\\lDiagram excludes <id>s:\\l - {}\\l".format(ex_id_list.join("\\l - "))
+        //console.log(ex_id_list)
+      }
+      let ex_dt_list = get_excluded_doctypes()
+      oreqm_main.set_excluded_doctypes(ex_dt_list)
+      if (ex_dt_list.length) {
+        title += "\\lDiagram excludes doctypes: {}\\l".format(ex_dt_list.join(", "))
+        //console.log(ex_dt_list)
+      }
     }
   }
 
