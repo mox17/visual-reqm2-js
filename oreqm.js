@@ -54,21 +54,21 @@ function get_fulfilledby(node) {
   return ff_list
 }
 
+const re_xml_comments = new RegExp(/<!--.*?-->/g, 'm')
+const re_unwanted_mu  = new RegExp(/<!\[CDATA\[\s*/g, 'm')
+const re_amp_quote    = new RegExp(/&/g, 'm')
+const re_list_heurist = new RegExp(/<li>[\s\n]*|<listitem>[\s\n]*/g, 'm')
+const re_tag_text     = new RegExp(/<a\s+type="xref"\s+href="[A-Z]+_([^"]+)"\s*\/>/g, 'm')
+const re_newlines     = new RegExp(/<br\/>|<BR\/>/g, 'm')
+const re_xml_remove   = new RegExp(/<\S.*?>/g, 'm')
+const re_whitespace   = new RegExp(/^[\s\n]*|\s\n]*$/)
+const re_nbr_list     = new RegExp(/\n\s+(\d+)/g)
+const re_line_length  = new RegExp(/([^\n]{90,500}?(;| ))/g)
+const re_keep_nl      = new RegExp(/\s*\n\s*/)
+const re_empty_lines  = new RegExp(/<BR ALIGN="LEFT"\/>(&nbsp;<BR ALIGN="LEFT"\/>)+/, 'm')
+
 function dot_format(txt) {
   //Remove xml style formatting not compliant with dot
-  const re_xml_comments = new RegExp(/<!--.*?-->/g, 'm')
-  const re_unwanted_mu  = new RegExp(/<!\[CDATA\[\s*/g, 'm')
-  const re_amp_quote    = new RegExp(/&/g, 'm')
-  const re_list_heurist = new RegExp(/<li>[\s\n]*|<listitem>[\s\n]*/g, 'm')
-  const re_tag_text     = new RegExp(/<a\s+type="xref"\s+href="[A-Z]+_([^"]+)"\s*\/>/g, 'm')
-  const re_newlines     = new RegExp(/<br\/>|<BR\/>/g, 'm')
-  const re_xml_remove   = new RegExp(/<\S.*?>/g, 'm')
-  const re_whitespace   = new RegExp(/^[\s\n]*|\s\n]*$/)
-  const re_nbr_list     = new RegExp(/\n\s+(\d+)/g)
-  const re_line_length  = new RegExp(/([^\n]{90,500}?(;| ))/g)
-  const re_keep_nl      = new RegExp(/\s*\n\s*/)
-  const re_empty_lines  = new RegExp(/<BR ALIGN="LEFT"\/>(&nbsp;<BR ALIGN="LEFT"\/>)+/, 'm')
-
   let new_txt = ''
   if (txt.length) {
     txt = txt.replace(re_xml_comments, '') // remove XML comments
@@ -202,5 +202,6 @@ function compare_oreqm() {
   ref_title += "\\lUpdated requirements are:\\l - {}\\l".format(results[1].join("\\l - "))
   const all_highlight = results[0].concat(results[1])
   graph = oreqm_main.create_graph(select_color, "reqspec1", ref_title, all_highlight)
+  set_doctype_count_shown(graph.doctype_dict)
 }
 

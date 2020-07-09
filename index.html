@@ -232,6 +232,10 @@
       margin:0px;
     }
 
+    #dyn_doctype_table
+    {
+      text-align: center;
+    }
     /* --------------- */
     /* Popup container */
     .popup {
@@ -547,6 +551,16 @@
     updateOutput();
   });
 
+  function set_doctype_count_shown(visible_nodes) {
+    // Update doctype table with counts of nodes actually displayed
+    const doctypes = Object.keys(visible_nodes)
+    for (const doctype of doctypes) {
+      const cell_name = "doctype_shown_{}".format(doctype)
+      let cell = document.getElementById(cell_name)
+      cell.innerHTML = visible_nodes[doctype].length
+    }
+  }
+
   function display_doctypes_with_count(doctype_dict) {
     let doctype_names = Object.keys(doctype_dict)
     doctype_names.sort()
@@ -712,6 +726,7 @@
     } else {
       // no pattern specified
       graph = oreqm_main.create_graph(select_all, "reqspec1", title, [])
+      set_doctype_count_shown(graph.doctype_dict)
     }
     //console.log(graph[1], graph[2])
     updateGraph();
@@ -746,6 +761,7 @@
     oreqm_main.clear_colors()
     oreqm_main.color_up_down(results, COLOR_UP, COLOR_DOWN)
     graph = oreqm_main.create_graph(select_color, "reqspec1", title, results)
+    set_doctype_count_shown(graph.doctype_dict)
   }
 
   function txt_search(regex) {
@@ -754,6 +770,7 @@
     oreqm_main.clear_colors()
     oreqm_main.color_up_down(results, COLOR_UP, COLOR_DOWN)
     graph = oreqm_main.create_graph(select_color, "reqspec1", title, results)
+    set_doctype_count_shown(graph.doctype_dict)
   }
 
     </script>

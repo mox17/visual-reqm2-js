@@ -12,6 +12,7 @@ class ReqM2Oreqm {
     this.excluded_ids = excluded_ids; // [id]
     this.new_reqs = [];            // List of new requirements (from comparison)
     this.updated_reqs = [];        // List of updated requirements (from comparison)
+    this.visible_nodes = new Map(); // {doctype:[id]}
     this.dot = 'digraph intro_tips {label="Select filter criteria and exclusions, then click\\l                    [Update graph]\\l(Unfiltered graphs may be too large to render)"\n  labelloc=b\n  fontsize=24\n  fontcolor=grey\n  fontname="Arial"\n}\n'
 
     // Initialization logic
@@ -336,14 +337,14 @@ class ReqM2Oreqm {
     let doctype_dict = new Map()
     for (const req_id of ids) {
       const rec = this.requirements[req_id]
+      if (!doctype_dict.hasOwnProperty(rec.doctype)) {
+        doctype_dict[rec.doctype] = []
+      }
       if (selection_function(req_id, rec, this.color[req_id]) &&
           !this.excluded_doctypes.includes(rec.doctype) &&
           !this.excluded_ids.includes(req_id)) {
         subset.push(req_id)
-        if (!doctype_dict.hasOwnProperty(rec.doctype)) {
-          doctype_dict[rec.doctype] = 0
-        }
-        doctype_dict[rec.doctype]++
+        doctype_dict[rec.doctype].push(req_id)
       }
     }
     let show_top = this.doctypes.hasOwnProperty(top_doctype) && !this.excluded_doctypes.includes(top_doctype)
@@ -395,7 +396,12 @@ class ReqM2Oreqm {
     graph += '\n  label="{}"\n  labelloc=b\n  fontsize=18\n  fontcolor=black\n  fontname="Arial"\n'.format(title)
     graph += ReqM2Oreqm.DOT_EPILOGUE
     this.dot = graph
-    return [graph, node_count, edge_count, doctype_dict]
+    let result = new Object()
+    //result.graph = graph
+    result.node_count = node_count
+    result.edge_count = edge_count
+    result.doctype_dict = doctype_dict
+    return result
   }
 
   set_excluded_doctypes(doctypes) {
