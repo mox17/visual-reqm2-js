@@ -324,14 +324,15 @@
 
           <b>Filter criteria</b><br/>
           <textarea id="search_regex" rows="3" cols="25"
-                    wrap="off" placeholder="search regex" ></textarea>
+                    wrap="off" placeholder="search regex"
+                    spellcheck="false"></textarea>
           <br>
           <label id="id_checkbox">
             <input type="checkbox">Search &lt;id&gt; only
           </label>
           <p/>
           <b>Excluded &lt;id&gt;s</b><br/>
-          <textarea id="excluded_ids" rows="3" cols="25"
+          <textarea id="excluded_ids" rows="3" cols="25" spellcheck="false"
                     wrap="off" placeholder="excluded <id>s&#13;&#10;separate with space,&#13;&#10;',' or newline" ></textarea>
           <p/>
           <button type="button" onclick="filter_graph()">Update graph</button>
@@ -350,7 +351,7 @@
            <!-- <option>json</option> -->
            <!-- <option>xdot</option> -->
                 <option>plain</option>
-          <!-- <option>ps</option> -->
+           <!-- <option>ps</option> -->
               </select>
             </label>
 
