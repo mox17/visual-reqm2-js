@@ -289,6 +289,7 @@
       from {opacity: 0;}
       to {opacity:1 ;}
     }
+
     </style>
   </head>
   <body>
@@ -342,6 +343,9 @@
           <button type="button" onclick="toggle_exclude()">toggle exclude</button>
           <p/>
           <div id="doctype_table"></div>
+          <p/>
+          <button type="button" onclick="save_colors()">save colors</button>
+          <button type="button" onclick="load_colors()">load colors</button>
         </div>
         <div id="graph" class="split">
           <div id="options">
@@ -606,6 +610,15 @@
       let cell = document.getElementById(cell_name)
       if (cell) {
         cell.innerHTML = visible_nodes.get(doctype).length
+      }
+    }
+  }
+
+  function update_doctype_table() {
+    if (oreqm_main) {
+      display_doctypes_with_count(oreqm_main.doctypes)
+      if (auto_update) {
+        filter_graph()
       }
     }
   }

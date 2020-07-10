@@ -143,3 +143,37 @@ function add_color(palette, doctype) {
     return color
   }
 
+
+  function downloadObjectAsJson(exportObj, exportName){
+    var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj, 0, 2));
+    var downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href",     dataStr);
+    downloadAnchorNode.setAttribute("download", exportName + ".json");
+    document.body.appendChild(downloadAnchorNode); // required for firefox
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  }
+
+  function save_colors() {
+    downloadObjectAsJson(my_palette, "visual_reqm2_colors")
+  }
+
+  function load_colors() {
+    let input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json'
+
+    input.onchange = e => {
+      let file = e.target.files[0];
+      let reader = new FileReader();
+
+      reader.readAsText(file,'UTF-8');
+      reader.onload = readerEvent => {
+        colors = JSON.parse(readerEvent.target.result);
+        //console.log(colors)
+        my_palette = colors
+        update_doctype_table()
+      }
+    }
+    input.click();
+  }
