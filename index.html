@@ -325,17 +325,19 @@
           <b>Filter criteria</b><br/>
           <textarea id="search_regex" rows="3" cols="25"
                     wrap="off" placeholder="search regex"
+                    onchange="filter_change()"
                     spellcheck="false"></textarea>
           <br>
           <label id="id_checkbox">
-            <input type="checkbox">Search &lt;id&gt; only
+            <input type="checkbox" onchange="filter_change()">Search &lt;id&gt; only
           </label>
           <p/>
           <b>Excluded &lt;id&gt;s</b><br/>
-          <textarea id="excluded_ids" rows="3" cols="25" spellcheck="false"
+          <textarea id="excluded_ids" rows="3" cols="25" spellcheck="false" onchange="filter_change()"
                     wrap="off" placeholder="excluded <id>s&#13;&#10;separate with space,&#13;&#10;',' or newline" ></textarea>
           <p/>
           <button type="button" onclick="filter_graph()">Update graph</button>
+          <input type="checkbox" id="auto_update" onchange="auto_update_click()">auto-update</button>
           <p/>
           <button type="button" onclick="toggle_exclude()">toggle exclude</button>
           <p/>
@@ -406,6 +408,9 @@
   var image_mime = ''
   var image_data = ''
   var image_data_url = ''
+  var auto_update = true
+
+  document.getElementById("auto_update").checked = auto_update
 
   function viz_working_set() {
     document.getElementById("viz_working").innerHTML = '<span style="color: #ff0000">WORKING</span>'
@@ -616,8 +621,27 @@
       cell = row.insertCell();
       let checked = excluded.includes(i)
       cell.innerHTML = '<input type="checkbox" id="doctype_{}" {}>'.format(i, checked ? 'checked' : '')
+      cell.addEventListener("click", function() {
+        doctype_filter_change();
+      });
     }
     document.getElementById("doctype_table").appendChild(table);
+  }
+
+  var toggle_doctype_exclude = false
+
+  function doctype_filter_change() {
+    if (!toggle_doctype_exclude) {
+      console.log("doctype_filter_change")
+    }
+  }
+
+  function auto_update_click() {
+    console.log("auto_update_click")
+  }
+
+  function filter_change() {
+    console.log("filter_change")
   }
 
   function get_main_oreqm_file() {
@@ -712,6 +736,7 @@
 
   function toggle_exclude() {
     if (oreqm_main) {
+      toggle_doctype_exclude = true
       const doctypes = oreqm_main.get_doctypes()
       const names = doctypes.keys()
       let ex_list = get_excluded_doctypes()
@@ -722,8 +747,9 @@
         if (new_state != elm.checked) {
           elm.click();
         }
-        //document.getElementById(checkbox_id).checked = new_state;
       }
+      toggle_doctype_exclude = false
+      doctype_filter_change();
     }
   }
 
