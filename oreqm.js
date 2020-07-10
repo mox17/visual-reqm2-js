@@ -226,7 +226,7 @@ function construct_graph_title() {
       title += '  <tr><td>excluded &lt;id&gt;s</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(excluded_ids.join('<BR ALIGN="LEFT"/>'))
     }
     title += '\n</table>>'
-    console.log(title)
+    //console.log(title)
   }
   return title
 }
