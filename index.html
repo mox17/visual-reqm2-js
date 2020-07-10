@@ -361,7 +361,7 @@
               <input type="checkbox"> Show raw output
             </label>
             <label id="download_image"></label>
-              Select text in image with mouse+Alt.
+              Click req to <b>copy</b> &lt;id&gt;. Select text in image with mouse+Alt.
               &nbsp;&nbsp;
             <label id="viz_working"></label>
           </div>
@@ -526,6 +526,30 @@
       }, false);
       window.addEventListener('resize', function(e) {
         panZoom.resize();
+      });
+
+      // This time, add the listener to the graph itself
+      svg.addEventListener('click', event => {
+        let str = ""
+        // Grab all the siblings of the element that was actually clicked on
+        for (const sibling of event.target.parentElement.children) {
+          // Check if they're the title
+          if (sibling.nodeName != 'title') continue;
+          str = sibling.innerHTML;
+          break;
+        }
+
+        const ta = document.createElement('textarea');
+        ta.value = str;
+        ta.setAttribute('readonly', '');
+        ta.style = { position: 'absolute', left: '-9999px' };
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+
+        //if (str == "") console.log('Nothing found to copy!');
+        //else console.log(`"${str}" copied to clipboard!`);
       });
 
       image_type = 'svg'
