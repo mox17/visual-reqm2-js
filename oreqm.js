@@ -116,7 +116,7 @@ function dot_format(txt) {
 function format_edge(from_node, to_node, kind) {
   // Format graph edge according to coverage type
   let formatting = ""
-  if (kind == "fulfilledby") {
+  if (kind === "fulfilledby") {
     formatting = ' [style=bold color=purple dir=back fontname="Arial" label="ffb"]'
   }
   return '  "{}" -> "{}"{};\n'.format(from_node, to_node, formatting)

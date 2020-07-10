@@ -347,10 +347,10 @@
               <select>
                 <option selected>svg</option>
                 <option>png-image-element</option>
-                <option>json</option>
-                <option>xdot</option>
+           <!-- <option>json</option> -->
+           <!-- <option>xdot</option> -->
                 <option>plain</option>
-                <option>ps</option>
+          <!-- <option>ps</option> -->
               </select>
             </label>
 
@@ -359,6 +359,8 @@
             </label>
             <label id="download_image"></label>
               Select text in image with mouse+Alt.
+              &nbsp;&nbsp;
+            <label id="viz_working"></label>
           </div>
           <div id="output">
             <div id="error"></div>
@@ -404,6 +406,15 @@
   var image_data = ''
   var image_data_url = ''
 
+  function viz_working_set() {
+    document.getElementById("viz_working").innerHTML = '<span style="color: #ff0000">WORKING</span>'
+  }
+
+  function viz_working_clear() {
+    document.getElementById("viz_working").innerHTML = '<span style="color: #000000"></span>'
+  }
+
+
   function updateGraph() {
     if (worker) {
       worker.terminate();
@@ -420,6 +431,7 @@
 
       result = e.data;
 
+      viz_working_clear()
       updateOutput();
     }
 
@@ -437,6 +449,7 @@
       document.querySelector("#error").appendChild(document.createTextNode(message));
 
       console.error(e);
+      viz_working_clear()
       e.preventDefault();
     }
 
@@ -446,18 +459,19 @@
       options: {
         engine: "dot", //document.querySelector("#engine select").value,
         format: document.querySelector("#format select").value
-        , totalMemory: 3 * 16 * 1024 *1024
+        , totalMemory: 4 * 16 * 1024 *1024
       }
     };
 
     // Instead of asking for png-image-element directly, which we can't do in a worker,
     // ask for SVG and convert when updating the output.
 
-    if (params.options.format == "png-image-element") {
+    if (params.options.format === "png-image-element") {
       params.options.format = "svg";
     }
 
     worker.postMessage(params);
+    viz_working_set()
   }
 
   function updateOutput() {
@@ -482,7 +496,7 @@
       return;
     }
 
-    if (document.querySelector("#format select").value == "svg" && !document.querySelector("#raw input").checked) {
+    if (document.querySelector("#format select").value === "svg" && !document.querySelector("#raw input").checked) {
       var svg = parser.parseFromString(result, "image/svg+xml").documentElement;
       svg.id = "svg_output";
       graph.appendChild(svg);
@@ -508,7 +522,7 @@
       image_type = 'svg'
       image_mime = 'image/svg+xml'
       image_data = result
-    } else if (document.querySelector("#format select").value == "png-image-element") {
+    } else if (document.querySelector("#format select").value === "png-image-element") {
       var image = Viz.svgXmlToPngImageElement(result);
       graph.appendChild(image);
       image_type = 'png'

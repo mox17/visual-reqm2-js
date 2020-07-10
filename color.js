@@ -8,32 +8,32 @@ function hsv_to_rgb(hue, saturation, value) {
   let p = value * (1 - saturation)
   let q = value * (1 - f * saturation)
   let t = value * (1 - (1 - f) * saturation)
-  if (hue_int == 0) {
+  if (hue_int === 0) {
     red = value
     green = t
     blue = p
   }
-  if (hue_int == 1) {
+  if (hue_int === 1) {
     red = q
     green = value
     blue = p
   }
-  if (hue_int == 2) {
+  if (hue_int === 2) {
     red = p
     green = value
     blue = t
   }
-  if (hue_int == 3) {
+  if (hue_int === 3) {
     red = p
     green = q
     blue = value
   }
-  if (hue_int == 4) {
+  if (hue_int === 4) {
     red = t
     green = p
     blue = value
   }
-  if (hue_int == 5) {
+  if (hue_int === 5) {
     red = value
     green = p
     blue = q
@@ -90,7 +90,7 @@ function add_color(palette, doctype) {
   let new_color = get_color_string()
   while (true) {
     for (const dt of doctypes) {
-      if (new_color == palette[dt]) {
+      if (new_color === palette[dt]) {
         new_color = get_color_string()
         continue
       }

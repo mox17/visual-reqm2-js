@@ -444,7 +444,7 @@ class ReqM2Oreqm {
     graph += '\n  # Edges\n'
     if (show_top) {
       for (const req_id of subset) {
-        if (this.requirements.get(req_id).doctype == top_doctype) {
+        if (this.requirements.get(req_id).doctype === top_doctype) {
           graph += format_edge(req_id, 'TOP')
         }
       }
