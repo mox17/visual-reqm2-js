@@ -239,7 +239,6 @@ function compare_oreqm() {
   oreqm_main.color_up_down(results.new_reqs, COLOR_UP, COLOR_DOWN)
   oreqm_main.color_up_down(results.updated_reqs, COLOR_UP, COLOR_DOWN)
   oreqm_main.color_up_down(results.removed_reqs, COLOR_UP, COLOR_DOWN)
-  //const all_highlight = results.updated_reqs.concat(results.removed_reqs, results.new_reqs)
   graph = oreqm_main.create_graph(select_color, "reqspec1", construct_graph_title(), [])
   set_doctype_count_shown(graph.doctype_dict)
 }

@@ -635,15 +635,22 @@
   function doctype_filter_change() {
     if (!toggle_doctype_exclude) {
       console.log("doctype_filter_change")
+      if (auto_update) {
+        filter_graph()
+      }
     }
   }
 
   function auto_update_click() {
     console.log("auto_update_click")
+    auto_update = document.getElementById("auto_update").checked
   }
 
   function filter_change() {
     console.log("filter_change")
+    if (auto_update) {
+      filter_graph()
+    }
   }
 
   function get_main_oreqm_file() {
@@ -785,8 +792,12 @@
 
   function handle_pruning() {
     if (oreqm_main) {
+      let ex_id_list = []
       const excluded_ids = document.getElementById("excluded_ids").value.trim()
-      let ex_id_list = excluded_ids.split(/[\n,]+/)
+      if (excluded_ids.length) {
+        ex_id_list = excluded_ids.split(/[\n,]+/)
+      }
+      console.log(ex_id_list)
       oreqm_main.set_excluded_ids(ex_id_list)
       let ex_dt_list = get_excluded_doctypes()
       oreqm_main.set_excluded_doctypes(ex_dt_list)
