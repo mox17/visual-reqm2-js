@@ -247,6 +247,16 @@ class ReqM2Oreqm {
     // A comparison may add 'ghost' requirements, which represent deleted
     // requirements. Remove these 'ghost' requirements
     for (const ghost_id of this.removed_reqs) {
+      const rec = this.requirements.get(ghost_id)
+      let dt_list = this.doctypes.get(rec.doctype)
+      console.log(rec.doctype, dt_list)
+      dt_list.remove(ghost_id)
+      console.log(dt_list)
+      if (dt_list.length) {
+        this.doctypes.set(rec.doctype, dt_list)
+      } else {
+        this.doctypes.delete(rec.doctype)
+      }
       this.requirements.delete(ghost_id)
     }
     this.removed_reqs = []
@@ -255,6 +265,7 @@ class ReqM2Oreqm {
     if (find_again) {
       this.find_links()
     }
+    update_doctype_table()
   }
 
   compare_requirements(old_reqs) {
