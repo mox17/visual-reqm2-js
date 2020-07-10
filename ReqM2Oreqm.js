@@ -335,6 +335,8 @@ class ReqM2Oreqm {
       + '\n' + rec.usecase
       + '\n' + rec.verifycrit
       + '\n' + rec.comment
+      + '\n' + rec.tags.join('\n')
+      + '\n' + rec.platform.join('\n')
     return all_text
   }
 
