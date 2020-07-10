@@ -295,7 +295,7 @@
     <div id="app">
       <!--
       <div id="header">
-        <b>Visual ReqM2</b> Read more at <a href="https://github.com/mox17/">the GitHub repository</a>.
+        <b>Visual ReqM2</b> Read more at <a href="https://example.com/">the web site</a>.
       </div>
       -->
       <div id="panes" class="split split-horizontal">
@@ -324,7 +324,7 @@
 
           <b>Filter criteria</b><br/>
           <textarea id="search_regex" rows="3" cols="25"
-                    wrap="off" placeholder="search regex"
+                    wrap="off" placeholder="search regex&#13;&#10;newlines are ignored"
                     onchange="filter_change()"
                     spellcheck="false"></textarea>
           <br>
@@ -527,6 +527,7 @@
       window.addEventListener('resize', function(e) {
         panZoom.resize();
       });
+
       image_type = 'svg'
       image_mime = 'image/svg+xml'
       image_data = result
@@ -605,7 +606,7 @@
     cell = row.insertCell();
     cell.innerHTML = "<b>count</b>";
     cell = row.insertCell();
-    cell.innerHTML = "<b>shown</b>";
+    cell.innerHTML = "<b>select</b>";
     cell = row.insertCell();
     cell.innerHTML = "<b>exclude</b>";
     for (var i of doctype_names) {
@@ -653,6 +654,11 @@
     }
   }
 
+  function set_auto_update(state) {
+    document.getElementById("auto_update").checked = state
+    auto_update = state
+  }
+
   function get_main_oreqm_file() {
     let input = document.createElement('input');
     input.type = 'file';
@@ -673,7 +679,13 @@
         document.getElementById('size').innerHTML = file.size+" bytes"
         document.getElementById('timestamp').innerHTML = oreqm_main_timestamp
         display_doctypes_with_count(oreqm_main.get_doctypes())
-        updateGraph();
+        const node_count = oreqm_main.get_node_count()
+        if (auto_update && node_count > 150) {
+          set_auto_update(false)
+        }
+        if (auto_update) {
+          filter_graph()
+        }
         let ref_button = document.getElementById('get_ref_oreqm')
         ref_button.disabled = false
         let clear_button = document.getElementById('clear_ref_oreqm')
@@ -704,7 +716,9 @@
         document.getElementById('ref_timestamp').innerHTML = oreqm_ref_timestamp
         compare_oreqm()
         display_doctypes_with_count(oreqm_main.get_doctypes())
-        updateGraph();
+        if (auto_update) {
+          filter_graph()
+        }
       }
     }
     input.click();
@@ -763,31 +777,32 @@
   }
 
   function filter_graph() {
-    handle_pruning()
-    // Collect filter criteria and generate .dot data
-    search_pattern = document.getElementById("search_regex").value
-    id_checkbox = document.querySelector("#id_checkbox input").checked
-    //console.log(search_pattern, id_checkbox)
-    search_pattern = search_pattern.trim()
-    if (search_pattern) {
-      if (id_checkbox) {
-        id_search(search_pattern)
+    if (oreqm_main) {
+      handle_pruning()
+      // Collect filter criteria and generate .dot data
+      search_pattern = document.getElementById("search_regex").value
+      id_checkbox = document.querySelector("#id_checkbox input").checked
+      search_pattern = search_pattern.trim().replace('\n', '') // ignore newlines in regex
+      if (search_pattern) {
+        if (id_checkbox) {
+          id_search(search_pattern)
+        } else {
+          txt_search(search_pattern)
+        }
       } else {
-        txt_search(search_pattern)
+        // no pattern specified
+        if (oreqm_ref) {
+          // If reference file exist use differences as filter
+          oreqm_main.color_up_down([], COLOR_UP, COLOR_DOWN) 
+          graph = oreqm_main.create_graph(select_color, "reqspec1", construct_graph_title(), [])
+          set_doctype_count_shown(graph.doctype_dict)
+        } else {
+          graph = oreqm_main.create_graph(select_all, "reqspec1", construct_graph_title(), [])
+          set_doctype_count_shown(graph.doctype_dict)
+        }
       }
-    } else {
-      // no pattern specified
-      if (oreqm_ref) {
-        // If reference file exist use differences as filter
-        oreqm_main.color_up_down([], COLOR_UP, COLOR_DOWN) 
-        graph = oreqm_main.create_graph(select_color, "reqspec1", construct_graph_title(), [])
-      } else {
-        graph = oreqm_main.create_graph(select_all, "reqspec1", construct_graph_title(), [])
-      }
-      set_doctype_count_shown(graph.doctype_dict)
+      updateGraph();
     }
-    //console.log(graph[1], graph[2])
-    updateGraph();
   }
 
   function handle_pruning() {
@@ -828,6 +843,9 @@
       document.getElementById('ref_name').innerHTML = ''
       document.getElementById('ref_size').innerHTML = ''
       document.getElementById('ref_timestamp').innerHTML = ''
+      if (auto_update) {
+        filter_graph()
+      }
     }
   }
 

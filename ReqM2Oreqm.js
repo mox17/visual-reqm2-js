@@ -150,9 +150,6 @@ class ReqM2Oreqm {
         if (!this.linksto.has(req_id)) {
             this.linksto.set(req_id, new Set())
         }
-        //lt_set = this.linksto.get(req_id)
-        //lt_set.add(link)
-        //this.linksto.set(req_id, lt_set)
         this.linksto.set(req_id, this.linksto.get(req_id).add(link))
 
         // top-down
@@ -507,6 +504,10 @@ class ReqM2Oreqm {
     diff.updated_reqs = this.updated_reqs
     diff.removed_reqs = this.removed_reqs
     return diff
+  }
+
+  get_node_count() {
+    return this.requirements.size
   }
 
 }
