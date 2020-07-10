@@ -188,6 +188,49 @@ function select_color(node_id, rec, node_color) {
   return node_color.has(COLOR_UP) || node_color.has(COLOR_DOWN)
 }
 
+function construct_graph_title() {
+  let title = '""'
+  if (oreqm_main) {
+    title  = '<<table border="1" cellspacing="0" cellborder="1">\n'
+    title += '  <tr><td cellspacing="0" >File</td><td>{}</td><td>{}</td></tr>'.format(oreqm_main_filename, oreqm_main_timestamp)
+
+    if (oreqm_ref) {
+      diff = oreqm_main.get_main_ref_diff()
+      title += '  <tr><td>Ref. file</td><td>{}</td><td>{}</td></tr>\n'.format(oreqm_ref_filename, oreqm_ref_timestamp)
+      if (diff.new_reqs.length) {
+        title += '  <tr><td>New reqs</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(diff.new_reqs.join('<BR ALIGN="LEFT"/>'))
+      }
+      if (diff.updated_reqs.length) {
+        title += '  <tr><td>Updated reqs</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(diff.updated_reqs.join('<BR ALIGN="LEFT"/>'))
+      }
+      if (diff.removed_reqs.length) {
+        title += '  <tr><td>Removed reqs</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(diff.removed_reqs.join('<BR ALIGN="LEFT"/>'))
+      }
+    }
+
+    if (search_pattern.length) {
+      if (id_checkbox ) {
+        title += '  <tr><td>Search &lt;id&gt;</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(search_pattern.replace('\\', '\\\\'))
+      } else {
+        title += '  <tr><td>Search text</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(search_pattern.replace('\\', '\\\\'))
+      }
+    }
+
+    let ex_dt_list = get_excluded_doctypes()
+    if (ex_dt_list.length) {
+      title += '  <tr><td>excluded doctypes</td><td colspan="2">{}</td></tr>\n'.format(ex_dt_list.join(", "))
+    }
+
+    let excluded_ids = oreqm_main.get_excluded_ids()
+    if (excluded_ids.length) {
+      title += '  <tr><td>excluded &lt;id&gt;s</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(excluded_ids.join('<BR ALIGN="LEFT"/>'))
+    }
+    title += '\n</table>>'
+    console.log(title)
+  }
+  return title
+}
+
 function compare_oreqm() {
   // Both main and reference oreqm have been read.
   // Highlight new, changed and removed nodes in main oreqm (removed are added as 'ghosts')
@@ -196,13 +239,7 @@ function compare_oreqm() {
   oreqm_main.color_up_down(results.new_reqs, COLOR_UP, COLOR_DOWN)
   oreqm_main.color_up_down(results.updated_reqs, COLOR_UP, COLOR_DOWN)
   oreqm_main.color_up_down(results.removed_reqs, COLOR_UP, COLOR_DOWN)
-  let ref_title = title
-  ref_title += "\\lReference oreqm: '{}' from: {}\\l".format(oreqm_ref_filename, oreqm_ref_timestamp)
-  ref_title += "\\lNew requirements are:\\l - {}\\l".format(results.new_reqs.join("\\l - "))
-  ref_title += "\\lUpdated requirements are:\\l - {}\\l".format(results.updated_reqs.join("\\l - "))
-  ref_title += "\\lRemoved requirements are:\\l - {}\\l".format(results.removed_reqs.join("\\l - "))
   //const all_highlight = results.updated_reqs.concat(results.removed_reqs, results.new_reqs)
-  graph = oreqm_main.create_graph(select_color, "reqspec1", ref_title, [])
+  graph = oreqm_main.create_graph(select_color, "reqspec1", construct_graph_title(), [])
   set_doctype_count_shown(graph.doctype_dict)
 }
-

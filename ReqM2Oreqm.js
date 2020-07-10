@@ -469,7 +469,7 @@ class ReqM2Oreqm {
         }
       }
     }
-    graph += '\n  label="{}"\n  labelloc=b\n  fontsize=18\n  fontcolor=black\n  fontname="Arial"\n'.format(title)
+    graph += '\n  label={}\n  labelloc=b\n  fontsize=18\n  fontcolor=black\n  fontname="Arial"\n'.format(title)
     graph += ReqM2Oreqm.DOT_EPILOGUE
     this.dot = graph
     let result = new Object()
@@ -488,6 +488,25 @@ class ReqM2Oreqm {
   set_excluded_ids(ids) {
     // Set excluded doctypes
     this.excluded_ids = ids
+  }
+
+  get_excluded_doctypes() {
+    // Get excluded doctypes
+    return this.excluded_doctypes
+  }
+
+  get_excluded_ids() {
+    // Get excluded doctypes
+    return this.excluded_ids
+  }
+
+  get_main_ref_diff() {
+    // Return the lists of ids
+    let diff = new Object()
+    diff.new_reqs = this.new_reqs
+    diff.updated_reqs = this.updated_reqs
+    diff.removed_reqs = this.removed_reqs
+    return diff
   }
 
 }

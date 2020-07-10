@@ -409,6 +409,8 @@
   var image_data = ''
   var image_data_url = ''
   var auto_update = true
+  var search_pattern = '' // regex for matching requirements
+  var id_checkbox = false // flag for scope of search
 
   document.getElementById("auto_update").checked = auto_update
 
@@ -754,12 +756,12 @@
   }
 
   function filter_graph() {
+    handle_pruning()
     // Collect filter criteria and generate .dot data
-    var search_pattern = document.getElementById("search_regex").value
-    var id_checkbox = document.querySelector("#id_checkbox input").checked
+    search_pattern = document.getElementById("search_regex").value
+    id_checkbox = document.querySelector("#id_checkbox input").checked
     //console.log(search_pattern, id_checkbox)
     search_pattern = search_pattern.trim()
-    make_title()
     if (search_pattern) {
       if (id_checkbox) {
         id_search(search_pattern)
@@ -771,9 +773,9 @@
       if (oreqm_ref) {
         // If reference file exist use differences as filter
         oreqm_main.color_up_down([], COLOR_UP, COLOR_DOWN) 
-        graph = oreqm_main.create_graph(select_color, "reqspec1", title, [])
+        graph = oreqm_main.create_graph(select_color, "reqspec1", construct_graph_title(), [])
       } else {
-        graph = oreqm_main.create_graph(select_all, "reqspec1", title, [])
+        graph = oreqm_main.create_graph(select_all, "reqspec1", construct_graph_title(), [])
       }
       set_doctype_count_shown(graph.doctype_dict)
     }
@@ -786,39 +788,24 @@
       const excluded_ids = document.getElementById("excluded_ids").value.trim()
       let ex_id_list = excluded_ids.split(/[\n,]+/)
       oreqm_main.set_excluded_ids(ex_id_list)
-      if (excluded_ids) {
-        title += "\\lDiagram excludes <id>s:\\l - {}\\l".format(ex_id_list.join("\\l - "))
-        //console.log(ex_id_list)
-      }
       let ex_dt_list = get_excluded_doctypes()
       oreqm_main.set_excluded_doctypes(ex_dt_list)
-      if (ex_dt_list.length) {
-        title += "\\lDiagram excludes doctypes: {}\\l".format(ex_dt_list.join(", "))
-        //console.log(ex_dt_list)
-      }
     }
   }
 
-  function make_title() {
-    title = "Analysis of: {} from: {}".format(oreqm_main_filename, oreqm_main_timestamp)
-    handle_pruning()
-  }
-
   function id_search(regex) {
-    title += "\\lSearch <id>: '{}'\\l".format(regex.replace('\\', '\\\\'))
     var results = oreqm_main.find_reqs_with_name(regex)
     oreqm_main.clear_colors()
     oreqm_main.color_up_down(results, COLOR_UP, COLOR_DOWN)
-    graph = oreqm_main.create_graph(select_color, "reqspec1", title, results)
+    graph = oreqm_main.create_graph(select_color, "reqspec1", construct_graph_title(), results)
     set_doctype_count_shown(graph.doctype_dict)
   }
 
   function txt_search(regex) {
-    title += "\\lSearch text: '{}'\\l".format(regex.replace('\\', '\\\\'))
     var results = oreqm_main.find_reqs_with_text(regex)
     oreqm_main.clear_colors()
     oreqm_main.color_up_down(results, COLOR_UP, COLOR_DOWN)
-    graph = oreqm_main.create_graph(select_color, "reqspec1", title, results)
+    graph = oreqm_main.create_graph(select_color, "reqspec1", construct_graph_title(), results)
     set_doctype_count_shown(graph.doctype_dict)
   }
 
