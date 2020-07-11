@@ -321,7 +321,6 @@ class ReqM2Oreqm {
     const ids = this.requirements.keys()
     let rx = new RegExp(regex, 'i')
     let matches = []
-    const re = new RegExp(regex, RegExp.prototype.ignoreCase)
     for (const id of ids) {
       if (id.search(rx) >= 0)
         matches.push(id)
@@ -351,7 +350,6 @@ class ReqM2Oreqm {
     const ids = this.requirements.keys()
     let rx = new RegExp(regex, 'i')
     let matches = []
-    const re = new RegExp(regex, RegExp.prototype.ignoreCase)
     for (const id of ids) {
       if (this.get_all_text(id).search(rx) >= 0)
         matches.push(id)
