@@ -90,6 +90,9 @@ function dot_format(txt) {
   if (txt.length) {
     txt = txt.replace(re_xml_comments, '') // remove XML comments
     txt = txt.replace(re_unwanted_mu, '')  // Remove unwanted markup
+    // Handle unicode literals
+    txt = txt.replace(/&#([0-9]+);/g, function (whole, group1) {return String.fromCharCode(parseInt(group1, 10));})
+    //txt = txt.replace(/\\u([0-9a-f]{4})/g, function (whole, group1) {return String.fromCharCode(parseInt(group1, 16));})
     txt = txt.replace(re_amp_quote, '&amp;')        // escape stray '&' characters
     //new_txt = txt.replace(re_list_heurist, '&nbsp;&nbsp;* ') // heuristic for bulleted lists
     new_txt = txt.split(/<li>[\s\n]*|<listitem>[\s\n]*/).join('&nbsp;&nbsp;* ') // heuristic for bulleted lists
