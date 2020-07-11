@@ -53,7 +53,7 @@ function get_random_color() {
   return hsv_to_rgb(HUE, 0.3, 0.99)
 }
 
-function _color_reset() {
+function _color_random_reset() {
   HUE = HUE_START
 }
 
@@ -103,35 +103,7 @@ function add_color(palette, doctype) {
 
   var my_palette =
   {
-    "assumptions": "#FF8000",
-    "creq": "#FDB1D0",
-    "faou": "#FFE6CC",
-    "fea": "#B1E6FD",
-    "hazop": "#DC8AFF",
-    "hw_featurespec": "#FFCC99",
-    "hw_safetydocs": "#FFC95E",
-    "impl": "#B0B5FF",
-    "kernelconf": "#E828EF",
-    "kernelconfspec": "#9999FF",
-    "kernelconfts": "#E5CCFF",
-    "nonfunctional": "#F838FF",
-    "pdoc": "#CEB1FD",
-    "preq": "#FCFDB1",
-    "reqspec1": "#00CC66",
-    "reqspec2": "#00BB00",
-    "review": "#FFCCFF",
-    "safetymandoc": "#B35900",
-    "saou": "#FFB685",
-    "swad": "#99FF99",
-    "swdd": "#E08F97",
-    "swdda": "#FFA3AC",
-    "swddats": "#EEFFB5",
-    "swintts": "#CCCC00",
-    "swrs": "#00DD00",
-    "swts": "#BBBB11",
-    "swuts": "#FFFF33",
-    "systemfunction": "#A5CFA5",
-    "udoc": "#D3FDB1"
+    "none": "#FFFFFF"
   };
 
   function get_color(key) {
@@ -170,10 +142,11 @@ function add_color(palette, doctype) {
       reader.readAsText(file,'UTF-8');
       reader.onload = readerEvent => {
         const colors = JSON.parse(readerEvent.target.result);
+        store_colors(colors)
         //console.log(colors)
         my_palette = colors
+        _color_random_reset()
         update_doctype_table()
-        store_colors(colors)
       }
     }
     input.click();
