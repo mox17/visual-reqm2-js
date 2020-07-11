@@ -164,16 +164,38 @@ function add_color(palette, doctype) {
     input.accept = '.json'
 
     input.onchange = e => {
-      let file = e.target.files[0];
+      const file = e.target.files[0];
       let reader = new FileReader();
 
       reader.readAsText(file,'UTF-8');
       reader.onload = readerEvent => {
-        colors = JSON.parse(readerEvent.target.result);
+        const colors = JSON.parse(readerEvent.target.result);
         //console.log(colors)
         my_palette = colors
         update_doctype_table()
+        store_colors(colors)
       }
     }
     input.click();
+  }
+
+  const color_storage_name = 'Visual_ReqM2_color_palette'
+  function store_colors(colors) {
+    if (typeof(Storage) !== "undefined") {
+      const color_string = JSON.stringify(colors)
+      localStorage.setItem(color_storage_name, color_string);
+    }
+  }
+
+  // Load color palette when page loads
+  if (typeof(Storage) !== "undefined") {
+    // Code for localStorage/sessionStorage.
+    let color_string = localStorage.getItem(color_storage_name);
+    console.log("storage:", color_string, typeof(color_string))
+    if (typeof(color_string) === 'string') {
+      const colors = JSON.parse(color_string)
+      my_palette = colors
+    }
+  } else {
+    // Sorry! No Web Storage support..
   }
