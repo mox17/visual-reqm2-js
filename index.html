@@ -48,9 +48,9 @@
       overflow: auto;
     }
 
-
     #oreqm {
       border-right: 1px solid #ccc;
+      background: #eee;
     }
 
     #header {
@@ -182,26 +182,7 @@
       margin-left: 8px;
     }
 
-    .table.gridview,
-    #reffile,
-    #gridview {
-      font-family: arial, sans-serif;
-      border-collapse: collapse;
-      width: 100%;
-    }
-
-    .table.gridview th,
-    #reffile th
-    #gridview th {
-      background-color: #808080;
-      border: 1px solid #dddddd;
-      text-align: center;
-      padding: 0px 0px 0px 0px;
-      margin:0px;
-      height: 0px;
-    }
-
-    .table.gridview td,
+    .table_gridview td,
     #reffile td,
     #gridview td {
       border: 0px solid #dddddd;
@@ -209,15 +190,23 @@
       padding: 0px 0px 0px 0px;
       margin:0px;
       height: 0px;
+      border-radius:1px;
+      -moz-border-radius:1px;
     }
 
-    .table.gridview tr:nth-child(even),
+    .table_gridview tr:nth-child(even),
     #reffile tr:nth-child(even),
     #gridview tr:nth-child(even) {
       background-color: #dddddd;
     }
 
-    .table.gridview table th,
+    .table_gridview tr:nth-child(odd),
+    #reffile tr:nth-child(odd),
+    #gridview tr:nth-child(odd) {
+      background-color: #ffffff;
+    }
+
+    .table_gridview table th,
     #reffile table th,
     #gridview table th {
       color:#ffffff;
@@ -236,58 +225,12 @@
     {
       text-align: center;
     }
-    /* --------------- */
-    /* Popup container */
-    .popup {
-      position: relative;
-      display: inline-block;
-      cursor: pointer;
-    }
 
-    /* The actual popup (appears on top) */
-    .popup .popuptext {
-      visibility: hidden;
-      width: 160px;
-      background-color: #555;
-      color: #fff;
-      text-align: center;
-      border-radius: 6px;
-      padding: 8px 0;
-      position: absolute;
-      z-index: 1;
-      bottom: 125%;
-      left: 50%;
-      margin-left: -80px;
-    }
-
-    /* Popup arrow */
-    .popup .popuptext::after {
-      content: "";
-      position: absolute;
-      top: 100%;
-      left: 50%;
-      margin-left: -5px;
-      border-width: 5px;
-      border-style: solid;
-      border-color: #555 transparent transparent transparent;
-    }
-
-    /* Toggle this class when clicking on the popup container (hide and show the popup) */
-    .popup .show {
-      visibility: visible;
-      -webkit-animation: fadeIn 1s;
-      animation: fadeIn 1s
-    }
-
-    /* Add animation (fade in the popup) */
-    @-webkit-keyframes fadeIn {
-      from {opacity: 0;}
-      to {opacity: 1;}
-    }
-
-    @keyframes fadeIn {
-      from {opacity: 0;}
-      to {opacity:1 ;}
+    textarea {
+      border-radius: 4px;
+      flex: 0 0 200px;
+      margin-right: 10px;
+      width: 96%; /* or whatever width you want to set */
     }
 
     /* The Modal (background) */
@@ -341,20 +284,20 @@
       <div id="panes" class="split split-horizontal">
         <div id="oreqm" class="split">
           <b>ReqM2 .oreqm file</b><br/>
-          <table class="table.gridview" id="gridview">
-            <tr><td width="1%">name</td><td id="name" class="absorbing-column"></td></tr>
-            <tr><td width="1%">size</td><td id="size"></td></tr>
-            <tr><td width="1%">timestamp&nbsp;&nbsp;</td><td id="timestamp"></td></tr>
+          <table class="table_gridview" id="gridview">
+            <tr><td width="1%">name&nbsp;&nbsp;</td><td id="name" class="absorbing-column"></td></tr>
+            <tr><td width="1%">size&nbsp;&nbsp;</td><td id="size"></td></tr>
+            <tr><td width="1%">date&nbsp;&nbsp;</td><td id="timestamp"></td></tr>
           </table>
           <p/>
           <button type="button" onclick="get_main_oreqm_file()">Select main .oreqm file</button>
           <p/>
           <div id="ref_oreqm">
             <b>Reference .oreqm file</b>
-            <table class="table.gridview" id="reffile">
-              <tr><td width="1%">name</td><td id="ref_name" class="absorbing-column"></td></tr>
-              <tr><td width="1%">size</td><td id="ref_size"></td></tr>
-              <tr><td width="1%">timestamp&nbsp;&nbsp;</td><td id="ref_timestamp"></td></tr>
+            <table class="table_gridview" id="reffile">
+              <tr><td width="1%">name&nbsp;&nbsp;</td><td id="ref_name" class="absorbing-column"></td></tr>
+              <tr><td width="1%">size&nbsp;&nbsp;</td><td id="ref_size"></td></tr>
+              <tr><td width="1%">date&nbsp;&nbsp;</td><td id="ref_timestamp"></td></tr>
             </table>
           </div>
           <p/>
@@ -362,8 +305,8 @@
           <button id="clear_ref_oreqm" type="button" disabled="true" onclick="clear_reference()">Clear reference</button>
           <p id="values"></p>
 
-          <b>Filter criteria</b><br/>
-          <textarea id="search_regex" rows="3" cols="25"
+          <b>Selection criteria</b><br/>
+          <textarea id="search_regex" rows="3" cols="34"
                     wrap="off" placeholder="search regex&#13;&#10;newlines are ignored"
                     onchange="filter_change()"
                     spellcheck="false"></textarea>
@@ -423,31 +366,31 @@
   <div class="modal-content">
     <span class="close">&times;</span>
     <h1>Visual ReqM2</h1>
-    <p>Created by erling.stage@gmail.com</p>
-    <p>Uses the following libraries:
-      <ul>
-        <li>Viz.js 1.8.2 (Graphviz 2.40.1, Expat 2.2.5, Emscripten 1.37.33)<br/>
-          Copyright (c) 2014-2018 Michael Daines<br/>
+    <p>Created by Erling Stage</p>
+    <p>erling.stage@gmail.com</p>
+    <h4>Dependencies</h4>
+    <p>Visual ReqM2 uses the following modules:
+        <p>Viz.js 1.8.2 (Graphviz 2.40.1, Expat 2.2.5, Emscripten 1.37.33)<br/>
+          Copyright 2014-2018 Michael Daines<br/>
           Licensed under MIT license<br/>
-          https://github.com/mdaines/viz.js<br/></li>
-        <li>
+          https://github.com/mdaines/viz.js<br/></p>
+        <p>
           svg-pan-zoom v3.6.1<br/>
           Copyright 2009-2010 Andrea Leofreddi<br/>
           BSD 2-Clause "Simplified" License<br/>
           https://github.com/ariutta/svg-pan-zoom<br/>
-        </li>
-        <li>
+        </p>
+        <p>
           fabric.js 1.6.7<br/>
           Licensed under MIT license<br/>
           https://github.com/fabricjs/fabric.js/tree/v1.6.7<br/>
-        </li>
-        <li>
+        </p>
+        <p>
           Split.js v1.3.5<br/>
-          2018 Nathan Cahill<br/>
+          Copyright 2018 Nathan Cahill<br/>
           Licensed under MIT license<br/>
           https://github.com/nathancahill/split<br/>
-        </li>
-        </ul>
+        </p>
     </p>
   </div>
 
@@ -714,7 +657,7 @@
     table.id = "dyn_doctype_table"
     let row = table.insertRow();
     let cell
-    table.className = 'table.gridview'
+    table.className = 'table_gridview'
     cell = row.insertCell();
     cell.innerHTML = "<b>doctype</b>";
     cell = row.insertCell();
@@ -734,7 +677,7 @@
 
       cell = row.insertCell();
       cell.innerHTML = '<div id="doctype_shown_{}">0</div>'.format(i)
-     
+
       cell = row.insertCell();
       let checked = excluded.includes(i)
       cell.innerHTML = '<input type="checkbox" id="doctype_{}" {}>'.format(i, checked ? 'checked' : '')
@@ -790,7 +733,7 @@
         oreqm_main_filename = file.name
         oreqm_main_timestamp = oreqm_main.get_time()
         document.getElementById('name').innerHTML = oreqm_main_filename
-        document.getElementById('size').innerHTML = file.size+" bytes"
+        document.getElementById('size').innerHTML = (Math.round(file.size/1024))+" KiB"
         document.getElementById('timestamp').innerHTML = oreqm_main_timestamp
         display_doctypes_with_count(oreqm_main.get_doctypes())
         const node_count = oreqm_main.get_node_count()
@@ -826,7 +769,7 @@
         oreqm_ref_filename = file.name
         oreqm_ref_timestamp = oreqm_main.get_time()
         document.getElementById('ref_name').innerHTML = oreqm_ref_filename
-        document.getElementById('ref_size').innerHTML = file.size+" bytes"
+        document.getElementById('ref_size').innerHTML = (Math.round(file.size/1024))+" KiB"
         document.getElementById('ref_timestamp').innerHTML = oreqm_ref_timestamp
         compare_oreqm()
         display_doctypes_with_count(oreqm_main.get_doctypes())
@@ -907,7 +850,7 @@
         // no pattern specified
         if (oreqm_ref) {
           // If reference file exist use differences as filter
-          oreqm_main.color_up_down([], COLOR_UP, COLOR_DOWN) 
+          oreqm_main.color_up_down([], COLOR_UP, COLOR_DOWN)
           graph = oreqm_main.create_graph(select_color, "reqspec1", construct_graph_title(), [])
           set_doctype_count_shown(graph.doctype_dict)
         } else {
@@ -971,7 +914,7 @@
   // Get the <span> element that closes the modal
   var span = document.getElementsByClassName("close")[0];
 
-  // When the user clicks the button, open the modal 
+  // When the user clicks the button, open the modal
   btn.onclick = function() {
     modal.style.display = "block";
   }
