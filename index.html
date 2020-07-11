@@ -378,8 +378,8 @@
               <input type="checkbox"> Show raw output
             </label>
             <label id="download_image"></label>
-              Right-click menu on reqs. Click req to <b>copy</b> &lt;id&gt;
-              <!--. &nbsp;&nbsp;&nbsp;Select text in image with <b>Alt</b>+mouse.-->
+              Right-click menu on reqs. Click req to <b>copy</b> &lt;id&gt;.
+              &nbsp;&nbsp;&nbsp;Select text in image with <b>Alt</b>+mouse.
               &nbsp;&nbsp;
             <label id="viz_working"></label>
             <!-- Trigger/Open The Modal -->
@@ -594,28 +594,30 @@
       // This time, add the listener to the graph itself
       svg.addEventListener('click', event => {
         let str = ""
-        // Grab all the siblings of the element that was actually clicked on
-        for (const sibling of event.target.parentElement.children) {
-          // Check if they're the title
-          if (sibling.nodeName != 'title') continue;
-          str = sibling.innerHTML;
-          break;
+        if (!event.altKey) { // This test allows Alt-drag to function
+          // Grab all the siblings of the element that was actually clicked on
+          for (const sibling of event.target.parentElement.children) {
+            // Check if they're the title
+            if (sibling.nodeName != 'title') continue;
+            str = sibling.innerHTML;
+            break;
+          }
+          const ta = document.createElement('textarea');
+          ta.value = str;
+          ta.setAttribute('readonly', '');
+          ta.style = { position: 'absolute', left: '-9999px' };
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
         }
-
-        const ta = document.createElement('textarea');
-        ta.value = str;
-        ta.setAttribute('readonly', '');
-        ta.style = { position: 'absolute', left: '-9999px' };
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand('copy');
-        document.body.removeChild(ta);
       });
 
       // context menu setup
       var menuNode = document.getElementById('node-menu');
       svg.addEventListener('contextmenu', event => {
         let str = ""
+        event.preventDefault()
         // Grab all the siblings of the element that was actually clicked on
         for (const sibling of event.target.parentElement.children) {
           // Check if they're the title
@@ -625,7 +627,6 @@
         }
         selected_node = str
         if (selected_node.length) {
-          event.preventDefault()
           // show context menu
           let stage = document.getElementById('app');
           menuNode.style.display = 'initial';
@@ -912,7 +913,7 @@
       // Collect filter criteria and generate .dot data
       id_checkbox = document.querySelector("#id_checkbox input").checked
       search_pattern = get_search_regex_clean()
-      console.log("filter_graph()", search_pattern)
+      //console.log("filter_graph()", search_pattern)
       if (search_pattern) {
         if (id_checkbox) {
           id_search(search_pattern)
