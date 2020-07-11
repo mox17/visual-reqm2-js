@@ -164,7 +164,7 @@ function add_color(palette, doctype) {
   if (typeof(Storage) !== "undefined") {
     // Code for localStorage/sessionStorage.
     let color_string = localStorage.getItem(color_storage_name);
-    console.log("storage:", color_string, typeof(color_string))
+    //console.log("storage:", color_string, typeof(color_string))
     if (typeof(color_string) === 'string') {
       const colors = JSON.parse(color_string)
       my_palette = colors

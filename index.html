@@ -271,6 +271,37 @@
       text-decoration: none;
       cursor: pointer;
     }
+    /* The Modal (background) - end */
+
+    /* svg context menu related */
+    .custom-menu {
+      display: none;
+      z-index: 1000;
+      position: absolute;
+      overflow: hidden;
+      border: 1px solid #CCC;
+      white-space: nowrap;
+      font-family: sans-serif;
+      background: #000;
+      color: #FFF;
+      list-style: none;
+      border-radius:1px;
+      -moz-border-radius:1px;
+    }
+
+    .custom-menu li {
+      padding: 4px 4px;
+      cursor: pointer;
+    }
+
+    .custom-menu li:hover {
+      background-color: #555;
+    }
+    /*
+    input {
+      display: none;
+    } */
+    /* svg context menu related - endct */
 
     </style>
   </head>
@@ -395,6 +426,11 @@
   </div>
 
 </div>
+<ul class='custom-menu' id="node-menu">
+  <li id="menu_select">Select</li>
+  <li id="menu_deselect">De-select</li>
+  <li id="menu_exclude">Exclude</li>
+</ul>
 
   <script src="./modules/viz.js/viz.js"></script>
   <script src="./modules/fabric.js/dist/fabric.min.js"></script>
@@ -506,6 +542,7 @@
     viz_working_set()
   }
 
+  var svg
   function updateOutput() {
     var graph = document.querySelector("#output");
 
@@ -529,7 +566,7 @@
     }
 
     if (document.querySelector("#format select").value === "svg" && !document.querySelector("#raw input").checked) {
-      var svg = parser.parseFromString(result, "image/svg+xml").documentElement;
+      svg = parser.parseFromString(result, "image/svg+xml").documentElement;
       svg.id = "svg_output";
       graph.appendChild(svg);
 
@@ -576,6 +613,52 @@
         //else console.log(`"${str}" copied to clipboard!`);
       });
 
+      // context menu setup
+      var menuNode = document.getElementById('node-menu');
+      var selected_node = ''
+      svg.addEventListener('contextmenu', event => {
+        let str = ""
+        // Grab all the siblings of the element that was actually clicked on
+        for (const sibling of event.target.parentElement.children) {
+          // Check if they're the title
+          if (sibling.nodeName != 'title') continue;
+          str = sibling.innerHTML;
+          break;
+        }
+        event.preventDefault()
+        selected_node = str
+        // show context menu
+        let stage = document.getElementById('app');
+        menuNode.style.display = 'initial';
+        var containerRect = stage.getBoundingClientRect();
+        menuNode.style.top =
+          containerRect.top + event.pageY + 2 + 'px';
+        menuNode.style.left =
+          containerRect.left + event.pageX + 2 + 'px';
+        console.log(containerRect, menuNode.style.top)
+        //if (str == "") console.log('Nothing found to copy!');
+        //else console.log(`"${str}" copied to clipboard!`);
+        return false
+      });
+
+      document.getElementById('menu_select').addEventListener('click', () => {
+        console.log(selected_node, "select")
+      });
+
+      document.getElementById('menu_deselect').addEventListener('click', () => {
+        console.log(selected_node, "deselect")
+      });
+
+      document.getElementById('menu_exclude').addEventListener('click', () => {
+        console.log(selected_node, "exclude")
+      });
+
+      window.addEventListener('click', () => {
+        // hide menu
+        menuNode.style.display = 'none';
+      });
+
+      // Setup for download of image
       image_type = 'svg'
       image_mime = 'image/svg+xml'
       image_data = result
