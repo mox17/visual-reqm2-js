@@ -1077,7 +1077,7 @@
   function deselect_node() {
     // Remove node to the selection criteria (if not already selected)
     let node = selected_node
-    let node_select_str = new RegExp("(^|\n\\|){}\\$".format(node))
+    let node_select_str = new RegExp("(^|\\|){}\\$".format(node))
     let search_pattern = document.getElementById("search_regex").value.trim()
     search_pattern = search_pattern.replace(/\n/g, '')
     let new_search_pattern = search_pattern.replace(node_select_str, '')
