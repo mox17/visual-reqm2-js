@@ -1079,10 +1079,12 @@
     let node = selected_node
     let node_select_str = new RegExp("(^|\n\\|){}\\$".format(node))
     let search_pattern = document.getElementById("search_regex").value.trim()
+    search_pattern = search_pattern.replace(/\n/g, '')
     let new_search_pattern = search_pattern.replace(node_select_str, '')
     if (new_search_pattern[0] === '|') {
       new_search_pattern = new_search_pattern.slice(1)
     }
+    new_search_pattern = new_search_pattern.replace(/\|/g, '\n|')
     if (new_search_pattern !== search_pattern) {
       document.getElementById("search_regex").value = new_search_pattern
       //console.log("deselect_node() - search ", node, search_pattern, new_search_pattern)
@@ -1096,7 +1098,11 @@
   function exclude_node() {
     // Add node to the exclusion list
     var excluded_ids = document.getElementById("excluded_ids").value.trim()
-    excluded_ids += '\n' + selected_node
+    if (excluded_ids.length) {
+      excluded_ids += '\n' + selected_node
+    } else {
+      excluded_ids = selected_node
+    }
     document.getElementById("excluded_ids").value = excluded_ids
     filter_change()
   }
