@@ -127,7 +127,9 @@ function add_color(palette, doctype) {
   }
 
   function save_colors() {
+    // Download color object and store it in Web storage
     downloadObjectAsJson(my_palette, "visual_reqm2_colors")
+    store_colors(my_palette)
   }
 
   function load_colors() {
