@@ -239,6 +239,7 @@
       position: fixed; /* Stay in place */
       z-index: 1; /* Sit on top */
       padding-top: 100px; /* Location of the box */
+      padding-right: 100px; /* Location of the box */
       left: 0;
       top: 0;
       width: 100%; /* Full width */
@@ -1056,6 +1057,12 @@
     if (event.target == modal) {
       modal.style.display = "none";
     }
+  }
+
+  // When the user clicks anywhere outside of the modal, close it
+  window.onbeforeunload = function(event) {
+    return "Graph is going away..."
+  
   }
 
   function select_node() {

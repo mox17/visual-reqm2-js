@@ -79,14 +79,27 @@ function normalize_indent(txt) {
   line_arr = txt.split('\n')
   // Calculate smallest amount of leading whitespace
   let min_leading = 100
-  for (let i=0; i<line_arr.length; i++) {
-    let match = line_arr[i].match(/^\s+/)
+  let match = line_arr[0].match(/^\s+/)
+  let first_length = 0
+  if (match) {
+    first_length = line_arr[0].match(/^\s+/)[0].length
+  }
+  for (let i=1; i<line_arr.length; i++) {
+     match = line_arr[i].match(/^\s+/)
     if (match) {
       const leading = match[0].length
       if ( leading < min_leading) min_leading = leading
     } else {
       min_leading = 0
     }
+  }
+  // Heuristic that 1st line may mave no indentation because of the xml is written
+  if (line_arr.length > 1) {
+    if (first_length < min_leading) {
+      line_arr[0] = ' '.repeat(min_leading-first_length) + line_arr[0]
+    }
+  } else {
+    min_leading = first_length
   }
   // Remove that amount from all strings
   for (let i=0; i<line_arr.length; i++) {
