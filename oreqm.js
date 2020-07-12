@@ -70,26 +70,65 @@ function get_fulfilledby(node) {
   return ff_list
 }
 
+function normalize_indent(txt) {
+  // Normalize indentation of multiline string
+  txt = txt.replace(/\r/, '')  // no cr
+  txt = txt.replace(/\t/, '  ')  // no tabs
+  txt = txt.replace(/^(\s*\n)+/, '') // empty initial line
+  txt = txt.replace(/(\n\s*)+$/m, '') // empty final line
+  line_arr = txt.split('\n')
+  // Calculate smallest amount of leading whitespace
+  let min_leading = 100
+  for (let i=0; i<line_arr.length; i++) {
+    let match = line_arr[i].match(/^\s+/)
+    if (match) {
+      const leading = match[0].length
+      if ( leading < min_leading) min_leading = leading
+    } else {
+      min_leading = 0
+    }
+  }
+  // Remove that amount from all strings
+  for (let i=0; i<line_arr.length; i++) {
+    line_arr[i] = line_arr[i].slice(min_leading)
+  }
+  txt = line_arr.join('\n')
+  return txt
+}
+
 // Regexes for "make requirements readable" heuristics
 const re_xml_comments = new RegExp(/<!--.*?-->/g, 'm')
-const re_unwanted_mu  = new RegExp(/<!\[CDATA\[\s*/g, 'm')
+//const re_unwanted_mu  = new RegExp(/<!\[CDATA\[\s*/g, 'm')
 const re_amp_quote    = new RegExp(/&/g, 'm')
 const re_list_heurist = new RegExp(/<li>[\s\n]*|<listitem>[\s\n]*/g, 'm')
 const re_tag_text     = new RegExp(/<a\s+type="xref"\s+href="[A-Z]+_([^"]+)"\s*\/>/g, 'm')
-const re_newlines     = new RegExp(/<br\/>|<BR\/>/g, 'm')
-const re_xml_remove   = new RegExp(/<\S.*?>/g, 'm')
+//const re_newlines     = new RegExp(/<br\/>|<BR\/>/g, 'm')
+//const re_xml_remove   = new RegExp(/<\S.*?>/g, 'm')
+const re_xml_remove   = new RegExp(/<\/?ul>|<\/?itemizedlist>|<\/listitem>|<\/li>|<\/para>/g, 'm')
 const re_whitespace   = new RegExp(/^[\s\n]*|\s\n]*$/)
 const re_nbr_list     = new RegExp(/\n\s+(\d+)/g)
 const re_line_length  = new RegExp(/([^\n]{110,500}?(:|;| ))/g)
 const re_keep_nl      = new RegExp(/\s*\n\s*/)
-const re_empty_lines  = new RegExp(/<BR ALIGN="LEFT"\/>(&nbsp;<BR ALIGN="LEFT"\/>)+/, 'm')
+const re_empty_lines  = new RegExp(/<BR ALIGN="LEFT"\/>(\s*&nbsp;<BR ALIGN="LEFT"\/>)+/, 'm')
+
+var tags_in_text = new Set()
 
 function dot_format(txt) {
   //Remove xml style formatting not compliant with dot
   let new_txt = ''
   if (txt.length) {
+    /*
+    let tags = txt.match(/<[a-z]+>|&lt;[a-z]]+&gt;/gmi)
+    if (tags && tags.length) {
+      for (const tag of tags) {
+        tags_in_text.add(tag)
+      }
+      console.log(tags_in_text)
+    }
+    */
+    txt = normalize_indent(txt)
     txt = txt.replace(re_xml_comments, '') // remove XML comments
-    txt = txt.replace(re_unwanted_mu, '')  // Remove unwanted markup
+    // txt = txt.replace(re_unwanted_mu, '')  // Remove unwanted markup
     // Handle unicode literals
     txt = txt.replace(/&#([0-9]+);/g, function (whole, group1) {return String.fromCharCode(parseInt(group1, 10));})
     //txt = txt.replace(/\\u([0-9a-f]{4})/g, function (whole, group1) {return String.fromCharCode(parseInt(group1, 16));})
@@ -99,16 +138,18 @@ function dot_format(txt) {
     // Dig out meaningful text from items like:
     // <a type="xref" href="TERM_UNAUTHORIZED_EXECUTABLE_ENTITIES"/>
     new_txt = new_txt.replace(re_tag_text, '$1')
-    new_txt = new_txt.split(/<br\/>|<BR\/>/).join('&nbsp;\n') // keep deliberate newlines
-    new_txt = new_txt.split(/<\S.*?>/).join('') // remove xml markup
+    new_txt = new_txt.split(/<br\s*\/>|<\/?p>/i).join('&nbsp;\n') // keep deliberate newlines
+    new_txt = new_txt.split(/<\/?ul>|<\/?itemizedlist>|<\/listitem>|<\/li>|<\/?para>|<a\s[^>\/]*\/?>|<\/a>|<\/?filename>|<\/?code>|<\/?function>|<\/?pre>|<\/glossterm>|<glossterm [^>]+>/).join('') // remove xml markup
     new_txt = new_txt.replace(re_whitespace, '') // remove leading and trailing whitespace
     new_txt = new_txt.replace(/"/g, '&quot;')
     new_txt = new_txt.replace(/</g, '&lt;')
     new_txt = new_txt.replace(/>/g, '&gt;')
     new_txt = new_txt.replace(re_nbr_list, '\n&nbsp;&nbsp;$1') // heuristic for numbered lists
     new_txt = new_txt.replace(re_line_length, '$1\n') // limit line length
-    new_txt = new_txt.split(/\s*\n\s*/).join('<BR ALIGN="LEFT"/>') // preserve newlines
+    new_txt = new_txt.split(/\s*\n/).join('<BR ALIGN="LEFT"/>') // preserve newlines
+    new_txt = new_txt.replace(/^(\s*(&nbsp;)*<BR ALIGN="LEFT"\/>)+/, '') // remove blank leading lines
     new_txt = new_txt.replace(re_empty_lines, '<BR ALIGN="LEFT"/>&nbsp;<BR ALIGN="LEFT"/>') // Limit empty lines
+    new_txt = new_txt.replace(/\r/, '')  // no cr
     if (!new_txt.endsWith('<BR ALIGN="LEFT"/>')) {
       new_txt += '<BR ALIGN="LEFT"/>'
     }
