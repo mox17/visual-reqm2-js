@@ -331,17 +331,17 @@ class ReqM2Oreqm {
   get_all_text(req_id) {
     // Get all text fields as combined string
     const rec = this.requirements.get(req_id)
-    let all_text = req_id
-      + '\n' + rec.description
-      + '\n' + rec.furtherinfo
-      + '\n' + rec.rationale
-      + '\n' + rec.safetyrationale
-      + '\n' + rec.shortdesc
-      + '\n' + rec.usecase
-      + '\n' + rec.verifycrit
-      + '\n' + rec.comment
-      + '\n' + rec.tags.join('\n')
-      + '\n' + rec.platform.join('\n')
+    let all_text = rec.description
+          + '\n' + rec.furtherinfo
+          + '\n' + rec.rationale
+          + '\n' + rec.safetyrationale
+          + '\n' + rec.shortdesc
+          + '\n' + rec.usecase
+          + '\n' + rec.verifycrit
+          + '\n' + rec.comment
+          + '\n' + rec.tags.join('\n')
+          + '\n' + rec.platform.join('\n')
+          + '\n' + req_id  // req_id is last to ensure regex search for <id>$ will succeed
     return all_text
   }
 

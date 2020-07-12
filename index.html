@@ -271,6 +271,22 @@
       text-decoration: none;
       cursor: pointer;
     }
+
+    .abt_alignleft {
+      float: left;
+      width: 50%;
+      text-align:left;
+      /*margin:0;
+      padding:0;*/
+    }
+
+    .abt_alignright {
+      float: right;
+      width: 50%;
+      text-align:right;
+      /*margin:0;
+      padding:0;*/
+    }
     /* The Modal (background) - end */
 
     /* svg context menu related */
@@ -297,12 +313,32 @@
     .custom-menu li:hover {
       background-color: #555;
     }
-    /*
-    input {
-      display: none;
-    } */
-    /* svg context menu related - endct */
+    /* svg context menu related - end */
 
+    /* Status bar layout */
+    .alignleft {
+      float: left;
+      width:35%;
+      text-align:left;
+      margin:0;
+      padding:0;
+    }
+
+    .aligncenter {
+      float: left;
+      width:55%;
+      text-align:center;
+      margin:0;
+      padding:0;
+    }
+
+    .alignright {
+      float: left;
+      width:10%;
+      text-align:right;
+      margin:0;
+      padding:0;
+    }
     </style>
   </head>
   <body>
@@ -335,7 +371,7 @@
           <button id="get_ref_oreqm" type="button" disabled="true" onclick="get_ref_oreqm_file()">Select reference .oreqm file</button>
           <button id="clear_ref_oreqm" type="button" disabled="true" onclick="clear_reference()">Clear reference</button>
           <p id="values"></p>
-
+          <hr>
           <b>Selection criteria</b><br/>
           <textarea id="search_regex" rows="3" cols="34"
                     wrap="off" placeholder="search regex&#13;&#10;newlines are ignored"
@@ -353,6 +389,8 @@
           <button type="button" onclick="filter_graph()">Update graph</button>
           <input type="checkbox" id="auto_update" onchange="auto_update_click()">auto-update</button>
           <p/>
+          <hr>
+          <b>Doctypes</b><br><p/>
           <button type="button" onclick="toggle_exclude()">toggle exclude</button>
           <p/>
           <div id="doctype_table"></div>
@@ -362,29 +400,32 @@
         </div>
         <div id="graph" class="split">
           <div id="options">
-            <label id="format">
-              Format:
-              <select>
-                <option selected>svg</option>
-                <option>png-image-element</option>
-           <!-- <option>json</option> -->
-           <!-- <option>xdot</option> -->
-                <option>plain</option>
-           <!-- <option>ps</option> -->
-              </select>
-            </label>
-
-            <label id="raw">
-              <input type="checkbox"> Show raw output
-            </label>
-            <label id="download_image"></label>
-              Right-click menu on reqs. Click req to <b>copy</b> &lt;id&gt;.
-              &nbsp;&nbsp;&nbsp;Select text in image with <b>Alt</b>+mouse.
-              &nbsp;&nbsp;
-            <label id="viz_working"></label>
-            <!-- Trigger/Open The Modal -->
-            <button id="myBtn">About</button>
+            <p class="alignleft">
+              <label id="format">
+                Format:
+                <select>
+                  <option selected>svg</option>
+                  <option>png-image-element</option>
+                  <!-- <option>json</option> -->
+                  <!-- <option>xdot</option> -->
+                  <option>plain</option>
+                  <!-- <option>ps</option> -->
+                </select>
+              </label>
+              <label id="raw">
+                <input type="checkbox"> Show raw output
+              </label>
+              <label id="download_image"></label>
+            </p>
+            <p class="aligncenter">
+              <label id="viz_working"></label>
+            </p>
+            <p class="alignright">
+              <!-- Trigger/Open The Modal -->
+              <button id="myBtn">About</button>
+            </p>
           </div>
+          <div style="clear: both;"></div>
           <div id="output">
             <div id="error"></div>
           </div>
@@ -397,32 +438,44 @@
   <!-- Modal content -->
   <div class="modal-content">
     <span class="close">&times;</span>
-    <h1>Visual ReqM2</h1>
-    <p>Created by Erling Stage</p>
-    <p>erling.stage@gmail.com</p>
-    <h4>Dependencies</h4>
-    <p>Visual ReqM2 uses the following modules:
-        <p>Viz.js 1.8.2 (Graphviz 2.40.1, Expat 2.2.5, Emscripten 1.37.33)<br/>
-          Copyright 2014-2018 Michael Daines<br/>
-          Licensed under MIT license<br/>
-          https://github.com/mdaines/viz.js<br/></p>
-        <p>
-          svg-pan-zoom v3.6.1<br/>
-          Copyright 2009-2010 Andrea Leofreddi<br/>
-          BSD 2-Clause "Simplified" License<br/>
-          https://github.com/ariutta/svg-pan-zoom<br/>
-        </p>
-        <p>
-          fabric.js 1.6.7<br/>
-          Licensed under MIT license<br/>
-          https://github.com/fabricjs/fabric.js/tree/v1.6.7<br/>
-        </p>
-        <p>
-          Split.js v1.3.5<br/>
-          Copyright 2018 Nathan Cahill<br/>
-          Licensed under MIT license<br/>
-          https://github.com/nathancahill/split<br/>
-        </p>
+    <p>
+      <h1 >Visual ReqM2</h1>
+      <p>Created by Erling Stage</p>
+      <p>erling.stage@gmail.com</p>
+      <h4>Dependencies</h4>
+      <p>Visual ReqM2 uses the following modules:
+          <p>Viz.js 1.8.2 (Graphviz 2.40.1, Expat 2.2.5, Emscripten 1.37.33)<br/>
+            Copyright 2014-2018 Michael Daines<br/>
+            Licensed under MIT license<br/>
+            https://github.com/mdaines/viz.js<br/></p>
+          <p>
+            svg-pan-zoom v3.6.1<br/>
+            Copyright 2009-2010 Andrea Leofreddi<br/>
+            BSD 2-Clause "Simplified" License<br/>
+            https://github.com/ariutta/svg-pan-zoom<br/>
+          </p>
+          <p>
+            fabric.js 1.6.7<br/>
+            Licensed under MIT license<br/>
+            https://github.com/fabricjs/fabric.js/tree/v1.6.7<br/>
+          </p>
+          <p>
+            Split.js v1.3.5<br/>
+            Copyright 2018 Nathan Cahill<br/>
+            Licensed under MIT license<br/>
+            https://github.com/nathancahill/split<br/>
+          </p>
+      </p>
+    </p>
+    <p class="abt_alignright">
+      <h4>Tips</h4>
+      <ul>
+        <li>Use mouse wheel (or scroll gesture) to zoom in and out around mouse position.</li>
+        <li>Use mouse-drag to pan image.</li>
+        <li>Select text in image with <b>Alt</b>+drag.</li>
+        <li>Right-click menu on requirements to do <b>select / deselect / exclude</b>.</li>
+        <li>Click requirement to <b>copy</b> requirement &lt;id&gt; to clipboard.</li>
+      </ul>
     </p>
   </div>
 
@@ -1034,6 +1087,9 @@
       document.getElementById("search_regex").value = new_search_pattern
       //console.log("deselect_node() - search ", node, search_pattern, new_search_pattern)
       filter_change()
+    } else {
+      alert_text = "'{}' is not a selected node\nPerhaps try 'Exclude'?".format(node)
+      alert(alert_text)
     }
   }
 
