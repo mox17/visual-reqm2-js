@@ -3,124 +3,22 @@
   <environment>
     <toolname>ReqM2</toolname>
     <toolversion>1.14.0 (devel)</toolversion>
-    <toolcopyright>Copyright 2010 - 2018 Elektrobit Automotive GmbH</toolcopyright>
-    <libxmlversion>2.0201</libxmlversion>
-    <libxml2compileversion>2.9.3</libxml2compileversion>
-    <libxml2runtimeversion>20903</libxml2runtimeversion>
-    <perlversion>v5.22.1</perlversion>
-    <commandline>-q -t -c /home/erst9576/eb_corbos_linux/corbos-linux-doc-all/config/ReqM2cfg_SafeLinux.xml -O /home/erst9576/eb_corbos_linux/corbos-linux-doc-all/build/reqm2 -P -s approved,draft,proposed -o oreqm.oreqm /home/erst9576/eb_corbos_linux/corbos-linux-doc-all/build/reqm2/tlreqspec.reqm /home/erst9576/eb_corbos_linux/corbos-linux-doc-all/build/reqm2/implassumpt.reqm /home/erst9576/eb_corbos_linux/corbos-linux-doc-all/build/reqm2/safetymandoc.reqm /home/erst9576/eb_corbos_linux/corbos-linux-doc-all/build/reqm2/hwswinterface.reqm /home/erst9576/eb_corbos_linux/corbos-linux-doc-all/build/reqm2/kernelconfig.reqm /home/erst9576/eb_corbos_linux/corbos-linux-doc-all/build/reqm2/architecture.reqm /home/erst9576/eb_corbos_linux/corbos-linux-doc-all/build/reqm2/osalswdd.reqm /home/erst9576/eb_corbos_linux/corbos-linux-doc-all/build/reqm2/osalimpl.reqm /home/erst9576/eb_corbos_linux/corbos-linux-doc-all/build/reqm2/aou.reqm /home/erst9576/eb_corbos_linux/corbos-linux-doc-all/build/reqm2/hazop.reqm /home/erst9576/eb_corbos_linux/corbos-linux-doc-all/build/reqm2/ltp.reqm /home/erst9576/eb_corbos_linux/corbos-linux-doc-all/build/reqm2/testspecsswuts.reqm /home/erst9576/eb_corbos_linux/corbos-linux-doc-all/build/reqm2/testspecsswts.reqm /home/erst9576/eb_corbos_linux/corbos-linux-doc-all/build/reqm2/contctrlswdd.reqm /home/erst9576/eb_corbos_linux/corbos-linux-doc-all/build/reqm2/contctrlimpl.reqm /home/erst9576/eb_corbos_linux/corbos-linux-doc-all/build/reqm2/contctrlswuts.reqm</commandline>
-    <timestamp>Mon Feb 10 09:17:02 1986</timestamp>
+    <timestamp>Tue Feb 11 15:46:12 2020</timestamp>
   </environment>
   <configuration>
     <settings>
       <logfile>build/ReqM2.log</logfile>
     </settings>
-    <!-- Possible doctypes -->
     <doctypes>
       <regexs>
-        <!-- requirements and design doctypes -->
         <regex>reqspec1</regex>
-        <regex>reqspec2</regex>
-        <regex>hw_safetydocs</regex>
+        <regex>fea</regex>
         <regex>swrs</regex>
-        <regex>nonfunctional</regex>
-        <regex>swad</regex>
-        <regex>swdda</regex>
         <regex>swdd</regex>
-        <regex>kernelconf</regex>
         <regex>impl</regex>
-        <!-- test doctypes -->
-        <regex>kernelconfts</regex>
-        <regex>swuts</regex>
-        <regex>swintts</regex>
-        <regex>swts</regex>
-        <regex>systs</regex>
-        <!-- review -->
-        <regex>review</regex>
-        <!-- assumptions -->
-        <regex>safetymandoc</regex>
-        <regex>assumptions</regex>
-        <regex>faou</regex>
-        <regex>saou</regex>
-        <!-- safety analyses -->
-        <regex>hazop</regex>
-        <!-- <regex>uc</regex> replaced by F-AoUs, S-AoUs and a list of glibc calls -->
-        <!-- <regex>reqspec3</regex> replaced by swrs -->
-        <!-- <regex>swudd</regex> Not in current RMP-->
       </regexs>
     </doctypes>
     <rules>
-      <rule>
-        <name>reqspec2.1 - reqspec2 provides coverage</name>
-        <description>All reqspec2 specobjects shall provide coverage to reqspec2 or reqspec1.</description>
-        <!-- although this rule only checks if the swrs provides a link,
-            but not if the link is of the correct doctype -->
-        <conditionchecks>
-          <conditioncheck>
-            <applyto>//specobject[(../@doctype='reqspec2')]</applyto>
-            <condition>count(./providescoverage/provcov) &gt; 0</condition>
-          </conditioncheck>
-        </conditionchecks>
-      </rule>
-      <rule>
-        <name>swrs.1 - swrs provides coverage</name>
-        <description>All swrs specobjects shall provide coverage to swrs or reqspec2.</description>
-        <!-- although this rule only checks if the swrs provides a link,
-            but not if the link is of the correct doctype -->
-        <conditionchecks>
-          <conditioncheck>
-            <applyto>//specobject[(../@doctype='swrs')]</applyto>
-            <condition>count(./providescoverage/provcov) &gt; 0</condition>
-          </conditioncheck>
-        </conditionchecks>
-      </rule>
-      <rule>
-        <name>swrs.2 - swrs contains verifycrit</name>
-        <description>swrs specobjects shall have verifycrit</description>
-        <conditionchecks>
-          <conditioncheck>
-            <applyto>//specobject[(../@doctype='swrs') and (./status!='rejected')
-                   and (./needscoverage/needsobj='swad')]
-            </applyto>
-            <condition>count(./verifycrit)&gt;0</condition>
-          </conditioncheck>
-        </conditionchecks>
-      </rule>
-      <rule>
-        <name>swrs.3 - swrs needs swrs or (swad and swts/review)</name>
-        <description>swrs specobjects swrs shall need coverage from (swrs) or (swad and swts)</description>
-        <conditionchecks>
-          <conditioncheck>
-            <applyto>//specobject[(../@doctype='swrs') and (not(./status='rejected'))]
-            </applyto>
-            <condition> ((needscoverage/needsobj="swad") and (needscoverage/needsobj='swts'))
-            or ((needscoverage/needsobj="swad") and (needscoverage/needsobj='review'))
-            or (needscoverage/needsobj="swrs")
-            </condition>
-          </conditioncheck>
-        </conditionchecks>
-      </rule>
-      <rule>
-        <name>swad.1 - swad provides coverage</name>
-        <description>All swad specobjects shall provide coverage to swrs or swad.</description>
-        <!-- The target doctype is not checked in this rule as it is not available. -->
-        <conditionchecks>
-          <conditioncheck>
-            <applyto>//specobject[(../@doctype='swad')]</applyto>
-            <condition>count(./providescoverage/provcov/linksto)&gt;0</condition>
-          </conditioncheck>
-        </conditionchecks>
-      </rule>
-      <rule>
-        <name>swad.2 - swad contains verifycrit</name>
-        <description>swad specobjects shall have verifycrit</description>
-        <conditionchecks>
-          <conditioncheck>
-            <applyto>//specobject[(../@doctype='swad')]</applyto>
-            <condition>count(./verifycrit)&gt;0</condition>
-          </conditioncheck>
-        </conditionchecks>
-      </rule>
     </rules>
   </configuration>
   <specdocument>
