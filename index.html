@@ -358,7 +358,7 @@
             <tr><td width="1%">date&nbsp;&nbsp;</td><td id="timestamp"></td></tr>
           </table>
           <p/>
-          <button type="button" onclick="get_main_oreqm_file()">Select main .oreqm file</button>
+          <button type="button" onclick="get_main_oreqm_file()">Load main .oreqm</button>
           <p/>
           <div id="ref_oreqm">
             <b>Reference .oreqm file</b>
@@ -369,7 +369,7 @@
             </table>
           </div>
           <p/>
-          <button id="get_ref_oreqm" type="button" disabled="true" onclick="get_ref_oreqm_file()">Select reference .oreqm file</button>
+          <button id="get_ref_oreqm" type="button" disabled="true" onclick="get_ref_oreqm_file()">Load reference</button>
           <button id="clear_ref_oreqm" type="button" disabled="true" onclick="clear_reference()">Clear reference</button>
           <p id="values"></p>
           <hr>
@@ -385,10 +385,11 @@
           <p/>
           <b>Excluded &lt;id&gt;s</b><br/>
           <textarea id="excluded_ids" rows="3" cols="25" spellcheck="false" onchange="filter_change()"
-                    wrap="off" placeholder="excluded <id>s&#13;&#10;separate with ',' or newline" ></textarea>
-          <p/>
-          <button type="button" onclick="filter_graph()">Update graph</button>
-          <input type="checkbox" id="auto_update" onchange="auto_update_click()">auto-update</button>
+          wrap="off" placeholder="excluded <id>s&#13;&#10;separate with ',' or newline" ></textarea>
+            <p/>
+            <button type="button" onclick="filter_graph()">Update graph</button>
+            <input type="checkbox" id="auto_update" onchange="auto_update_click()">auto-update</button>
+            <button id="clear_filters" type="button" onclick="clear_filters()">Clear filters</button>
           <p/>
           <hr>
           <b>Doctypes</b><br><p/>
@@ -440,7 +441,7 @@
   <div class="modal-content">
     <span class="close">&times;</span>
     <p>
-      <h1 >Visual ReqM2</h1>
+      <h1>Visual ReqM2</h1>
       <p>Created by Erling Stage</p>
       <p>erling.stage@gmail.com</p>
       <h4>Dependencies</h4>
@@ -473,7 +474,7 @@
       <ul>
         <li>Use mouse wheel (or scroll gesture) to zoom in and out around mouse position.</li>
         <li>Use mouse-drag to pan image.</li>
-        <li>Select text in image with <b>Alt</b>+drag.</li>
+        <li>Select text in image with <b>Alt</b>+drag or <b>Ctrl</b>+drag (browser dependent). </li>
         <li>Right-click menu on requirements to do <b>select / deselect / exclude</b>.</li>
         <li>Click requirement to <b>copy</b> requirement &lt;id&gt; to clipboard.</li>
       </ul>
@@ -1114,6 +1115,11 @@
     filter_change()
   }
 
+  function clear_filters() {
+    document.getElementById("search_regex").value = ""
+    document.getElementById("excluded_ids").value = ""
+    filter_change()
+  }
 
     </script>
   </body>
