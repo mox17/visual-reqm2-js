@@ -382,6 +382,7 @@
           <label id="id_checkbox">
             <input type="checkbox" onchange="filter_change()">Search &lt;id&gt; only
           </label>
+          <button id="clear_filters" type="button" onclick="clear_search_regex()">Clear</button>
           <p/>
           <b>Excluded &lt;id&gt;s</b><br/>
           <textarea id="excluded_ids" rows="3" cols="25" spellcheck="false" onchange="filter_change()"
@@ -389,7 +390,7 @@
             <p/>
             <button type="button" onclick="filter_graph()">Update graph</button>
             <input type="checkbox" id="auto_update" onchange="auto_update_click()">auto-update</button>
-            <button id="clear_filters" type="button" onclick="clear_filters()">Clear filters</button>
+            <button id="clear_filters" type="button" onclick="clear_excluded_ids()">Clear</button>
           <p/>
           <hr>
           <b>Doctypes</b><br><p/>
@@ -1086,8 +1087,8 @@
     // Remove node to the selection criteria (if not already selected)
     let node = selected_node
     let node_select_str = new RegExp("(^|\\|){}\\$".format(node))
-    let search_pattern = document.getElementById("search_regex").value.trim()
-    search_pattern = search_pattern.replace(/\n/g, '')
+    let org_search_pattern = document.getElementById("search_regex").value.trim()
+    let search_pattern = org_search_pattern.replace(/\n/g, '')
     let new_search_pattern = search_pattern.replace(node_select_str, '')
     if (new_search_pattern[0] === '|') {
       new_search_pattern = new_search_pattern.slice(1)
@@ -1115,8 +1116,12 @@
     filter_change()
   }
 
-  function clear_filters() {
+  function clear_search_regex() {
     document.getElementById("search_regex").value = ""
+    filter_change()
+  }
+
+  function clear_excluded_ids() {
     document.getElementById("excluded_ids").value = ""
     filter_change()
   }
