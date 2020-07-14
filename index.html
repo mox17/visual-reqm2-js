@@ -859,11 +859,14 @@
         document.getElementById('name').innerHTML = oreqm_main_filename
         document.getElementById('size').innerHTML = (Math.round(file.size/1024))+" KiB"
         document.getElementById('timestamp').innerHTML = oreqm_main_timestamp
-        display_doctypes_with_count(oreqm_main.get_doctypes())
         const node_count = oreqm_main.get_node_count()
-        if (auto_update && node_count > 150) {
+        if (auto_update && node_count > 500) {
           set_auto_update(false)
         }
+        if (oreqm_ref) { // if we have a reference do a compare
+          compare_oreqm()
+        }
+        display_doctypes_with_count(oreqm_main.get_doctypes())
         if (auto_update) {
           filter_graph()
         }
@@ -889,6 +892,7 @@
       reader.readAsText(file,'UTF-8');
       reader.onload = readerEvent => {
         //console.log( file );
+        oreqm_main.remove_ghost_requirements()
         oreqm_ref = new ReqM2Oreqm(readerEvent.target.result, [], [])
         oreqm_ref_filename = file.name
         oreqm_ref_timestamp = oreqm_main.get_time()
@@ -978,7 +982,7 @@
         }
       } else {
         // no pattern specified
-        if (oreqm_ref) {
+        if (false && oreqm_ref) {  // disable
           // If reference file exist use differences as filter
           oreqm_main.color_up_down([], COLOR_UP, COLOR_DOWN)
           graph = oreqm_main.create_graph(select_color, "reqspec1", construct_graph_title(), [])
@@ -1064,7 +1068,6 @@
   // When the user clicks anywhere outside of the modal, close it
   window.onbeforeunload = function(event) {
     return "Graph is going away..."
-  
   }
 
   function select_node() {

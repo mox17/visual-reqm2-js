@@ -197,6 +197,7 @@ class ReqM2Oreqm {
     if (this.color.get(req_id).has(color)) {
       return // already visited
     }
+    console.log(this.requirements.get(req_id).doctype)
     if (this.excluded_doctypes.includes(this.requirements.get(req_id).doctype)) {
       return // blacklisted doctype
     }
@@ -247,15 +248,17 @@ class ReqM2Oreqm {
     // A comparison may add 'ghost' requirements, which represent deleted
     // requirements. Remove these 'ghost' requirements
     for (const ghost_id of this.removed_reqs) {
-      const rec = this.requirements.get(ghost_id)
-      let dt_list = this.doctypes.get(rec.doctype)
-      dt_list.remove(ghost_id)
-      if (dt_list.length) {
-        this.doctypes.set(rec.doctype, dt_list)
-      } else {
-        this.doctypes.delete(rec.doctype)
+      if (this.requirements.has(ghost_id)) { // Ghost may not exist
+        const rec = this.requirements.get(ghost_id)
+        let dt_list = this.doctypes.get(rec.doctype)
+        dt_list.remove(ghost_id)
+        if (dt_list.length) {
+          this.doctypes.set(rec.doctype, dt_list)
+        } else {
+          this.doctypes.delete(rec.doctype)
+        }
+        this.requirements.delete(ghost_id)
       }
-      this.requirements.delete(ghost_id)
     }
     this.removed_reqs = []
     this.new_reqs = []
@@ -268,7 +271,7 @@ class ReqM2Oreqm {
 
   compare_requirements(old_reqs) {
     // Compare two sets of requirements (instances of ReqM2Oreqm)
-    // and return lists of new and modified <id>s"""
+    // and return lists of new, modified and removed <id>s"""
     const new_ids = Array.from(this.requirements.keys())
     let new_reqs = []
     let updated_reqs = []
@@ -276,7 +279,7 @@ class ReqM2Oreqm {
     this.remove_ghost_requirements(false)
     for (const req_id of new_ids) {
       if (old_reqs.requirements.has(req_id) &&
-        stringEqual(this.requirements.get(req_id), old_reqs.requirements.get(req_id))) {
+        stringEqual(this.requirements.get(req_id), old_reqs.requirements.get(req_id))) { // compare json versions
         continue // skip unchanged reqs
       }
       if (this.requirements.has(req_id)) {
@@ -293,19 +296,22 @@ class ReqM2Oreqm {
     }
     const old_ids = old_reqs.requirements.keys()
     for (const req_id of old_ids) {
-      if (!new_ids.includes(req_id)) {
+      if (!new_ids.includes(req_id)) { // <id> no longer present -> removed
         removed_reqs.push(req_id)
+        // Create 'ghost' requirement
         let req = old_reqs.requirements.get(req_id)
         this.requirements.set(req_id, req)
+        // check if this introduces a new doctype
         if (!this.doctypes.has(req.doctype)) {
           this.doctypes.set(req.doctype, [])
         }
+        // Update doctype table with new counts (and types)
         let dt_arr = this.doctypes.get(req.doctype)
         dt_arr.push(req_id)
         this.doctypes.set(req.doctype, dt_arr)
       }
     }
-    this.find_links()
+    this.find_links() // Select the changed ones (if wanted)
     this.new_reqs = new_reqs
     this.updated_reqs = updated_reqs
     this.removed_reqs = removed_reqs
@@ -316,13 +322,27 @@ class ReqM2Oreqm {
     return result
   }
 
+  decorate_id(req_id) {
+    // prefix <id> with new:, chg: or rem: if changed
+    let id_str = req_id
+    if (this.new_reqs.includes(req_id)) {
+      id_str = 'new:' + req_id
+    } else if (this.updated_reqs.includes(req_id)) {
+      id_str = 'chg:' + req_id
+    } else if (this.removed_reqs.includes(req_id)) {
+      id_str = 'rem:' + req_id
+    }
+    return id_str
+  }
+
   find_reqs_with_name(regex) {
     // Check <id> against regex
     const ids = this.requirements.keys()
     let rx = new RegExp(regex, 'i')
     let matches = []
     for (const id of ids) {
-      if (id.search(rx) >= 0)
+      const decorated_id = this.decorate_id(id)
+      if (decorated_id.search(rx) >= 0)
         matches.push(id)
     }
     return matches
@@ -331,6 +351,7 @@ class ReqM2Oreqm {
   get_all_text(req_id) {
     // Get all text fields as combined string
     const rec = this.requirements.get(req_id)
+    let id_str = this.decorate_id(req_id)
     let all_text = rec.description
           + '\n' + rec.furtherinfo
           + '\n' + rec.rationale
@@ -341,7 +362,7 @@ class ReqM2Oreqm {
           + '\n' + rec.comment
           + '\n' + rec.tags.join('\n')
           + '\n' + rec.platform.join('\n')
-          + '\n' + req_id  // req_id is last to ensure regex search for <id>$ will succeed
+          + '\n' + id_str  // req_id is last to ensure regex search for <id>$ will succeed
     return all_text
   }
 
@@ -360,7 +381,7 @@ class ReqM2Oreqm {
   color_up_down(id_list, color_up_value, color_down_value) {
     // Color from all nodes in id_list both up and down
     //console.log(id_list)
-    let full_list = id_list.concat(this.new_reqs, this.updated_reqs, this.removed_reqs)
+    let full_list = id_list //.concat(this.new_reqs, this.updated_reqs, this.removed_reqs)
     for (const res of full_list) {
       this.color_down(color_down_value, res)
       this.color_up(color_up_value, res)
@@ -436,12 +457,13 @@ class ReqM2Oreqm {
         let node = format_node(req_id, this.requirements.get(req_id), ghost)
         let dot_id = req_id.replace(/\./g, '_').replace(' ', '_')
         if (this.new_reqs.includes(req_id)) {
-          node = 'subgraph "cluster_{}" { color=limegreen penwidth=3 label="new" fontname="Arial" labelloc="t"\n{}}\n'.format(dot_id, node)
+          node = 'subgraph "cluster_{}" { color=limegreen penwidth=4 label="new" fontname="Arial" labelloc="t"\n{}}\n'.format(dot_id, node)
         } else if (this.updated_reqs.includes(req_id)) {
           node = 'subgraph "cluster_{}" { color=goldenrod1 penwidth=3 label="changed" fontname="Arial" labelloc="t"\n{}}\n'.format(dot_id, node)
         } else if (this.removed_reqs.includes(req_id)) {
           node = 'subgraph "cluster_{}" { color=red penwidth=3 label="removed" fontname="Arial" labelloc="t"\n{}}\n'.format(dot_id, node)
-        } else if (highlights.includes(req_id)) {
+        }
+        if (highlights.includes(req_id)) {
           node = 'subgraph "cluster_{}" { color=maroon3 penwidth=3 label=""\n{}}\n'.format(dot_id, node)
         }
         graph += node + '\n'

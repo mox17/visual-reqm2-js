@@ -293,10 +293,21 @@ function compare_oreqm() {
   // Both main and reference oreqm have been read.
   // Highlight new, changed and removed nodes in main oreqm (removed are added as 'ghosts')
   let results = oreqm_main.compare_requirements(oreqm_ref)
+  let new_search_array = []
+  let raw_search = document.getElementById("search_regex").value.trim()
+  // This is a hack, these prefixes are a hidden part of 'delta' reqs <id>, and a search term is constructed to find them
+  // Also avoid adding them more than once.
+  if (!raw_search.includes('new:')) new_search_array.push('new:')
+  if (!raw_search.includes('chg:')) new_search_array.push('chg:')
+  if (!raw_search.includes('rem:')) new_search_array.push('rem:')
+  let new_search = new_search_array.join('|')
+  if (new_search.length && raw_search) {
+    raw_search = new_search + '|\n' + raw_search
+  } else if (new_search.length) {
+    raw_search = new_search
+  }
+  document.getElementById("search_regex").value = raw_search
   //console.log(results)
-  oreqm_main.color_up_down(results.new_reqs, COLOR_UP, COLOR_DOWN)
-  oreqm_main.color_up_down(results.updated_reqs, COLOR_UP, COLOR_DOWN)
-  oreqm_main.color_up_down(results.removed_reqs, COLOR_UP, COLOR_DOWN)
   graph = oreqm_main.create_graph(select_color, "reqspec1", construct_graph_title(), [])
   set_doctype_count_shown(graph.doctype_dict)
 }
