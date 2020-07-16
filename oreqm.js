@@ -184,12 +184,12 @@ function tags_line(tags, platforms) {
   let line = []
   if (tags.length) {
     let tag_str = "tags: " + tags.join(", ")
-    tag_str = tag_str.replace(/([^\n]{90,110})/g, '$1,<BR ALIGN="LEFT"/>')
+    tag_str = tag_str.replace(/([^\n]{90,800}?)/g, '$1,<BR ALIGN="LEFT"/>')
     line.push(tag_str)
   }
   if (platforms.length) {
     let platform_str = "platforms: " + platforms.join(", ")
-    platform_str = platform_str.replace(/([^\n]{90,110})/g, '$1,<BR ALIGN="LEFT"/>')
+    platform_str = platform_str.replace(/([^\n]{90,800}?)/g, '$1,<BR ALIGN="LEFT"/>')
     line.push(platform_str)
   }
   if (line.length) {
