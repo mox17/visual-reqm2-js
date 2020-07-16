@@ -163,8 +163,8 @@ Try for example to load `oreqm_testdata_del_movement.oreqm` as main file and loa
 
 ## Further reading
 
-There is a slide set in the documentation folder with further details
+There is a slide set in the ./doc folder with further details
 
 ## example diagram
 
-![Image](documentation/visual-reqm2-screenshot.png "screenshot")
+![Image](doc/visual-reqm2-screenshot.png "screenshot")
