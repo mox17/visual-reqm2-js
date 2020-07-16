@@ -1,5 +1,5 @@
-Introduction
-=============
+# Introduction
+
 
 Visual ReqM2 is a browser app that generate visualizations of requirements hierarchies.
 
@@ -11,13 +11,75 @@ It can visualize requirements from a single `.oreqm` file, or make a diagram rep
 
 It needs to be used from a http server. There are helper scripts to set up a simple python server.
 
-Output
-------
+
+# Search
+When no search terms are defined, Visual ReqM2 will display all nodes. This may not always be a good strategy, as
+some projects can have many thousands of requirements.
+Visual ReqM2 will disable the 'auto-update' flag when there are more than 500 nodes.
+
+## Filter Mechanisms
+There are three main ways to filter requirements
+ * by `doctype`
+ * select nodes (and what is reachable)
+ * exclude nodes (breaks reachability)
+
+These will be explained below:
+
+### Doctypes
+Each requirement/node belong to a `doctype`. Each `doctype` is rendered in a box with a particular color.
+The doctype table allows to disable display of certain ones. For example 'impl' doctypes rarely have interesting information,
+it is their presence that counts, so the user may choose not to clutter the diagram with these and exclude them.
+
+The doctype table shows how many nodes of each are present in .oreqm and how many are currently displayed.
+
+### Selecting nodes
+The 'selection criteria' text box to the left accepts a **regular expression**. Nodes which match this expression will be shown and highlighted with a maroon outline. Furthermore all nodes reachable from these **selected** nodes will also be shown. All other nodes are left out.
+The regular expression can be applied to the <id> only, or to a combined string. 
+
+The combined string combines the raw text from xml tags in the order below, separated by newlines.
+
+ * `<description>`
+ * `<furtherinfo>`
+ * `<rationale>`
+ * `<safetyrationale>`
+ * `<shortdesc>`
+ * `<usecase>`
+ * `<verifycrit>`
+ * `<comment>`
+ * `<tags>\<tag>*`
+ * `<platform>`
+ * `<id>`
+
+**Note**: The `<id>` is deliberately the last item in this string. This means that a regex ending with '$' will match `<id>`.
+
+**Note**: When doing comparisons of two `.oreqm` files, the `<id>` is prefixed with `rem:`, `chg:` and `new:` for removed, changed and new nodes.respectively.
+
+Nodes can also be selected by right-clicking them and choosing 'Select' in the menu. This will update the regex in the search box.
+Similarly an explicitly selected node and aso be de-selected from the right-click menu.
+It is not possible to delselect nodes that were matched with anything but a specific `<id>$`.
+
+### Excluding nodes
+
+
+# Output
 The app can generate output in `.svg`, `.png` and plain `.dot` format.
 
-Further reading
----------------
+## How nodes are displayed
+The text in specobjects is often written with various docbook/xml markup. `Graphviz` cannot render this markup, and readability
+of the requirement suffers from the markup. Therefore heuristics are applied to remove the markup and implement simple versions of
+list rendering. There is no attempt to reflow text, except from breaking up lines longer than a 100 characters.
+
+## colors
+Each doctype is assigned its own color. It is possible to load a color scheme, which is a simple JSON map from doctype name to hex RGB string("#RRGGBB").
+Visual ReqM2 will generate new unique colors for new doctypes.
+The resulting palette can be downloaded, possibly modified, and uploaded. Visual ReqM2 stores the palette as a web storage in the browser, for persistence.
+
+
+
+# Further reading
+
 There is a slide set in the documentation folder with further details
 
+## example diagram
 ![Image](documentation/example_diagram.svg "Graph")
 
