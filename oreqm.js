@@ -254,6 +254,7 @@ function construct_graph_title() {
     if (oreqm_ref) {
       diff = oreqm_main.get_main_ref_diff()
       title += '  <tr><td>Ref. file</td><td>{}</td><td>{}</td></tr>\n'.format(oreqm_ref_filename, oreqm_ref_timestamp)
+      /*
       if (diff.new_reqs.length) {
         title += '  <tr><td>New reqs</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(diff.new_reqs.join('<BR ALIGN="LEFT"/>'))
       }
@@ -263,8 +264,8 @@ function construct_graph_title() {
       if (diff.removed_reqs.length) {
         title += '  <tr><td>Removed reqs</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(diff.removed_reqs.join('<BR ALIGN="LEFT"/>'))
       }
+      */
     }
-
     if (search_pattern.length) {
       let pattern_string = search_pattern.trim().replace(/([^\n]{40,500}?\|)/g, '$1<BR ALIGN="LEFT"/>').replace(/\n/g, '<BR ALIGN="LEFT"/>')
       if (id_checkbox ) {

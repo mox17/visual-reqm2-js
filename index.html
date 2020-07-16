@@ -528,6 +528,7 @@
   var auto_update = true
   var search_pattern = '' // regex for matching requirements
   var id_checkbox = false // flag for scope of search
+  var dot_source = ''
 
   document.getElementById("auto_update").checked = auto_update
 
@@ -574,11 +575,12 @@
       document.querySelector("#error").appendChild(document.createTextNode(message));
 
       console.error(e);
+      console.log(dot_source)
       viz_working_clear()
       e.preventDefault();
     }
 
-    let dot_source = oreqm_main != null ? oreqm_main.get_dot() : "digraph foo {\nfoo -> bar\nfoo -> baz\n}\n"
+    dot_source = oreqm_main != null ? oreqm_main.get_dot() : "digraph foo {\nfoo -> bar\nfoo -> baz\n}\n"
     var params = {
       src: dot_source,
       options: {
@@ -843,7 +845,7 @@
   function get_main_oreqm_file() {
     let input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.oreqm,.reqm,.reqm2,.xml'
+    input.accept = '.oreqm'
 
     input.onchange = e => {
       // getting a hold of the file reference
@@ -882,7 +884,7 @@
   function get_ref_oreqm_file() {
     let input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.oreqm,.reqm,.reqm2,.xml'
+    input.accept = '.oreqm'
 
     input.onchange = e => {
       // getting a hold of the file reference

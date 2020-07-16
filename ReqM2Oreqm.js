@@ -197,7 +197,7 @@ class ReqM2Oreqm {
     if (this.color.get(req_id).has(color)) {
       return // already visited
     }
-    console.log(this.requirements.get(req_id).doctype)
+    //console.log(this.requirements.get(req_id).doctype)
     if (this.excluded_doctypes.includes(this.requirements.get(req_id).doctype)) {
       return // blacklisted doctype
     }
