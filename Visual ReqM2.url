@@ -1,4 +1,4 @@
 [InternetShortcut]
 URL=http://localhost:8000/
-IconFile=http://localhost:8000/favicon.ico
-IconIndex=1
+IconFile=http://localhost:8000/resources/favicon.ico
+IconIndex=0
