@@ -11,8 +11,32 @@ It can visualize requirements from a single `.oreqm` file, or make a diagram rep
 
 It needs to be used from a http server. There are helper scripts to set up a simple python server.
 
+# Quick start
+Clone this repository to a directory.
+
+Since `.js` files are used here, it is necessary to browse the `index.html` through a web browser.
+
+Let a http server provide this directory.
+
+If python is available on the machine, start one of the server scripts as approriate
+
+| OS      | Python2                        | Python3                        |
+|---------|--------------------------------|--------------------------------|
+| Windows | local_http_server-python2.cmd  | local_http_server-python3.cmd  |
+| Linux   | local_http_server-python2.sh   | local_http_server-python3.sh   |
+
+On Windows then double-click the "Visual ReqM2" Internet shortcut, it will connect to http://localhost:8000
+
+On Linux browse to http://localhost:8000
+
+No data is sent to the server side, all processing happens in the browser. The server is only needed because of
+standard browser security mechanisms.
 
 # Search
+The whole point of this application is to quickly focus on nodes of particular interest and have an overview
+of the context they appear in. To achieve this, selection and pruning of the graph of nodes is wanted.
+
+## search terms
 When no search terms are defined, Visual ReqM2 will display all nodes. This may not always be a good strategy, as
 some projects can have many thousands of requirements.
 Visual ReqM2 will disable the 'auto-update' flag when there are more than 500 nodes.
@@ -114,6 +138,13 @@ Visual ReqM2 will generate pseudo-random unique colors for new doctypes.
 
 The resulting palette can be downloaded, possibly modified, and uploaded. Visual ReqM2 stores the palette as a web storage in the browser, for persistence.
 
+There are sample color `.json` files in the `./testdata/` directory.
+
+
+# Examples
+The `./testdata/` directory contains a few sample `.oreqm` files, which can illustrate the features of the program.
+
+Try for example to load `oreqm_testdata_del_movement.oreqm` as main file and load `oreqm_testdata_no_ogre.oreqm` as a reference file.
 
 
 # Further reading
