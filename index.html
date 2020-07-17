@@ -48,7 +48,7 @@
       overflow: auto;
     }
 
-    #oreqm {
+    #oreqm_div {
       border-right: 1px solid #ccc;
       background: #eee;
     }
@@ -149,88 +149,61 @@
       float: left;
     }
 
-    .table.oreqm, td {
-      width: 120px;
-      table-layout: fixed;
-      font-size: 80%;
-      /*height: 15px;*/
-    }
-
-    table {
-      table-layout: auto;
-      border-collapse: collapse;
-    }
-
-    table .absorbing-column {
-      width: 100%;
-    }
-    table, th, td {
-      border: 1px solid black;
-      padding: 10px;
-    }
-
-    td {
-      width:0.1%;
-      white-space: nowrap;
-    }
     html, body {
         font-family: arial;
     }
 
-    #oreqm {
-      margin-top: 8px;
-      margin-left: 8px;
+    #oreqm_div {
+      padding-right: 4px;
+      padding-left: 4px;
+      padding-top: 4px;
     }
 
-    .table_gridview td,
-    #reffile td,
-    #gridview td {
-      border: 0px solid #dddddd;
+    table.oreqm_file_table {
+      font-family: Arial, Helvetica, sans-serif;
+      border: 1px solid #000000;
+      background-color: #FFFFFF;
+      width: 100%;
       text-align: left;
-      padding: 0px 0px 0px 0px;
-      margin:0px;
-      height: 0px;
-      border-radius:1px;
-      -moz-border-radius:1px;
     }
 
-    .table_gridview tr:nth-child(even),
-    #reffile tr:nth-child(even),
-    #gridview tr:nth-child(even) {
-      background-color: #dddddd;
+    table.oreqm_file_table td, table.oreqm_file_table th {
+      border: 0px solid #AAAAAA;
+      padding: 0px 0px;
     }
 
-    .table_gridview tr:nth-child(odd),
-    #reffile tr:nth-child(odd),
-    #gridview tr:nth-child(odd) {
-      background-color: #ffffff;
+    table.oreqm_file_table tbody td {
+      font-size: 12px;
+    }
+    table.oreqm_file_table tr:nth-child(even) {
+      background: #DDDDDD;
     }
 
-    .table_gridview table th,
-    #reffile table th,
-    #gridview table th {
-      color:#ffffff;
-    }
-
-    #dyn_doctype_table tr,
-    #dyn_doctype_table td,
-    #dyn_doctype_table p,
-    table p
+    table.doctype_table td,
+    table.doctype_table p
     {
-      padding:0px;
+      padding-left:0px;
+      padding-right:0px;
+      padding-top:0px;
+      padding-bottom:0px;
       margin:0px;
     }
 
-    #dyn_doctype_table
+    table.doctype_table
     {
       text-align: center;
+      font-size: 12px;
+      width: 100%;
     }
 
-    textarea {
+    textarea.search_terms {
       border-radius: 4px;
       flex: 0 0 200px;
       margin-right: 10px;
-      width: 96%; /* or whatever width you want to set */
+      margin-top: 4px;
+      padding-right: 4px;
+      font-size: 12px;
+      width: 97%;
     }
 
     /* The Modal (background) */
@@ -350,47 +323,47 @@
       </div>
       -->
       <div id="panes" class="split split-horizontal">
-        <div id="oreqm" class="split">
+        <div id="oreqm_div" class="split">
           <b>ReqM2 .oreqm file</b><br/>
-          <table class="table_gridview" id="gridview">
-            <tr><td width="1%">name&nbsp;&nbsp;</td><td id="name" class="absorbing-column"></td></tr>
-            <tr><td width="1%">size&nbsp;&nbsp;</td><td id="size"></td></tr>
-            <tr><td width="1%">date&nbsp;&nbsp;</td><td id="timestamp"></td></tr>
+          <table class="oreqm_file_table" >
+            <tr><td width="1%">name</td><td id="name" class="absorbing-column"></td></tr>
+            <tr><td width="1%">size</td><td id="size"></td></tr>
+            <tr><td width="1%">date</td><td id="timestamp"></td></tr>
           </table>
           <p/>
-          <button type="button" onclick="get_main_oreqm_file()">Load main .oreqm</button>
+          <button type="button" onclick="get_main_oreqm_file()" >Load file</button>
           <p/>
           <div id="ref_oreqm">
             <b>Reference .oreqm file</b>
-            <table class="table_gridview" id="reffile">
-              <tr><td width="1%">name&nbsp;&nbsp;</td><td id="ref_name" class="absorbing-column"></td></tr>
-              <tr><td width="1%">size&nbsp;&nbsp;</td><td id="ref_size"></td></tr>
-              <tr><td width="1%">date&nbsp;&nbsp;</td><td id="ref_timestamp"></td></tr>
+            <table class="oreqm_file_table">
+              <tr><td width="1%">name</td><td id="ref_name" class="absorbing-column"></td></tr>
+              <tr><td width="1%">size</td><td id="ref_size"></td></tr>
+              <tr><td width="1%">date</td><td id="ref_timestamp"></td></tr>
             </table>
           </div>
           <p/>
-          <button id="get_ref_oreqm" type="button" disabled="true" onclick="get_ref_oreqm_file()">Load reference</button>
-          <button id="clear_ref_oreqm" type="button" disabled="true" onclick="clear_reference()">Clear reference</button>
-          <p id="values"></p>
+          <button id="get_ref_oreqm" type="button" disabled="true" onclick="get_ref_oreqm_file()">Load file</button>
+          <button id="clear_ref_oreqm" type="button" disabled="true" onclick="clear_reference()">Clear</button>
+          <p></p>
           <hr>
-          <b>Selection criteria</b><br/>
-          <textarea id="search_regex" rows="3" cols="34"
-                    wrap="off" placeholder="search regex&#13;&#10;newlines are ignored"
+          <b>Selection criteria</b>
+          <button id="clear_filters" type="button" onclick="clear_search_regex()">Clear</button>
+          <textarea class="search_terms" id="search_regex" rows="3" cols="34"
+                    wrap="off" placeholder="search regex&#13;&#10;newlines are ignored&#13;&#10;rem:|chg:|new: select changes"
                     onchange="filter_change()"
                     spellcheck="false"></textarea>
           <br>
           <label id="id_checkbox">
             <input type="checkbox" onchange="filter_change()">Search &lt;id&gt; only
           </label>
-          <button id="clear_filters" type="button" onclick="clear_search_regex()">Clear</button>
           <p/>
-          <b>Excluded &lt;id&gt;s</b><br/>
-          <textarea id="excluded_ids" rows="3" cols="25" spellcheck="false" onchange="filter_change()"
+          <b>Excluded &lt;id&gt;s</b>
+          <button id="clear_filters" type="button" onclick="clear_excluded_ids()">Clear</button>
+          <textarea class="search_terms" id="excluded_ids" rows="3" cols="25" spellcheck="false" onchange="filter_change()"
           wrap="off" placeholder="excluded <id>s&#13;&#10;separate with ',' or newline" ></textarea>
-            <p/>
+            <hr>
             <button type="button" onclick="filter_graph()">Update graph</button>
             <input type="checkbox" id="auto_update" onchange="auto_update_click()">auto-update</button>
-            <button id="clear_filters" type="button" onclick="clear_excluded_ids()">Clear</button>
           <p/>
           <hr>
           <b>Doctypes</b><br><p/>
@@ -443,8 +416,8 @@
     <span class="close">&times;</span>
     <p>
       <h1>Visual ReqM2</h1>
-      <p>Created by Erling Stage</p>
-      <p>erling.stage@gmail.com</p>
+      <p>Copyright 2020 Erling Stage<br/>
+      Licensed under MIT license</p>
       <h4>Dependencies</h4>
       <p>Visual ReqM2 uses the following modules:
           <p>Viz.js 1.8.2 (Graphviz 2.40.1, Expat 2.2.5, Emscripten 1.37.33)<br/>
@@ -501,7 +474,7 @@
   var beforeUnloadMessage = null;
 
   var resizeEvent = new Event("paneresize");
-  Split(['#oreqm', '#graph'], {
+  Split(['#oreqm_div', '#graph'], {
     sizes: [15, 85],
     onDragEnd: function() {
       var svgOutput = document.getElementById("svg_output");
@@ -783,7 +756,7 @@
     table.id = "dyn_doctype_table"
     let row = table.insertRow();
     let cell
-    table.className = 'table_gridview'
+    table.className = 'doctype_table'
     cell = row.insertCell();
     cell.innerHTML = "<b>doctype</b>";
     cell = row.insertCell();
@@ -1069,7 +1042,7 @@
 
   // When the user clicks anywhere outside of the modal, close it
   window.onbeforeunload = function(event) {
-    return "Graph is going away..."
+    return //"Graph is going away..."
   }
 
   function select_node() {
