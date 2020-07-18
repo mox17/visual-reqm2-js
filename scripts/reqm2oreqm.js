@@ -1,3 +1,4 @@
+/* Main class for managing oreqm xml data */
 class ReqM2Oreqm {
   // This class reads and manages information in ReqM2 .oreqm files
   constructor(content, excluded_doctypes, excluded_ids) {
