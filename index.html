@@ -192,7 +192,7 @@
     table.doctype_table
     {
       text-align: center;
-      font-size: 12px;
+      font-size: 13px;
       width: 100%;
     }
 
@@ -384,12 +384,12 @@
                   <option>png-image-element</option>
                   <!-- <option>json</option> -->
                   <!-- <option>xdot</option> -->
-                  <option>plain</option>
+                  <!-- <option>plain</option> -->
                   <!-- <option>ps</option> -->
                 </select>
               </label>
-              <label id="raw">
-                <input type="checkbox"> Show raw output
+              <label id="raw" style="visibility: hidden;">
+                <input type="checkbox" > raw
               </label>
               <label id="download_image"></label>
             </p>
@@ -460,6 +460,9 @@
   <li id="menu_select"   onclick="select_node()">Select</li>
   <li id="menu_deselect" onclick="deselect_node()">De-select</li>
   <li id="menu_exclude"  onclick="exclude_node()">Exclude</li>
+  <li id="menu_copy_id"  onclick="copy_id_node()">Copy &lt;id&gt;</li>
+  <li id="menu_save_svg" onclick="save_svg_node()">Save image</li>
+  <li id="menu_pan_test" onclick="pan_test_node()">Pan test</li>
 </ul>
 
   <script src="./modules/viz.js/viz.js"></script>
@@ -502,6 +505,7 @@
   var search_pattern = '' // regex for matching requirements
   var id_checkbox = false // flag for scope of search
   var dot_source = ''
+  var panZoom = null
 
   document.getElementById("auto_update").checked = auto_update
 
@@ -512,7 +516,6 @@
   function viz_working_clear() {
     document.getElementById("viz_working").innerHTML = '<span style="color: #000000"></span>'
   }
-
 
   function updateGraph() {
     if (worker) {
@@ -575,7 +578,7 @@
   }
 
   var selected_node = ''
-  var svg
+  var svg_element = null
   function updateOutput() {
     var graph = document.querySelector("#output");
 
@@ -599,13 +602,14 @@
     }
 
     if (document.querySelector("#format select").value === "svg" && !document.querySelector("#raw input").checked) {
-      svg = parser.parseFromString(result, "image/svg+xml").documentElement;
-      svg.id = "svg_output";
-      graph.appendChild(svg);
+      svg_element = parser.parseFromString(result, "image/svg+xml").documentElement;
+      svg_element.id = "svg_output";
+      graph.appendChild(svg_element);
 
-      panZoom = svgPanZoom(svg, {
+      panZoom = svgPanZoom(svg_element, {
         panEnabled: true,
         zoomEnabled: true,
+        dblClickZoomEnabled: false,
         controlIconsEnabled: true,
         preventMouseEventsDefault: false,
         fit: true,
@@ -615,7 +619,7 @@
         zoomScaleSensitivity: 0.3
       });
 
-      svg.addEventListener('paneresize', function(e) {
+      svg_element.addEventListener('paneresize', function(e) {
         panZoom.resize();
       }, false);
       window.addEventListener('resize', function(e) {
@@ -623,7 +627,7 @@
       });
 
       // This time, add the listener to the graph itself
-      svg.addEventListener('click', event => {
+      svg_element.addEventListener('click', event => {
         let str = ""
         if (!event.altKey) { // This test allows Alt-drag to function
           // Grab all the siblings of the element that was actually clicked on
@@ -646,7 +650,8 @@
 
       // context menu setup
       var menuNode = document.getElementById('node-menu');
-      svg.addEventListener('contextmenu', event => {
+      var menuVisible = false
+      svg_element.addEventListener('contextmenu', event => {
         let str = ""
         event.preventDefault()
         // Grab all the siblings of the element that was actually clicked on
@@ -658,20 +663,29 @@
         }
         selected_node = str
         if (selected_node.length) {
-          // show context menu
-          let stage = document.getElementById('app');
-          menuNode.style.display = 'initial';
-          var containerRect = stage.getBoundingClientRect();
-          menuNode.style.top =
-            containerRect.top + event.pageY + 2 + 'px';
-          menuNode.style.left =
-            containerRect.left + event.pageX + 2 + 'px';
+          if (!menuVisible) {
+            // show context menu
+            let stage = document.getElementById('app');
+            menuNode.style.display = 'initial';
+            var containerRect = stage.getBoundingClientRect();
+            menuNode.style.top =
+              containerRect.top + event.pageY + 2 + 'px';
+            menuNode.style.left =
+              containerRect.left + event.pageX + 2 + 'px';
+              menuVisible = true
+          } else {
+            // Remove on 2nd right-click
+            menuNode.style.display = 'none';
+            menuVisible = false
+          }
         }
       });
 
-      window.addEventListener('click', () => {
+      window.addEventListener('click', function(e) {
         // hide menu
         menuNode.style.display = 'none';
+        menuVisible = false
+        e.preventDefault();
       });
 
       // Setup for download of image
@@ -1102,6 +1116,58 @@
   function clear_excluded_ids() {
     document.getElementById("excluded_ids").value = ""
     filter_change()
+  }
+
+  function pan_test_node() {
+    center_node("corbos.LNX.OperatingSystem")
+  }
+
+  function center_node(node_name) {
+    // Grab all the siblings of the element that was actually clicked on
+    let search_term = ".node[title='{}']".format(node_name)
+    let found = false
+    let bbox = null
+    let titles = document.querySelectorAll('.node > title');
+    for (const node of titles ) {
+      if (node.innerHTML === node_name) {
+        found = true
+        bb = node.parentNode.getBBox()
+        console.log(bb, node_name)
+        break;
+      }
+    }
+    if (found) {
+      /*
+      var viewBox = panZoom.getSizes().viewBox(),
+      offsetX = (this.width - (viewBox.width + bbox.x * 2) * this.getZoom()) * 0.5,
+      offsetY = (this.height - (viewBox.height + bbox.y * 2) * this.getZoom()) * 0.5;
+      
+      panZoom.pan({x: offsetX, y: offsetY})
+      */
+
+      //let bb=$("#target")[0].getBBox();
+      let vbb=panZoom.getSizes().viewBox;
+      let x=vbb.width/2-bb.x-bb.width/2;
+      let y=vbb.height/2-bb.y-bb.height/2;
+      let rz=panZoom.getSizes().realZoom;
+      console.log(x, y, rz, x*rz, y*rz, vbb)
+      let new_x = x*rz/2
+      let new_y = y*rz/2
+      let realZoom = panZoom.getZoom()
+      console.log(rz, realZoom)
+      //panZoom.pan({x: new_x,y: new_y});
+      panZoom.panBy({x: bb.width*rz, y: 0});
+/*
+     newX = bb.x + bb.width * 0.5
+     newY = bb.y - bb.height * 0.5
+     panZoom.pan({x:0,y:0});
+     let realZoom = panZoom.getZoom() //getSizes().realZoom;
+     console.log(realZoom, newX, newY)
+     panZoom.pan({  
+        x: -(newX*realZoom)+(panZoom.getSizes().width/2),
+        y: -(newY*realZoom)+(panZoom.getSizes().height/2)
+      }); */
+    }
   }
 
     </script>
