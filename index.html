@@ -269,7 +269,7 @@
       z-index: 1000;
       position: absolute;
       overflow: hidden;
-      border: 1px solid #CCC;
+      border: 1px solid #555;
       white-space: nowrap;
       font-family: sans-serif;
       background: #000;
@@ -277,6 +277,7 @@
       list-style: none;
       border-radius:1px;
       -moz-border-radius:1px;
+      box-shadow: 2px 2px 2px #aaa;
     }
 
     .custom-menu li {
@@ -307,7 +308,7 @@
     }
 
     .alignright {
-      float: left;
+      float: right;
       width:10%;
       text-align:right;
       margin:0;
@@ -648,9 +649,21 @@
         }
       });
 
+      svg_element.onkeyup = function(e) {
+        if (e.which == 77) {
+          //alert("M key was pressed");
+          pan_test_node()
+        } else if (e.ctrlKey && e.which == 66) {
+          alert("Ctrl + B shortcut combination was pressed");
+        } else if (e.ctrlKey && e.altKey && e.which == 89) {
+          alert("Ctrl + Alt + Y shortcut combination was pressed");
+        } else if (e.ctrlKey && e.altKey && e.shiftKey && e.which == 85) {
+          alert("Ctrl + Alt + Shift + U shortcut combination was pressed");
+        }
+      };
+
       // context menu setup
       var menuNode = document.getElementById('node-menu');
-      var menuVisible = false
       svg_element.addEventListener('contextmenu', event => {
         let str = ""
         event.preventDefault()
@@ -663,29 +676,39 @@
         }
         selected_node = str
         if (selected_node.length) {
-          if (!menuVisible) {
+          
+          if ((menuNode.style.display==='none')) {
             // show context menu
-            let stage = document.getElementById('app');
-            menuNode.style.display = 'initial';
+            let stage = document.getElementById('output');
             var containerRect = stage.getBoundingClientRect();
-            menuNode.style.top =
-              containerRect.top + event.pageY + 2 + 'px';
-            menuNode.style.left =
-              containerRect.left + event.pageX + 2 + 'px';
-              menuVisible = true
+            menuNode.style.display = 'initial';
+            menuNode.style.top = "0"
+            menuNode.style.left = "0"
+            let menu_width = menuNode.clientWidth
+            let menu_height = menuNode.clientHeight
+            let menu_rel_x = 2
+            let menu_rel_y = 2
+            if ((event.pageX+menu_width+menu_rel_x+20) >= containerRect.right) {
+              menu_rel_x = -menu_rel_x - menu_width
+            }
+            if ((event.pageY+menu_height+menu_rel_y+28) >= containerRect.bottom) {
+              menu_rel_y = -menu_rel_y - menu_height - 16 // TODO: fix height of a row
+            }
+            menuNode.style.top  = /*containerRect.top  +*/ event.pageY + menu_rel_y + 'px';
+            menuNode.style.left = /*containerRect.left +*/ event.pageX + menu_rel_x + 'px';
           } else {
             // Remove on 2nd right-click
             menuNode.style.display = 'none';
-            menuVisible = false
           }
         }
       });
 
       window.addEventListener('click', function(e) {
-        // hide menu
-        menuNode.style.display = 'none';
-        menuVisible = false
-        e.preventDefault();
+        // hide context menu
+        if (menuNode.style.display !== 'none') {
+          menuNode.style.display = 'none';
+          e.preventDefault();
+        }
       });
 
       // Setup for download of image
@@ -1127,46 +1150,44 @@
     let search_term = ".node[title='{}']".format(node_name)
     let found = false
     let bbox = null
+    let viewport = document.querySelectorAll('.node > title');
     let titles = document.querySelectorAll('.node > title');
     for (const node of titles ) {
       if (node.innerHTML === node_name) {
         found = true
         bb = node.parentNode.getBBox()
-        console.log(bb, node_name)
+        console.log("BBox", bb, node_name)
         break;
       }
     }
     if (found) {
-      /*
-      var viewBox = panZoom.getSizes().viewBox(),
-      offsetX = (this.width - (viewBox.width + bbox.x * 2) * this.getZoom()) * 0.5,
-      offsetY = (this.height - (viewBox.height + bbox.y * 2) * this.getZoom()) * 0.5;
+      let output = document.getElementById("output");
+      let sizes = panZoom.getSizes()
+      let rz = sizes.realZoom;
+      let pan = panZoom.getPan()
+      let window_width = output.clientWidth/rz
+      let window_height = output.clientHeight/rz
+      console.log("Sizes", sizes)
+      console.log("ViewBox", sizes.viewBox)
+      console.log("Pan", pan)
       
-      panZoom.pan({x: offsetX, y: offsetY})
-      */
-
-      //let bb=$("#target")[0].getBBox();
-      let vbb=panZoom.getSizes().viewBox;
-      let x=vbb.width/2-bb.x-bb.width/2;
-      let y=vbb.height/2-bb.y-bb.height/2;
-      let rz=panZoom.getSizes().realZoom;
-      console.log(x, y, rz, x*rz, y*rz, vbb)
-      let new_x = x*rz/2
-      let new_y = y*rz/2
-      let realZoom = panZoom.getZoom()
-      console.log(rz, realZoom)
-      //panZoom.pan({x: new_x,y: new_y});
-      panZoom.panBy({x: bb.width*rz, y: 0});
-/*
-     newX = bb.x + bb.width * 0.5
-     newY = bb.y - bb.height * 0.5
-     panZoom.pan({x:0,y:0});
-     let realZoom = panZoom.getZoom() //getSizes().realZoom;
-     console.log(realZoom, newX, newY)
-     panZoom.pan({  
-        x: -(newX*realZoom)+(panZoom.getSizes().width/2),
-        y: -(newY*realZoom)+(panZoom.getSizes().height/2)
-      }); */
+      let centerpos_x = sizes.viewBox.width * 0.5
+      let centerpos_y = sizes.viewBox.height * 0.5
+      if (window_width > sizes.viewBox.width)
+      centerpos_x += (window_width-sizes.viewBox.width) * 0.5
+      if (window_width < sizes.viewBox.width)
+        centerpos_x -= (sizes.viewBox.width-window_width) * 0.5
+      if (window_height > sizes.viewBox.height)
+        centerpos_y += (window_height-sizes.viewBox.height) * 0.5
+      if (window_height < sizes.viewBox.height)
+        centerpos_y -= (sizes.viewBox.height-window_height) * 0.5
+      console.log(centerpos_x, centerpos_y)
+      let req_center_x = bb.x + bb.width * 0.5
+      let req_center_y = bb.y
+      let pan_vector_x = (centerpos_x - req_center_x)*rz
+      let pan_vector_y = (centerpos_y - req_center_y)*rz
+      console.log(pan_vector_x, pan_vector_y)
+      panZoom.pan({x: pan_vector_x, y: pan_vector_y});
     }
   }
 
