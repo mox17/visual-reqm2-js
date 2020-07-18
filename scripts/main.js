@@ -1,3 +1,4 @@
+  "use strict";
 
   var beforeUnloadMessage = null;
 
@@ -104,8 +105,9 @@
 
   var selected_node = ''
   var svg_element = null
+
   function updateOutput() {
-    var graph = document.querySelector("#output");
+    const graph = document.querySelector("#output");
 
     var svg = graph.querySelector("svg");
     if (svg) {
@@ -518,15 +520,8 @@
         }
       } else {
         // no pattern specified
-        if (false && oreqm_ref) {  // disable
-          // If reference file exist use differences as filter
-          oreqm_main.color_up_down([], COLOR_UP, COLOR_DOWN)
-          graph = oreqm_main.create_graph(select_color, "reqspec1", construct_graph_title(), [])
-          set_doctype_count_shown(graph.doctype_dict)
-        } else {
-          graph = oreqm_main.create_graph(select_all, "reqspec1", construct_graph_title(), [])
-          set_doctype_count_shown(graph.doctype_dict)
-        }
+        const graph = oreqm_main.create_graph(select_all, "reqspec1", construct_graph_title(), [])
+        set_doctype_count_shown(graph.doctype_dict)
       }
       updateGraph();
     }
@@ -547,19 +542,64 @@
 
   var selected_nodes = []
   var selected_index = 0
+  var selected_node = null
+  var selected_polygon = null
+  var selected_width = ""
 
   function reset_selection() {
     selected_nodes = []
     selected_index = 0
   }
 
+  function set_selection(selection) {
+    selected_nodes = selection
+    selected_index = 0
+  }
+
+  function clear_selection_highlight() {
+    if (selected_polygon) {
+      selected_polygon.stroke_width = selected_width
+      selected_polygon = null
+    }
+  }
+
+  function set_selection_highlight(node) {
+    clear_selection_highlight()
+    //let cluster_name = "cluster_{}".format()
+    let outline = document.querySelector('.polygon');
+    if (outline) {
+      selected_polygon = outline
+      selected_width = selected_polygon.stroke_width
+      selected_polygon.stroke_width = "8"
+    }
+  }
+
+  function prev_selected() {
+    // step backwards through nodes and center display
+    if (oreqm_main && selected_nodes.length) {
+      if (selected_index > selected_nodes.length) selected_index = 0
+      center_node(selected_nodes[selected_index])
+      selected_index--
+      if (selected_index < 0) selected_index = selected_nodes.length - 1
+    }
+  }
+
+  function next_selected() {
+    // step forwards through nodes and center display
+    if (oreqm_main && selected_nodes.length) {
+      if (selected_index > selected_nodes.length) selected_index = 0
+      center_node(selected_nodes[selected_index])
+      selected_index++
+      if (selected_index >= selected_nodes.length) selected_index = 0
+    }
+  }
+
   function id_search(regex) {
     var results = oreqm_main.find_reqs_with_name(regex)
-    selected_nodes = results
-    selected_index = 0
+    set_selection(results)
     oreqm_main.clear_colors()
     oreqm_main.color_up_down(results, COLOR_UP, COLOR_DOWN)
-    graph = oreqm_main.create_graph(select_color, "reqspec1", construct_graph_title(), results)
+    const graph = oreqm_main.create_graph(select_color, "reqspec1", construct_graph_title(), results)
     set_doctype_count_shown(graph.doctype_dict)
   }
 
@@ -569,7 +609,7 @@
     selected_index = 0
     oreqm_main.clear_colors()
     oreqm_main.color_up_down(results, COLOR_UP, COLOR_DOWN)
-    graph = oreqm_main.create_graph(select_color, "reqspec1", construct_graph_title(), results)
+    const graph = oreqm_main.create_graph(select_color, "reqspec1", construct_graph_title(), results)
     set_doctype_count_shown(graph.doctype_dict)
   }
 
@@ -679,12 +719,11 @@
 
   function center_node(node_name) {
     // Grab all the siblings of the element that was actually clicked on
-    let search_term = ".node[title='{}']".format(node_name)
     let found = false
-    let bbox = null
-    let viewport = document.querySelectorAll('.node > title');
     let titles = document.querySelectorAll('.node > title');
-    for (const node of titles ) {
+    let bb
+    let node
+    for (node of titles ) {
       if (node.innerHTML === node_name) {
         found = true
         bb = node.parentNode.getBBox()
@@ -693,10 +732,11 @@
       }
     }
     if (found) {
+      set_selection_highlight(node.parentNode)
       let output = document.getElementById("output");
       let sizes = panZoom.getSizes()
       let rz = sizes.realZoom;
-      let pan = panZoom.getPan()
+      //let pan = panZoom.getPan()
       let window_width = output.clientWidth/rz
       let window_height = output.clientHeight/rz
       let req_center_x = bb.x + bb.width * 0.5
@@ -725,26 +765,6 @@
       let pan_vector_y = (centerpos_y - req_center_y)*rz
       // console.log(pan_vector_x, pan_vector_y)
       panZoom.pan({x: pan_vector_x, y: pan_vector_y*0.5});
-    }
-  }
-
-  function prev_selected() {
-    // step backwards through nodes and center display
-    if (oreqm_main && selected_nodes.length) {
-      if (selected_index > selected_nodes.length) selected_index = 0
-      center_node(selected_nodes[selected_index])
-      selected_index--
-      if (selected_index < 0) selected_index = selected_nodes.length - 1
-    }
-  }
-
-  function next_selected() {
-    // step forwards through nodes and center display
-    if (oreqm_main && selected_nodes.length) {
-      if (selected_index > selected_nodes.length) selected_index = 0
-      center_node(selected_nodes[selected_index])
-      selected_index++
-      if (selected_index >= selected_nodes.length) selected_index = 0
     }
   }
 

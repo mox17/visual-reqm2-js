@@ -1,4 +1,6 @@
 /* Main class for managing oreqm xml data */
+"use strict";
+
 class ReqM2Oreqm {
   // This class reads and manages information in ReqM2 .oreqm files
   constructor(content, excluded_doctypes, excluded_ids) {
@@ -456,16 +458,16 @@ class ReqM2Oreqm {
         // nodes
         const ghost = this.removed_reqs.includes(req_id)
         let node = format_node(req_id, this.requirements.get(req_id), ghost)
-        let dot_id = req_id.replace(/\./g, '_').replace(' ', '_')
+        let dot_id = req_id //.replace(/\./g, '_').replace(' ', '_')
         if (this.new_reqs.includes(req_id)) {
-          node = 'subgraph "cluster_{}" { color=limegreen penwidth=4 label="new" fontname="Arial" labelloc="t"\n{}}\n'.format(dot_id, node)
+          node = 'subgraph "cluster_{}_new" { color=limegreen penwidth=1 label="new" fontname="Arial" labelloc="t"\n{}}\n'.format(dot_id, node)
         } else if (this.updated_reqs.includes(req_id)) {
-          node = 'subgraph "cluster_{}" { color=goldenrod1 penwidth=3 label="changed" fontname="Arial" labelloc="t"\n{}}\n'.format(dot_id, node)
+          node = 'subgraph "cluster_{}_changed" { color=goldenrod1 penwidth=1 label="changed" fontname="Arial" labelloc="t"\n{}}\n'.format(dot_id, node)
         } else if (this.removed_reqs.includes(req_id)) {
-          node = 'subgraph "cluster_{}" { color=red penwidth=3 label="removed" fontname="Arial" labelloc="t"\n{}}\n'.format(dot_id, node)
+          node = 'subgraph "cluster_{}_removed" { color=red penwidth=1 label="removed" fontname="Arial" labelloc="t"\n{}}\n'.format(dot_id, node)
         }
         if (highlights.includes(req_id)) {
-          node = 'subgraph "cluster_{}" { color=maroon3 penwidth=3 label=""\n{}}\n'.format(dot_id, node)
+          node = 'subgraph "cluster_{}" { id="sel_{}" color=maroon3 penwidth=3 label=""\n{}}\n'.format(dot_id, dot_id, node)
         }
         graph += node + '\n'
         node_count += 1

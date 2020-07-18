@@ -1,8 +1,10 @@
 // Manage color palettes for doctypes
+"use strict";
 
 function hsv_to_rgb(hue, saturation, value) {
   // HSV values in [0..1]
   //  returns [r, g, b] values from 0 to 255
+  let red, green, blue
   let hue_int = Math.floor(hue * 6)
   let f = hue * 6 - hue_int
   let p = value * (1 - saturation)
@@ -44,7 +46,7 @@ function hsv_to_rgb(hue, saturation, value) {
 // use golden ratio
 const GOLDEN_RATIO_CONJUGATE = 0.618033988749895
 var HUE_START = 0.314159265359 // use "random" start value
-var HUE = 0.314159265359 // use "random" start value
+var HUE = HUE_START
 
 function get_random_color() {
   // Calculate next pseudo random color
@@ -69,7 +71,7 @@ function decimalToHex(d, padding) {
 
 function get_color_string() {
   // Return color as #RRGGBB string"""
-  color = get_random_color()
+  const color = get_random_color()
   return "#{}{}{}".format(decimalToHex(color[0], 2),
                           decimalToHex(color[1], 2),
                           decimalToHex(color[2], 2))
@@ -79,7 +81,7 @@ function get_color_array(size) {
   // Return a list with size number of #RRGGBB string colors
   let color_array = []
   for (const i = 0; i<size; i++) {
-    color = get_color_string()
+    const color = get_color_string()
     color_array.push(color)
   }
   return color_array
@@ -101,76 +103,77 @@ function add_color(palette, doctype) {
   return new_color
 }
 
-  var my_palette =
-  {
-    "none": "#FFFFFF"
-  };
+var my_palette =
+{
+  "none": "#FFFFFF"
+};
 
-  function get_color(key) {
-    if (key in my_palette) {
-      color = my_palette[key]
-    } else {
-      color = add_color(my_palette, key)
-    }
-    return color
-  }
-
-
-  function downloadObjectAsJson(exportObj, exportName){
-    var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj, 0, 2));
-    var downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href",     dataStr);
-    downloadAnchorNode.setAttribute("download", exportName + ".json");
-    document.body.appendChild(downloadAnchorNode); // required for firefox
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
-  }
-
-  function save_colors() {
-    // Download color object and store it in Web storage
-    downloadObjectAsJson(my_palette, "visual_reqm2_colors")
-    store_colors(my_palette)
-  }
-
-  function load_colors() {
-    let input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json'
-
-    input.onchange = e => {
-      const file = e.target.files[0];
-      let reader = new FileReader();
-
-      reader.readAsText(file,'UTF-8');
-      reader.onload = readerEvent => {
-        const colors = JSON.parse(readerEvent.target.result);
-        store_colors(colors)
-        //console.log(colors)
-        my_palette = colors
-        _color_random_reset()
-        update_doctype_table()
-      }
-    }
-    input.click();
-  }
-
-  const color_storage_name = 'Visual_ReqM2_color_palette'
-  function store_colors(colors) {
-    if (typeof(Storage) !== "undefined") {
-      const color_string = JSON.stringify(colors)
-      localStorage.setItem(color_storage_name, color_string);
-    }
-  }
-
-  // Load color palette when page loads
-  if (typeof(Storage) !== "undefined") {
-    // Code for localStorage/sessionStorage.
-    let color_string = localStorage.getItem(color_storage_name);
-    //console.log("storage:", color_string, typeof(color_string))
-    if (typeof(color_string) === 'string') {
-      const colors = JSON.parse(color_string)
-      my_palette = colors
-    }
+function get_color(key) {
+  let color
+  if (key in my_palette) {
+    color = my_palette[key]
   } else {
-    // Sorry! No Web Storage support..
+    color = add_color(my_palette, key)
   }
+  return color
+}
+
+
+function downloadObjectAsJson(exportObj, exportName){
+  var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj, 0, 2));
+  var downloadAnchorNode = document.createElement('a');
+  downloadAnchorNode.setAttribute("href",     dataStr);
+  downloadAnchorNode.setAttribute("download", exportName + ".json");
+  document.body.appendChild(downloadAnchorNode); // required for firefox
+  downloadAnchorNode.click();
+  downloadAnchorNode.remove();
+}
+
+function save_colors() {
+  // Download color object and store it in Web storage
+  downloadObjectAsJson(my_palette, "visual_reqm2_colors")
+  store_colors(my_palette)
+}
+
+function load_colors() {
+  let input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json'
+
+  input.onchange = e => {
+    const file = e.target.files[0];
+    let reader = new FileReader();
+
+    reader.readAsText(file,'UTF-8');
+    reader.onload = readerEvent => {
+      const colors = JSON.parse(readerEvent.target.result);
+      store_colors(colors)
+      //console.log(colors)
+      my_palette = colors
+      _color_random_reset()
+      update_doctype_table()
+    }
+  }
+  input.click();
+}
+
+const color_storage_name = 'Visual_ReqM2_color_palette'
+function store_colors(colors) {
+  if (typeof(Storage) !== "undefined") {
+    const color_string = JSON.stringify(colors)
+    localStorage.setItem(color_storage_name, color_string);
+  }
+}
+
+// Load color palette when page loads
+if (typeof(Storage) !== "undefined") {
+  // Code for localStorage/sessionStorage.
+  let color_string = localStorage.getItem(color_storage_name);
+  //console.log("storage:", color_string, typeof(color_string))
+  if (typeof(color_string) === 'string') {
+    const colors = JSON.parse(color_string)
+    my_palette = colors
+  }
+} else {
+  // Sorry! No Web Storage support..
+}
