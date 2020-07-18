@@ -293,7 +293,7 @@
     /* Status bar layout */
     .alignleft {
       float: left;
-      width:35%;
+      width:55%;
       text-align:left;
       margin:0;
       padding:0;
@@ -301,7 +301,7 @@
 
     .aligncenter {
       float: left;
-      width:55%;
+      width:35%;
       text-align:center;
       margin:0;
       padding:0;
@@ -392,6 +392,8 @@
               <label id="raw" style="visibility: hidden;">
                 <input type="checkbox" > raw
               </label>
+              <button type="button" onclick="prev_selected()">prev</button>
+              <button type="button" onclick="next_selected()">next</button>
               <label id="download_image"></label>
             </p>
             <p class="aligncenter">
@@ -463,7 +465,6 @@
   <li id="menu_exclude"  onclick="exclude_node()">Exclude</li>
   <li id="menu_copy_id"  onclick="copy_id_node()">Copy &lt;id&gt;</li>
   <li id="menu_save_svg" onclick="save_svg_node()">Save image</li>
-  <li id="menu_pan_test" onclick="pan_test_node()">Pan test</li>
 </ul>
 
   <script src="./modules/viz.js/viz.js"></script>
@@ -650,9 +651,9 @@
       });
 
       svg_element.onkeyup = function(e) {
-        if (e.which == 77) {
-          //alert("M key was pressed");
-          pan_test_node()
+        if (e.which == 78) {
+          //alert("N key was pressed");
+          next_selected()
         } else if (e.ctrlKey && e.which == 66) {
           alert("Ctrl + B shortcut combination was pressed");
         } else if (e.ctrlKey && e.altKey && e.which == 89) {
@@ -676,7 +677,6 @@
         }
         selected_node = str
         if (selected_node.length) {
-          
           if ((menuNode.style.display==='none')) {
             // show context menu
             let stage = document.getElementById('output');
@@ -692,7 +692,7 @@
               menu_rel_x = -menu_rel_x - menu_width
             }
             if ((event.pageY+menu_height+menu_rel_y+28) >= containerRect.bottom) {
-              menu_rel_y = -menu_rel_y - menu_height - 16 // TODO: fix height of a row
+              menu_rel_y = -menu_rel_y - menu_height - 16 // compensate height of a row
             }
             menuNode.style.top  = /*containerRect.top  +*/ event.pageY + menu_rel_y + 'px';
             menuNode.style.left = /*containerRect.left +*/ event.pageX + menu_rel_x + 'px';
@@ -980,6 +980,7 @@
   }
 
   function filter_graph() {
+    reset_selection()
     if (oreqm_main) {
       handle_pruning()
       // Collect filter criteria and generate .dot data
@@ -1021,8 +1022,18 @@
     }
   }
 
+  var selected_nodes = []
+  var selected_index = 0
+
+  function reset_selection() {
+    selected_nodes = []
+    selected_index = 0
+  }
+
   function id_search(regex) {
     var results = oreqm_main.find_reqs_with_name(regex)
+    selected_nodes = results
+    selected_index = 0
     oreqm_main.clear_colors()
     oreqm_main.color_up_down(results, COLOR_UP, COLOR_DOWN)
     graph = oreqm_main.create_graph(select_color, "reqspec1", construct_graph_title(), results)
@@ -1031,6 +1042,8 @@
 
   function txt_search(regex) {
     var results = oreqm_main.find_reqs_with_text(regex)
+    selected_nodes = results
+    selected_index = 0
     oreqm_main.clear_colors()
     oreqm_main.color_up_down(results, COLOR_UP, COLOR_DOWN)
     graph = oreqm_main.create_graph(select_color, "reqspec1", construct_graph_title(), results)
@@ -1141,10 +1154,6 @@
     filter_change()
   }
 
-  function pan_test_node() {
-    center_node("corbos.LNX.OperatingSystem")
-  }
-
   function center_node(node_name) {
     // Grab all the siblings of the element that was actually clicked on
     let search_term = ".node[title='{}']".format(node_name)
@@ -1156,7 +1165,7 @@
       if (node.innerHTML === node_name) {
         found = true
         bb = node.parentNode.getBBox()
-        console.log("BBox", bb, node_name)
+        // console.log("BBox", bb, node_name)
         break;
       }
     }
@@ -1167,27 +1176,52 @@
       let pan = panZoom.getPan()
       let window_width = output.clientWidth/rz
       let window_height = output.clientHeight/rz
-      console.log("Sizes", sizes)
-      console.log("ViewBox", sizes.viewBox)
-      console.log("Pan", pan)
-      
-      let centerpos_x = sizes.viewBox.width * 0.5
-      let centerpos_y = sizes.viewBox.height * 0.5
-      if (window_width > sizes.viewBox.width)
-      centerpos_x += (window_width-sizes.viewBox.width) * 0.5
-      if (window_width < sizes.viewBox.width)
-        centerpos_x -= (sizes.viewBox.width-window_width) * 0.5
-      if (window_height > sizes.viewBox.height)
-        centerpos_y += (window_height-sizes.viewBox.height) * 0.5
-      if (window_height < sizes.viewBox.height)
-        centerpos_y -= (sizes.viewBox.height-window_height) * 0.5
-      console.log(centerpos_x, centerpos_y)
       let req_center_x = bb.x + bb.width * 0.5
       let req_center_y = bb.y
+      //console.log("Sizes", sizes)
+      //console.log("ViewBox", sizes.viewBox)
+      //console.log("Pan", pan)
+
+      let centerpos_x = sizes.viewBox.width * 0.5
+      let centerpos_y = sizes.viewBox.height * 0.5
+      if (window_width > sizes.viewBox.width) {
+        centerpos_x += (window_width-sizes.viewBox.width) * 0.5
+      }
+      if (window_width < sizes.viewBox.width) {
+        centerpos_x -= (sizes.viewBox.width-window_width) * 0.5
+      }
+      if (window_height > sizes.viewBox.height) {
+        //centerpos_y += (window_height-sizes.viewBox.height) * 0.5
+        req_center_y -= (window_height-sizes.viewBox.height) * 0.5
+      }
+      if (window_height < sizes.viewBox.height) {
+        centerpos_y -= (sizes.viewBox.height-window_height) * 0.5
+      }
+      // console.log(centerpos_x, centerpos_y)
       let pan_vector_x = (centerpos_x - req_center_x)*rz
       let pan_vector_y = (centerpos_y - req_center_y)*rz
-      console.log(pan_vector_x, pan_vector_y)
-      panZoom.pan({x: pan_vector_x, y: pan_vector_y});
+      // console.log(pan_vector_x, pan_vector_y)
+      panZoom.pan({x: pan_vector_x, y: pan_vector_y*0.5});
+    }
+  }
+
+  function prev_selected() {
+    // step backwards through nodes and center display
+    if (oreqm_main && selected_nodes.length) {
+      if (selected_index > selected_nodes.length) selected_index = 0
+      center_node(selected_nodes[selected_index])
+      selected_index--
+      if (selected_index < 0) selected_index = selected_nodes.length - 1
+    }
+  }
+
+  function next_selected() {
+    // step forwards through nodes and center display
+    if (oreqm_main && selected_nodes.length) {
+      if (selected_index > selected_nodes.length) selected_index = 0
+      center_node(selected_nodes[selected_index])
+      selected_index++
+      if (selected_index >= selected_nodes.length) selected_index = 0
     }
   }
 
