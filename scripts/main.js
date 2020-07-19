@@ -296,22 +296,25 @@
 
   function update_menu_options(node_id) {
     // get individual context menu options as appropriate
-    if (node_id.length) {
+    if (oreqm_main && oreqm_main.check_node_id(node_id)) {
       // a node was right-clicked
-      document.getElementById('menu_copy_id').className = ''
-      document.getElementById('menu_exclude').className = ''
+      document.getElementById('menu_copy_id').classList.remove('custom-menu_disabled')
+      document.getElementById('menu_exclude').classList.remove('custom-menu_disabled')
       if (selected_node_check(node_id)) {
         // it is a selected node
-        document.getElementById('menu_select').className = 'custom-menu_disabled'
-        document.getElementById('menu_deselect').className = ''
+        document.getElementById('menu_select').classList.add('custom-menu_disabled')
+        document.getElementById('menu_deselect').classList.remove('custom-menu_disabled')
       } else {
-        document.getElementById('menu_select').className = ''
-        document.getElementById('menu_deselect').className = 'custom-menu_disabled'
+        document.getElementById('menu_select').classList.remove('custom-menu_disabled')
+        document.getElementById('menu_deselect').classList.add('custom-menu_disabled')
       }
     } else {
       // click not on nodes
-      document.getElementById('menu_copy_id').className = 'custom-menu_disabled'
-      document.getElementById('menu_exclude').className = 'custom-menu_disabled'
+      console.log("document.getElementById('menu_copy_id').classList.add('custom-menu_disabled')")
+      document.getElementById('menu_select').classList.add('custom-menu_disabled')
+      document.getElementById('menu_deselect').classList.add('custom-menu_disabled')
+      document.getElementById('menu_exclude').classList.add('custom-menu_disabled')
+      document.getElementById('menu_copy_id').classList.add('custom-menu_disabled')
     }
   }
 
@@ -807,4 +810,3 @@
       panZoom.pan({x: pan_vector_x, y: pan_vector_y*0.5});
     }
   }
-
