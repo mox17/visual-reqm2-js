@@ -181,4 +181,9 @@ There is a slide set in the ./doc folder with further details
 
 ## example diagram
 
-![Image](doc/visual-reqm2-screenshot.png "screenshot")
+### No selections - all nodes shown
+![Image](doc/visual-reqm2-screenshot.png "All nodes")
+
+
+### Compare two `.oreqm` files
+![Image](doc/visual-reqm2-screenshot-compare.png "differences and related nodes")
