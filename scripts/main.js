@@ -202,7 +202,7 @@
           break;
         }
         selected_node = str
-        if ((menuNode.style.display==='none')) {
+        if ((menuNode.style.display==='none')||(menuNode.style.display==='initial')) {
           // show context menu
           let stage = document.getElementById('output');
           var containerRect = stage.getBoundingClientRect();
@@ -310,7 +310,6 @@
       }
     } else {
       // click not on nodes
-      console.log("document.getElementById('menu_copy_id').classList.add('custom-menu_disabled')")
       document.getElementById('menu_select').classList.add('custom-menu_disabled')
       document.getElementById('menu_deselect').classList.add('custom-menu_disabled')
       document.getElementById('menu_exclude').classList.add('custom-menu_disabled')
@@ -412,6 +411,37 @@
     auto_update = state
   }
 
+
+  function load_file_main(file) {
+    // setting up the reader
+    let reader = new FileReader();
+    reader.readAsText(file,'UTF-8');
+    reader.onload = readerEvent => {
+      //console.log( file );
+      oreqm_main = new ReqM2Oreqm(readerEvent.target.result, [], [])
+      oreqm_main_filename = file.name
+      oreqm_main_timestamp = oreqm_main.get_time()
+      document.getElementById('name').innerHTML = oreqm_main_filename
+      document.getElementById('size').innerHTML = (Math.round(file.size/1024))+" KiB"
+      document.getElementById('timestamp').innerHTML = oreqm_main_timestamp
+      const node_count = oreqm_main.get_node_count()
+      if (auto_update && node_count > 500) {
+        set_auto_update(false)
+      }
+      if (oreqm_ref) { // if we have a reference do a compare
+        compare_oreqm()
+      }
+      display_doctypes_with_count(oreqm_main.get_doctypes())
+      if (auto_update) {
+        filter_graph()
+      }
+      let ref_button = document.getElementById('get_ref_oreqm')
+      ref_button.disabled = false
+      let clear_button = document.getElementById('clear_ref_oreqm')
+      clear_button.disabled = false
+    }
+  }
+
   function get_main_oreqm_file() {
     let input = document.createElement('input');
     input.type = 'file';
@@ -420,46 +450,14 @@
     input.onchange = e => {
       // getting a hold of the file reference
       let file = e.target.files[0];
-      // setting up the reader
-      let reader = new FileReader();
-      reader.readAsText(file,'UTF-8');
-      reader.onload = readerEvent => {
-        //console.log( file );
-        oreqm_main = new ReqM2Oreqm(readerEvent.target.result, [], [])
-        oreqm_main_filename = file.name
-        oreqm_main_timestamp = oreqm_main.get_time()
-        document.getElementById('name').innerHTML = oreqm_main_filename
-        document.getElementById('size').innerHTML = (Math.round(file.size/1024))+" KiB"
-        document.getElementById('timestamp').innerHTML = oreqm_main_timestamp
-        const node_count = oreqm_main.get_node_count()
-        if (auto_update && node_count > 500) {
-          set_auto_update(false)
-        }
-        if (oreqm_ref) { // if we have a reference do a compare
-          compare_oreqm()
-        }
-        display_doctypes_with_count(oreqm_main.get_doctypes())
-        if (auto_update) {
-          filter_graph()
-        }
-        let ref_button = document.getElementById('get_ref_oreqm')
-        ref_button.disabled = false
-        let clear_button = document.getElementById('clear_ref_oreqm')
-        clear_button.disabled = false
-      }
+      load_file_main(file)
     }
     input.click();
   }
 
-  function get_ref_oreqm_file() {
-    let input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.oreqm'
-
-    input.onchange = e => {
-      // getting a hold of the file reference
-      let file = e.target.files[0];
-      // setting up the reader
+  function load_file_ref(file) {
+    // Load reference file
+    if (oreqm_main) {
       let reader = new FileReader();
       reader.readAsText(file,'UTF-8');
       reader.onload = readerEvent => {
@@ -477,6 +475,20 @@
           filter_graph()
         }
       }
+    } else {
+      alert("No main file selected")
+    }
+  }
+
+  function get_ref_oreqm_file() {
+    let input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.oreqm'
+
+    input.onchange = e => {
+      // getting a hold of the file reference
+      let file = e.target.files[0];
+      load_file_ref(file)
     }
     input.click();
   }
@@ -808,5 +820,88 @@
       let pan_vector_y = (centerpos_y - req_center_y)*rz
       // console.log(pan_vector_x, pan_vector_y)
       panZoom.pan({x: pan_vector_x, y: pan_vector_y*0.5});
+    }
+  }
+
+  // drop file handling
+  const drop_area_main = document.getElementById('drop_area_main');
+  const drop_area_ref = document.getElementById('drop_area_ref');
+  const app_area = document.getElementById('app');
+
+  // Main oreqm file
+  drop_area_main.addEventListener('dragover', (event) => {
+    event.stopPropagation();
+    event.preventDefault();
+    // Style the drag-and-drop as a "copy file" operation.
+    event.dataTransfer.dropEffect = 'copy';
+  });
+
+  drop_area_main.addEventListener('drop', (event) => {
+    event.stopPropagation();
+    event.preventDefault();
+    const fileList = event.dataTransfer.files;
+    //console.log(fileList);
+    process_dropped_file(event, true)
+  });
+
+  // Reference oreqm file
+  drop_area_ref.addEventListener('dragover', (event) => {
+    event.stopPropagation();
+    event.preventDefault();
+    // Style the drag-and-drop as a "copy file" operation.
+    event.dataTransfer.dropEffect = 'copy';
+  });
+
+  drop_area_ref.addEventListener('drop', (event) => {
+    event.stopPropagation();
+    event.preventDefault();
+    const fileList = event.dataTransfer.files;
+    //console.log(fileList);
+    process_dropped_file(event, false)
+  });
+
+  // Prevent drag-drop elsewhere
+  app_area.addEventListener('dragover', (event) => {
+    event.stopPropagation();
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'none';
+  });
+
+  app_area.addEventListener('drop', (event) => {
+    event.stopPropagation();
+    event.preventDefault();
+    const fileList = event.dataTransfer.files;
+    //console.log("app", fileList);
+  });
+
+  function process_dropped_file(ev, main_file) {
+    // Process dropped file, if there is just one file
+    let dropped_file
+    let count = 0
+    if (ev.dataTransfer.items) {
+      // Use DataTransferItemList interface to access the file(s)
+      for (var i = 0; i < ev.dataTransfer.items.length; i++) {
+        // If dropped items aren't files, reject them
+        if (ev.dataTransfer.items[i].kind === 'file') {
+          count++
+          var file = ev.dataTransfer.items[i].getAsFile();
+          //console.log('... file[' + i + '].name = ' + file.name);
+          dropped_file = file
+        }
+      }
+    } else {
+      // Use DataTransfer interface to access the file(s)
+      for (var i = 0; i < ev.dataTransfer.files.length; i++) {
+        //console.log('... file[' + i + '].name = ' + ev.dataTransfer.files[i].name);
+        dropped_file = ev.dataTransfer.files[i]
+        count++
+      }
+    }
+    if (count === 1) {
+      if (main_file) {
+        load_file_main(dropped_file)
+      } else {
+        load_file_ref(dropped_file)
+      }
     }
   }

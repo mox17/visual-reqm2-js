@@ -17,22 +17,26 @@
       <div id="panes" class="split split-horizontal">
         <div id="oreqm_div" class="split">
           <b>ReqM2 .oreqm file</b><br/>
-          <table class="oreqm_file_table" >
-            <tr><td width="1%">name</td><td id="name" class="absorbing-column"></td></tr>
-            <tr><td width="1%">size</td><td id="size"></td></tr>
-            <tr><td width="1%">date</td><td id="timestamp"></td></tr>
-          </table>
+          <div id="drop_area_main" >
+            <table class="oreqm_file_table" >
+              <tr><td width="1%">name</td><td id="name" class="absorbing-column"></td></tr>
+              <tr><td width="1%">size</td><td id="size"></td></tr>
+              <tr><td width="1%">date</td><td id="timestamp"></td></tr>
+            </table>
+          </div>
           <p/>
           <button type="button" onclick="get_main_oreqm_file()" >Load file</button>
           <p/>
           <div id="ref_oreqm">
             <b>Reference .oreqm file</b>
             <button id="clear_ref_oreqm" type="button" disabled="true" onclick="clear_reference()">Clear</button>
-            <table class="oreqm_file_table">
-              <tr><td width="1%">name</td><td id="ref_name" class="absorbing-column"></td></tr>
-              <tr><td width="1%">size</td><td id="ref_size"></td></tr>
-              <tr><td width="1%">date</td><td id="ref_timestamp"></td></tr>
-            </table>
+            <div id="drop_area_ref" >
+              <table class="oreqm_file_table">
+                <tr><td width="1%">name</td><td id="ref_name" class="absorbing-column"></td></tr>
+                <tr><td width="1%">size</td><td id="ref_size"></td></tr>
+                <tr><td width="1%">date</td><td id="ref_timestamp"></td></tr>
+              </table>
+            </div>
           </div>
           <p/>
           <button id="get_ref_oreqm" type="button" disabled="true" onclick="get_ref_oreqm_file()">Load file</button>
@@ -142,10 +146,10 @@
           <h4>Tips</h4>
           <ul>
             <li>Use mouse wheel (or scroll gesture) to zoom in and out around mouse position.</li>
-            <li>Use mouse-drag to pan image.</li>
-            <li>Select text in image with <b>Alt</b>+drag or <b>Ctrl</b>+drag (browser dependent). </li>
-            <li>Right-click menu on requirements to do <b>select / deselect / exclude</b>.</li>
-            <li>Click requirement to <b>copy</b> requirement &lt;id&gt; to clipboard.</li>
+            <li>Use mouse-drag to pan diagram.</li>
+            <li>Select text in diagram with <b>Alt</b>+drag or <b>Ctrl</b>+drag (browser dependent). </li>
+            <li>Right-click menu on requirements to do <b>select / deselect / exclude / copy &lt;id&gt;</b>.</li>
+            <li>When comparing oreqm files, use &lt;id&gt; prefixes <b>"rem:"</b>, <b>"chg:"</b> or <b>"new:"</b> in regex'es to select <b>removed</b>, <b>changed</b> or <b>new</b> requirements.</li>
           </ul>
         </p>
       </div>
