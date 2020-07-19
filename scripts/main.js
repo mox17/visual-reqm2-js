@@ -197,17 +197,27 @@
         }
       }); */
 
-      svg_element.onkeyup = function(e) {
+      svg_element.addEventListener('focus', function() {
+        this.addEventListener('keypress', function(e) {
+            //console.log(e.keyCode);
+        });
+      }, svg_element);
+
+      document.getElementById('graph').onkeyup = function(e) {
         if (e.which == 78) {
-          //alert("N key was pressed");
+          // alert("N key was pressed");
           next_selected()
-        } else if (e.ctrlKey && e.which == 66) {
-          alert("Ctrl + B shortcut combination was pressed");
-        } else if (e.ctrlKey && e.altKey && e.which == 89) {
-          alert("Ctrl + Alt + Y shortcut combination was pressed");
-        } else if (e.ctrlKey && e.altKey && e.shiftKey && e.which == 85) {
-          alert("Ctrl + Alt + Shift + U shortcut combination was pressed");
+        } else if (e.which == 80) {
+          // alert("P key was pressed");
+          prev_selected()
+        // } else if (e.ctrlKey && e.which == 66) {
+        //   alert("Ctrl + B shortcut combination was pressed");
+        // } else if (e.ctrlKey && e.altKey && e.which == 89) {
+        //   alert("Ctrl + Alt + Y shortcut combination was pressed");
+        // } else if (e.ctrlKey && e.altKey && e.shiftKey && e.which == 85) {
+        //   alert("Ctrl + Alt + Shift + U shortcut combination was pressed");
         }
+        console.log(e)
       };
 
       // context menu setup
