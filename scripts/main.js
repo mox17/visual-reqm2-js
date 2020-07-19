@@ -202,7 +202,7 @@
           break;
         }
         selected_node = str
-        if ((menuNode.style.display==='none')) {
+        if ((menuNode.style.display==='none')||(menuNode.style.display==='initial')) {
           // show context menu
           let stage = document.getElementById('output');
           var containerRect = stage.getBoundingClientRect();
@@ -310,7 +310,6 @@
       }
     } else {
       // click not on nodes
-      console.log("document.getElementById('menu_copy_id').classList.add('custom-menu_disabled')")
       document.getElementById('menu_select').classList.add('custom-menu_disabled')
       document.getElementById('menu_deselect').classList.add('custom-menu_disabled')
       document.getElementById('menu_exclude').classList.add('custom-menu_disabled')
@@ -841,7 +840,7 @@
     event.stopPropagation();
     event.preventDefault();
     const fileList = event.dataTransfer.files;
-    console.log(fileList);
+    //console.log(fileList);
     process_dropped_file(event, true)
   });
 
@@ -857,7 +856,7 @@
     event.stopPropagation();
     event.preventDefault();
     const fileList = event.dataTransfer.files;
-    console.log(fileList);
+    //console.log(fileList);
     process_dropped_file(event, false)
   });
 
@@ -872,7 +871,7 @@
     event.stopPropagation();
     event.preventDefault();
     const fileList = event.dataTransfer.files;
-    console.log("app", fileList);
+    //console.log("app", fileList);
   });
 
   function process_dropped_file(ev, main_file) {
@@ -886,14 +885,14 @@
         if (ev.dataTransfer.items[i].kind === 'file') {
           count++
           var file = ev.dataTransfer.items[i].getAsFile();
-          console.log('... file[' + i + '].name = ' + file.name);
+          //console.log('... file[' + i + '].name = ' + file.name);
           dropped_file = file
         }
       }
     } else {
       // Use DataTransfer interface to access the file(s)
       for (var i = 0; i < ev.dataTransfer.files.length; i++) {
-        console.log('... file[' + i + '].name = ' + ev.dataTransfer.files[i].name);
+        //console.log('... file[' + i + '].name = ' + ev.dataTransfer.files[i].name);
         dropped_file = ev.dataTransfer.files[i]
         count++
       }
