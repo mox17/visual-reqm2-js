@@ -542,4 +542,8 @@ class ReqM2Oreqm {
     return this.requirements.size
   }
 
+  check_node_id(name) {
+    return this.requirements.has(name)
+  }
+
 }

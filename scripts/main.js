@@ -153,6 +153,7 @@
         panZoom.resize();
       });
 
+      /*
       // This time, add the listener to the graph itself
       svg_element.addEventListener('click', event => {
         let str = ""
@@ -173,7 +174,7 @@
           document.execCommand('copy');
           document.body.removeChild(ta);
         }
-      });
+      }); */
 
       svg_element.onkeyup = function(e) {
         if (e.which == 78) {
@@ -201,30 +202,29 @@
           break;
         }
         selected_node = str
-        if (selected_node.length) {
-          if ((menuNode.style.display==='none')) {
-            // show context menu
-            let stage = document.getElementById('output');
-            var containerRect = stage.getBoundingClientRect();
-            menuNode.style.display = 'initial';
-            menuNode.style.top = "0"
-            menuNode.style.left = "0"
-            let menu_width = menuNode.clientWidth
-            let menu_height = menuNode.clientHeight
-            let menu_rel_x = 2
-            let menu_rel_y = 2
-            if ((event.pageX+menu_width+menu_rel_x+20) >= containerRect.right) {
-              menu_rel_x = -menu_rel_x - menu_width
-            }
-            if ((event.pageY+menu_height+menu_rel_y+28) >= containerRect.bottom) {
-              menu_rel_y = -menu_rel_y - menu_height - 16 // compensate height of a row
-            }
-            menuNode.style.top  = /*containerRect.top  +*/ event.pageY + menu_rel_y + 'px';
-            menuNode.style.left = /*containerRect.left +*/ event.pageX + menu_rel_x + 'px';
-          } else {
-            // Remove on 2nd right-click
-            menuNode.style.display = 'none';
+        if ((menuNode.style.display==='none')) {
+          // show context menu
+          let stage = document.getElementById('output');
+          var containerRect = stage.getBoundingClientRect();
+          menuNode.style.display = 'initial';
+          menuNode.style.top = "0"
+          menuNode.style.left = "0"
+          update_menu_options(selected_node)
+          let menu_width = menuNode.clientWidth
+          let menu_height = menuNode.clientHeight
+          let menu_rel_x = 2
+          let menu_rel_y = 2
+          if ((event.pageX+menu_width+menu_rel_x+20) >= containerRect.right) {
+            menu_rel_x = -menu_rel_x - menu_width
           }
+          if ((event.pageY+menu_height+menu_rel_y+28) >= containerRect.bottom) {
+            menu_rel_y = -menu_rel_y - menu_height - 16 // compensate height of a row
+          }
+          menuNode.style.top  = /*containerRect.top  +*/ event.pageY + menu_rel_y + 'px';
+          menuNode.style.left = /*containerRect.left +*/ event.pageX + menu_rel_x + 'px';
+        } else {
+          // Remove on 2nd right-click
+          menuNode.style.display = 'none';
         }
       });
 
@@ -262,6 +262,17 @@
     return beforeUnloadMessage;
   });
 
+  function copy_id_node() {
+    const ta = document.createElement('textarea');
+    ta.value = selected_node
+    ta.setAttribute('readonly', '');
+    ta.style = { position: 'absolute', left: '-9999px' };
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  }
+
   /*
   document.querySelector("#engine select").addEventListener("change", function() {
       updateGraph();
@@ -282,6 +293,27 @@
   document.querySelector("#raw input").addEventListener("change", function() {
     updateOutput();
   });
+
+  function update_menu_options(node_id) {
+    // get individual context menu options as appropriate
+    if (node_id.length) {
+      // a node was right-clicked
+      document.getElementById('menu_copy_id').className = ''
+      document.getElementById('menu_exclude').className = ''
+      if (selected_node_check(node_id)) {
+        // it is a selected node
+        document.getElementById('menu_select').className = 'custom-menu_disabled'
+        document.getElementById('menu_deselect').className = ''
+      } else {
+        document.getElementById('menu_select').className = ''
+        document.getElementById('menu_deselect').className = 'custom-menu_disabled'
+      }
+    } else {
+      // click not on nodes
+      document.getElementById('menu_copy_id').className = 'custom-menu_disabled'
+      document.getElementById('menu_exclude').className = 'custom-menu_disabled'
+    }
+  }
 
   function set_doctype_count_shown(visible_nodes) {
     // Update doctype table with counts of nodes actually displayed
@@ -556,6 +588,10 @@
     selected_index = 0
   }
 
+  function selected_node_check(node) {
+    return selected_nodes.includes(node)
+  }
+
   function clear_selection_highlight() {
     if (selected_polygon) {
       selected_polygon.stroke_width = selected_width
@@ -663,14 +699,16 @@
     let node = selected_node
     let node_select_str = "{}$".format(node)
     let search_pattern = document.getElementById("search_regex").value.trim()
-    if (!search_pattern.includes(node_select_str)) {
-      if (search_pattern.length) {
-        node_select_str = '\n|'+node_select_str
+    if (oreqm_main && oreqm_main.check_node_id(node)) {
+      if (!search_pattern.includes(node_select_str)) {
+        if (search_pattern.length) {
+          node_select_str = '\n|'+node_select_str
+        }
+        search_pattern += node_select_str
+        //document.querySelector("#id_checkbox input").checked = true
+        document.getElementById("search_regex").value = search_pattern
+        filter_change()
       }
-      search_pattern += node_select_str
-      //document.querySelector("#id_checkbox input").checked = true
-      document.getElementById("search_regex").value = search_pattern
-      filter_change()
     }
   }
 
@@ -690,21 +728,23 @@
       //console.log("deselect_node() - search ", node, search_pattern, new_search_pattern)
       filter_change()
     } else {
-      alert_text = "'{}' is not a selected node\nPerhaps try 'Exclude'?".format(node)
+      let alert_text = "'{}' is not a selected node\nPerhaps try 'Exclude'?".format(node)
       alert(alert_text)
     }
   }
 
   function exclude_node() {
     // Add node to the exclusion list
-    var excluded_ids = document.getElementById("excluded_ids").value.trim()
-    if (excluded_ids.length) {
-      excluded_ids += '\n' + selected_node
-    } else {
-      excluded_ids = selected_node
+    if (oreqm_main && oreqm_main.check_node_id(selected_node)) {
+        var excluded_ids = document.getElementById("excluded_ids").value.trim()
+      if (excluded_ids.length) {
+        excluded_ids += '\n' + selected_node
+      } else {
+        excluded_ids = selected_node
+      }
+      document.getElementById("excluded_ids").value = excluded_ids
+      filter_change()
     }
-    document.getElementById("excluded_ids").value = excluded_ids
-    filter_change()
   }
 
   function clear_search_regex() {

@@ -282,6 +282,11 @@
   .custom-menu li:hover {
     background-color: #555;
   }
+
+  .custom-menu_disabled  {
+    pointer-events: none; /* This makes it not clickable */
+    opacity: 0.6;         /* This grays it out to look disabled */
+  }
   /* svg context menu related - end */
 
   /* Status bar layout */
