@@ -1,4 +1,6 @@
 // Some utility functions
+"use strict";
+
 String.prototype.format = function () {
   var i = 0, args = arguments;
   return this.replace(/{}/g, function () {
@@ -76,7 +78,7 @@ function normalize_indent(txt) {
   txt = txt.replace(/\t/, '  ')  // no tabs
   txt = txt.replace(/^(\s*\n)+/, '') // empty initial line
   txt = txt.replace(/(\n\s*)+$/m, '') // empty final line
-  line_arr = txt.split('\n')
+  let line_arr = txt.split('\n')
   // Calculate smallest amount of leading whitespace
   let min_leading = 100
   let match = line_arr[0].match(/^\s+/)
@@ -202,14 +204,14 @@ function tags_line(tags, platforms) {
 function format_node(node_id, rec, ghost) {
   // Create 'dot' style 'html' table entry for the specobject. Rows without data are left out
   let node_table = ""
-  furtherinfo     = rec.furtherinfo     ? '        <TR><TD COLSPAN="3" ALIGN="LEFT">furtherinfo: {}</TD></TR>\n'.format(dot_format(rec.furtherinfo)) : ''
-  safetyrationale = rec.safetyrationale ? '        <TR><TD COLSPAN="3" ALIGN="LEFT">safetyrationale: {}</TD></TR>\n'.format(dot_format(rec.safetyrationale)) : ''
-  shortdesc       = rec.shortdesc       ? '        <TR><TD COLSPAN="3" ALIGN="LEFT">shortdesc: {}</TD></TR>\n'.format(dot_format(rec.shortdesc)) : ''
-  rationale       = rec.rationale       ? '        <TR><TD COLSPAN="3" ALIGN="LEFT">rationale: {}</TD></TR>\n'.format(dot_format(rec.rationale)) : ''
-  verifycrit      = rec.verifycrit      ? '        <TR><TD COLSPAN="3" ALIGN="LEFT">{}</TD></TR>\n'.format(dot_format(rec.verifycrit)) : ''
-  comment         = rec.comment         ? '        <TR><TD COLSPAN="3" ALIGN="LEFT">comment: {}</TD></TR>\n'.format(dot_format(rec.comment)) : ''
-  source          = rec.source          ? '        <TR><TD COLSPAN="3" ALIGN="LEFT">source: {}</TD></TR>\n'.format(dot_format(rec.source)) : ''
-  status          = rec.status          ? '        <TR><TD>{}</TD><TD>{}</TD><TD>{}</TD></TR>\n'.format(tags_line(rec.tags, rec.platform), rec.safetyclass, rec.status) : ''
+  let furtherinfo     = rec.furtherinfo     ? '        <TR><TD COLSPAN="3" ALIGN="LEFT">furtherinfo: {}</TD></TR>\n'.format(dot_format(rec.furtherinfo)) : ''
+  let safetyrationale = rec.safetyrationale ? '        <TR><TD COLSPAN="3" ALIGN="LEFT">safetyrationale: {}</TD></TR>\n'.format(dot_format(rec.safetyrationale)) : ''
+  let shortdesc       = rec.shortdesc       ? '        <TR><TD COLSPAN="3" ALIGN="LEFT">shortdesc: {}</TD></TR>\n'.format(dot_format(rec.shortdesc)) : ''
+  let rationale       = rec.rationale       ? '        <TR><TD COLSPAN="3" ALIGN="LEFT">rationale: {}</TD></TR>\n'.format(dot_format(rec.rationale)) : ''
+  let verifycrit      = rec.verifycrit      ? '        <TR><TD COLSPAN="3" ALIGN="LEFT">{}</TD></TR>\n'.format(dot_format(rec.verifycrit)) : ''
+  let comment         = rec.comment         ? '        <TR><TD COLSPAN="3" ALIGN="LEFT">comment: {}</TD></TR>\n'.format(dot_format(rec.comment)) : ''
+  let source          = rec.source          ? '        <TR><TD COLSPAN="3" ALIGN="LEFT">source: {}</TD></TR>\n'.format(dot_format(rec.source)) : ''
+  let status          = rec.status          ? '        <TR><TD>{}</TD><TD>{}</TD><TD>{}</TD></TR>\n'.format(tags_line(rec.tags, rec.platform), rec.safetyclass, rec.status) : ''
   node_table     = `
       <TABLE BGCOLOR="{}{}" BORDER="1" CELLSPACING="0" CELLBORDER="1" COLOR="{}" >
         <TR><TD CELLSPACING="0" >{}</TD><TD>{}</TD><TD>{}</TD></TR>
@@ -227,7 +229,7 @@ function format_node(node_id, rec, ghost) {
                         furtherinfo,
                         source,
                         status)
-  let node = '  "{}" [label=<{}>];\n'.format(node_id, node_table)
+  let node = '  "{}" [id="{}" label=<{}>];\n'.format(node_id, node_id, node_table)
   return node
 }
 
@@ -252,7 +254,7 @@ function construct_graph_title() {
     title += '  <tr><td cellspacing="0" >File</td><td>{}</td><td>{}</td></tr>'.format(oreqm_main_filename, oreqm_main_timestamp)
 
     if (oreqm_ref) {
-      diff = oreqm_main.get_main_ref_diff()
+      let diff = oreqm_main.get_main_ref_diff()
       title += '  <tr><td>Ref. file</td><td>{}</td><td>{}</td></tr>\n'.format(oreqm_ref_filename, oreqm_ref_timestamp)
       /*
       if (diff.new_reqs.length) {
@@ -309,6 +311,6 @@ function compare_oreqm() {
   }
   document.getElementById("search_regex").value = raw_search
   //console.log(results)
-  graph = oreqm_main.create_graph(select_color, "reqspec1", construct_graph_title(), [])
+  const graph = oreqm_main.create_graph(select_color, "reqspec1", construct_graph_title(), [])
   set_doctype_count_shown(graph.doctype_dict)
 }
