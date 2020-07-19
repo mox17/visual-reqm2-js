@@ -48,6 +48,8 @@
       worker.terminate();
     }
 
+    clear_diagram()
+
     document.querySelector("#output").classList.add("working");
     document.querySelector("#output").classList.remove("error");
 
@@ -105,6 +107,25 @@
 
   var selected_node = ''
   var svg_element = null
+
+  function clear_diagram() {
+    const graph = document.querySelector("#output");
+
+    var svg = graph.querySelector("svg");
+    if (svg) {
+      graph.removeChild(svg);
+    }
+
+    var text = graph.querySelector("#text");
+    if (text) {
+      graph.removeChild(text);
+    }
+
+    var img = graph.querySelector("img");
+    if (img) {
+      graph.removeChild(img);
+    }
+  }
 
   function updateOutput() {
     const graph = document.querySelector("#output");

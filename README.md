@@ -32,6 +32,20 @@ On Linux browse to http://localhost:8000
 No data is sent to the server side, all processing happens in the browser. The server is only needed because of
 standard browser security mechanisms.
 
+### Drag and drop
+
+The `.oreqm` files can be dragged to the tables for main file and reference respectively.
+
+### If no diagram appears...
+
+For very complex diagrams the viz.js/graphviz module can take take a very long time to compute a layout.
+This is not even guaranteed to succeed.
+
+If the program is not producing a diagram, consider disabling one or more less important doctypes, by exluding them from
+the doctype table. This can be done at any time.
+
+In the doctype table it is visible how many nodes an exclusion of a doctype would eliminate from the diagram.
+
 ## Search
 
 The whole point of this application is to quickly focus on nodes of particular interest and have an overview
