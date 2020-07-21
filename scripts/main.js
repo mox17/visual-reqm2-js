@@ -100,9 +100,13 @@
     if (params.options.format === "png-image-element") {
       params.options.format = "svg";
     }
-
-    worker.postMessage(params);
-    viz_working_set()
+    
+    if (document.querySelector("#format select").value === 'dot-source') {
+      updateOutput();
+    } else {
+      worker.postMessage(params);
+      viz_working_set()
+    }
   }
 
   var selected_node = ''
@@ -277,6 +281,14 @@
       image_type = 'png'
       image_mime = 'image/png'
       image_data = image
+    } else if (document.querySelector("#format select").value === "dot-source") {
+      var text = document.createElement("div");
+      text.id = "text";
+      text.appendChild(document.createTextNode(dot_source));
+      graph.appendChild(text);
+      image_type = 'dot'
+      image_mime = 'text/vnd.graphviz'
+      image_data = result
     } else {
       var text = document.createElement("div");
       text.id = "text";

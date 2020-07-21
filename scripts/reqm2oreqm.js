@@ -17,7 +17,7 @@ class ReqM2Oreqm {
     this.updated_reqs = [];        // List of updated requirements (from comparison)
     this.removed_reqs = [];        // List of removed requirements (copies taken from older(?) version of oreqm)
     this.visible_nodes = new Map(); // {doctype:[id]}
-    this.dot = 'digraph intro_tips {label="Select filter criteria and exclusions, then click\\l                    [Update graph]\\l(Unfiltered graphs may be too large to render)"\n  labelloc=b\n  fontsize=24\n  fontcolor=grey\n  fontname="Arial"\n}\n'
+    this.dot = 'digraph "" {label="Select filter criteria and exclusions, then click\\l                    [Update graph]\\l(Unfiltered graphs may be too large to render)"\n  labelloc=b\n  fontsize=24\n  fontcolor=grey\n  fontname="Arial"\n}\n'
 
     // Initialization logic
     this.process_oreqm_content(content);
@@ -415,7 +415,7 @@ class ReqM2Oreqm {
   // Fixed texts that form part of dot file
   static get DOT_PREAMBLE() {
     const preamble =
-`digraph requirements {
+`digraph "" {
   rankdir="RL"
   node [shape=plaintext fontname="Arial" fontsize=16]
   edge [color="blue",dir="forward",arrowhead="normal",arrowtail="normal"];
