@@ -556,27 +556,36 @@ class ReqM2Oreqm {
     for (const doctype of dt_keys) {
       let dt_instance = new Doctype(doctype)
       //console.log("doctype: ", doctype)
-      for (const id of this.doctypes.get(doctype)) {
+      let id_list = Array.from(this.doctypes.get(doctype))
+      for (let i=0; i<id_list.length; i++) {
+        let id = id_list[i]
         // Now scanning through id's of this doctypes
         dt_instance.add_instance()
         //console.log("+1: ", id)
         // linksto
         if (this.linksto.has(id)) {
-          const linksto = this.linksto.get(id)
-          for (const linked_id of linksto) {
-            //console.log("add_linksto ", this.requirements.get(linked_id).doctype)
-            dt_instance.add_linksto(this.requirements.get(linked_id).doctype)
+          const linksto = Array.from(this.linksto.get(id))
+          for (let i=0; i<linksto.length; i++) {
+            let linked_id = linksto[i]
+            if (this.requirements.has(linked_id)) {
+              //console.log("add_linksto ", doctype, linked_id, this.requirements.get(linked_id).doctype)
+              dt_instance.add_linksto(this.requirements.get(linked_id).doctype)
+            }
           }
         }
         // needsobj
-        for (const need of this.requirements.get(id).needsobj) {
+        let need_list = Array.from(this.requirements.get(id).needsobj)
+        for (let i=0; i<need_list.length; i++) {
+          let need = need_list[i]
           if (!need.endsWith('*')) {
             //console.log("add_needsobj ", need)
             dt_instance.add_needsobj(need)
           }
         }
         // fulfilledby
-        for (const ffb of this.requirements.get(id).fulfilledby) {
+        let ffb_list = Array.from(this.requirements.get(id).fulfilledby)
+        for (let i=0; i<ffb_list.length; i++) {
+          let ffb = ffb_list[i]
           //console.log("add_fulfilledby ", ffb[1])
           dt_instance.add_fulfilledby(ffb[1])
         }
@@ -615,19 +624,22 @@ class ReqM2Oreqm {
       dt = dt_map.get(doctype)
       // Needsobj links
       graph += '# linkage from {}\n'.format(doctype)
-      let need_keys = dt.needsobj.keys()
-      for (const nk of need_keys) {
+      let need_keys = Array.from(dt.needsobj.keys())
+      for (let i=0; i<need_keys.length; i++) {
+        let nk = need_keys[i]
         count = dt.needsobj.get(nk)
         graph += ' {} -> {} [label="need {}" style="dotted"]\n'.format(doctype, nk, count)
       }
       // linksto links
-      let lt_keys = dt.linksto.keys()
-      for (const lk of lt_keys) {
+      let lt_keys = Array.from(dt.linksto.keys())
+      for (let i=0; i<lt_keys.length; i++) {
+        let lk = lt_keys[i]
         count = dt.linksto.get(lk)
         graph += ' {} -> {} [label="linksto {}" color="green"]\n'.format(doctype, lk, count)
       }
-      let ffb_keys = dt.fulfilledby.keys()
-      for (const ffb of ffb_keys) {
+      let ffb_keys = Array.from(dt.fulfilledby.keys())
+      for (let i=0; i<ffb_keys.length; i++) {
+        let ffb = ffb_keys[i]
         count = dt.fulfilledby.get(ffb)
         graph += ' {} -> {} [label="fulfilledby {}" color="purple"]\n'.format(doctype, ffb, count)
       }
