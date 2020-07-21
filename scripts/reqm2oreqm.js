@@ -550,4 +550,106 @@ class ReqM2Oreqm {
     return this.requirements.has(name)
   }
 
+  scan_doctypes() {
+    let dt_keys = this.doctypes.keys()
+    let dt_map = new Map() // A map of { doctype_name : Doctype }
+    for (const doctype of dt_keys) {
+      let dt_instance = new Doctype(doctype)
+      //console.log("doctype: ", doctype)
+      for (const id of this.doctypes.get(doctype)) {
+        // Now scanning through id's of this doctypes
+        dt_instance.add_instance()
+        //console.log("+1: ", id)
+        // linksto
+        if (this.linksto.has(id)) {
+          const linksto = this.linksto.get(id)
+          for (const linked_id of linksto) {
+            //console.log("add_linksto ", this.requirements.get(linked_id).doctype)
+            dt_instance.add_linksto(this.requirements.get(linked_id).doctype)
+          }
+        }
+        // needsobj
+        for (const need of this.requirements.get(id).needsobj) {
+          if (!need.endsWith('*')) {
+            //console.log("add_needsobj ", need)
+            dt_instance.add_needsobj(need)
+          }
+        }
+        // fulfilledby
+        for (const ffb of this.requirements.get(id).fulfilledby) {
+          //console.log("add_fulfilledby ", ffb[1])
+          dt_instance.add_fulfilledby(ffb[1])
+        }
+      }
+      dt_map.set(doctype, dt_instance)
+      dt_instance = null
+    }
+    let graph = `digraph "" {
+      rankdir="TD"
+      node [shape=plaintext fontname="Arial" fontsize=16]
+      edge [color="black",dir="forward",arrowhead="normal",arrowtail="normal"];
+    
+    `
+    // Define the nodes - the order affects the layout
+    const dt_rank = this.doctypes_rank()
+    let doctype
+    let dt
+    for (let i=0; i<dt_rank.length; i++) {
+      doctype = dt_rank[i]
+      dt = dt_map.get(doctype)
+      let dt_node = `\
+      "{}" [label=<
+        <TABLE BGCOLOR="{}" BORDER="1" CELLSPACING="0" CELLBORDER="1" COLOR="black" >
+        <TR><TD CELLSPACING="0" >doctype: {}</TD></TR>
+        <TR><TD ALIGN="LEFT">specobject count: {}</TD></TR>
+        </TABLE>>];\n\n`.format(
+          doctype,
+          get_color(doctype),
+          doctype,
+          dt.count)
+      graph += dt_node
+    }
+    let count
+    for (let i=0; i<dt_rank.length; i++) {
+      doctype = dt_rank[i]
+      dt = dt_map.get(doctype)
+      // Needsobj links
+      graph += '# linkage from {}\n'.format(doctype)
+      let need_keys = dt.needsobj.keys()
+      for (const nk of need_keys) {
+        count = dt.needsobj.get(nk)
+        graph += ' {} -> {} [label="need {}" style="dotted"]\n'.format(doctype, nk, count)
+      }
+      // linksto links
+      let lt_keys = dt.linksto.keys()
+      for (const lk of lt_keys) {
+        count = dt.linksto.get(lk)
+        graph += ' {} -> {} [label="linksto {}" color="green"]\n'.format(doctype, lk, count)
+      }
+      let ffb_keys = dt.fulfilledby.keys()
+      for (const ffb of ffb_keys) {
+        count = dt.fulfilledby.get(ffb)
+        graph += ' {} -> {} [label="fulfilledby {}" color="purple"]\n'.format(doctype, ffb, count)
+      }
+    }
+    graph += '\n  label={}\n  labelloc=b\n  fontsize=18\n  fontcolor=black\n  fontname="Arial"\n'.format(construct_graph_title(false))
+    graph += '\n}\n'
+    //console.log(graph)
+    this.dot = graph
+    return graph
+  }
+
+  doctypes_rank() {
+    // Return an array of doctypes in abstraction level order. 
+    // Could be the order of initial declaration in oreqm
+    // For now this is it.
+    return Array.from(this.doctypes.keys())
+  }
+
+  doctype_graph() {
+    this.dot = "digraph { a -> b }"
+    this.scan_doctypes()
+    return this.dot
+  }
+
 }

@@ -693,7 +693,7 @@
     set_selection(results)
     oreqm_main.clear_colors()
     oreqm_main.color_up_down(results, COLOR_UP, COLOR_DOWN)
-    const graph = oreqm_main.create_graph(select_color, "reqspec1", construct_graph_title(), results)
+    const graph = oreqm_main.create_graph(select_color, "reqspec1", construct_graph_title(true), results)
     set_doctype_count_shown(graph.doctype_dict)
   }
 
@@ -703,7 +703,7 @@
     selected_index = 0
     oreqm_main.clear_colors()
     oreqm_main.color_up_down(results, COLOR_UP, COLOR_DOWN)
-    const graph = oreqm_main.create_graph(select_color, "reqspec1", construct_graph_title(), results)
+    const graph = oreqm_main.create_graph(select_color, "reqspec1", construct_graph_title(true), results)
     set_doctype_count_shown(graph.doctype_dict)
   }
 
@@ -946,5 +946,13 @@
       } else {
         load_file_ref(dropped_file)
       }
+    }
+  }
+
+  function show_doctypes() {
+    // Show the graph of doctype relationships
+    if (oreqm_main) {
+      const graph = oreqm_main.doctype_graph()
+      updateGraph();
     }
   }
