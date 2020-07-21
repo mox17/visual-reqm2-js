@@ -250,43 +250,43 @@ function select_color(node_id, rec, node_color) {
 function construct_graph_title() {
   let title = '""'
   if (oreqm_main) {
-    title  = '<<table border="1" cellspacing="0" cellborder="1">\n'
-    title += '  <tr><td cellspacing="0" >File</td><td>{}</td><td>{}</td></tr>'.format(oreqm_main_filename, oreqm_main_timestamp)
+    title  = '<\n    <table border="1" cellspacing="0" cellborder="1">\n'
+    title += '      <tr><td cellspacing="0" >File</td><td>{}</td><td>{}</td></tr>\n'.format(oreqm_main_filename, oreqm_main_timestamp)
 
     if (oreqm_ref) {
       let diff = oreqm_main.get_main_ref_diff()
-      title += '  <tr><td>Ref. file</td><td>{}</td><td>{}</td></tr>\n'.format(oreqm_ref_filename, oreqm_ref_timestamp)
+      title += '      <tr><td>Ref. file</td><td>{}</td><td>{}</td></tr>\n'.format(oreqm_ref_filename, oreqm_ref_timestamp)
       /*
       if (diff.new_reqs.length) {
-        title += '  <tr><td>New reqs</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(diff.new_reqs.join('<BR ALIGN="LEFT"/>'))
+        title += '      <tr><td>New reqs</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(diff.new_reqs.join('<BR ALIGN="LEFT"/>'))
       }
       if (diff.updated_reqs.length) {
-        title += '  <tr><td>Updated reqs</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(diff.updated_reqs.join('<BR ALIGN="LEFT"/>'))
+        title += '      <tr><td>Updated reqs</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(diff.updated_reqs.join('<BR ALIGN="LEFT"/>'))
       }
       if (diff.removed_reqs.length) {
-        title += '  <tr><td>Removed reqs</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(diff.removed_reqs.join('<BR ALIGN="LEFT"/>'))
+        title += '      <tr><td>Removed reqs</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(diff.removed_reqs.join('<BR ALIGN="LEFT"/>'))
       }
       */
     }
     if (search_pattern.length) {
       let pattern_string = search_pattern.trim().replace(/([^\n]{40,500}?\|)/g, '$1<BR ALIGN="LEFT"/>').replace(/\n/g, '<BR ALIGN="LEFT"/>')
       if (id_checkbox ) {
-        title += '  <tr><td>Search &lt;id&gt;</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(pattern_string.replace('\\', '\\\\'))
+        title += '      <tr><td>Search &lt;id&gt;</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(pattern_string.replace('\\', '\\\\'))
       } else {
-        title += '  <tr><td>Search text</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(pattern_string.replace('\\', '\\\\'))
+        title += '      <tr><td>Search text</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(pattern_string.replace('\\', '\\\\'))
       }
     }
 
     let ex_dt_list = get_excluded_doctypes()
     if (ex_dt_list.length) {
-      title += '  <tr><td>excluded doctypes</td><td colspan="2">{}</td></tr>\n'.format(ex_dt_list.join(", "))
+      title += '      <tr><td>excluded doctypes</td><td colspan="2">{}</td></tr>\n'.format(ex_dt_list.join(", "))
     }
 
     let excluded_ids = oreqm_main.get_excluded_ids()
     if (excluded_ids.length) {
-      title += '  <tr><td>excluded &lt;id&gt;s</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(excluded_ids.join('<BR ALIGN="LEFT"/>'))
+      title += '      <tr><td>excluded &lt;id&gt;s</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(excluded_ids.join('<BR ALIGN="LEFT"/>'))
     }
-    title += '\n</table>>'
+    title += '    </table>>'
     //console.log(title)
   }
   return title

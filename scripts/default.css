@@ -98,7 +98,7 @@
   }
 
   #output.working svg, #output.error svg,
-  #output.working #text, #output.error #text,
+  /*#output.working #text, #output.error #text,*/
   #output.working img, #output.error img {
     opacity: 0.4;
   }
