@@ -95,7 +95,7 @@ class ReqM2Oreqm {
               "dependson": [],
               "description": "*FULFILLEDBY PLACEHOLDER*",
               "doctype": ff_doctype,
-              "fulfilledby": '',
+              "fulfilledby": [],
               "furtherinfo": '',
               "id": ff_id,
               "linksto": [],
@@ -355,6 +355,9 @@ class ReqM2Oreqm {
     // Get all text fields as combined string
     const rec = this.requirements.get(req_id)
     let id_str = this.decorate_id(req_id)
+    let ffb = []
+    rec.fulfilledby.forEach(element => 
+      ffb.push('ffb:'+element[0]))
     let all_text = rec.description
           + '\n' + rec.furtherinfo
           + '\n' + rec.rationale
@@ -363,6 +366,7 @@ class ReqM2Oreqm {
           + '\n' + rec.usecase
           + '\n' + rec.verifycrit
           + '\n' + rec.comment
+          + '\n' + ffb.join('\n')
           + '\n' + rec.tags.join('\n')
           + '\n' + rec.platform.join('\n')
           + '\n' + id_str  // req_id is last to ensure regex search for <id>$ will succeed
