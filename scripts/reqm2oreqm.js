@@ -17,6 +17,7 @@ class ReqM2Oreqm {
     this.updated_reqs = [];        // List of updated requirements (from comparison)
     this.removed_reqs = [];        // List of removed requirements (copies taken from older(?) version of oreqm)
     this.visible_nodes = new Map(); // {doctype:[id]}
+    this.problems = []             // [ Str ] problems reports
     this.dot = 'digraph "" {label="Select filter criteria and exclusions, then click\\l                    [Update graph]\\l(Unfiltered graphs may be too large to render)"\n  labelloc=b\n  fontsize=24\n  fontcolor=grey\n  fontname="Arial"\n}\n'
 
     // Initialization logic
@@ -24,6 +25,10 @@ class ReqM2Oreqm {
     this.read_req_descriptions();
     this.add_fulfilledby_nodes();
     this.find_links();
+    let problems = this.get_problems()
+    if (problems) {
+      alert(problems)
+    }
   }
 
   process_oreqm_content(content) {
@@ -32,17 +37,18 @@ class ReqM2Oreqm {
   }
 
   read_req_descriptions() {
-    let specobjects = this.root.getElementsByTagName("specobjects");
-    for (const specobject of specobjects) {
-      let doctype = specobject.getAttributeNode("doctype").value;
+    let specobjects_list = this.root.getElementsByTagName("specobjects");
+    for (const specobjects of specobjects_list) {
+      let doctype = specobjects.getAttributeNode("doctype").value;
       if (!this.doctypes.has(doctype)) {
         this.doctypes.set(doctype, []);
       }
-      this.read_specobject_list(specobject, doctype);
+      this.read_specobject_list(specobjects, doctype);
     }
   }
 
   read_specobject_list(node, doctype) {
+    // Read individual specobjects
     let specobject_list = node.getElementsByTagName("specobject");
     for (const comp of specobject_list) {
       let req = new Object();
@@ -68,11 +74,25 @@ class ReqM2Oreqm {
       req.usecase         = get_xml_text(comp, 'usecase'),
       req.verifycrit      = get_xml_text(comp, 'verifycrit'),
       req.version         = get_xml_text(comp, 'version');
+      req.ffb_placeholder = false;
 
+      if (this.requirements.has(req.id)) {
+        let problem = "<id> duplicated: {} ".format(req.id)
+        //console.log("redefinition of ", req.id)
+        this.problem_duplicate(problem)
+      }
+      while (this.requirements.has(req.id)) {
+        // Add suffix until unique
+        req.id += '_dup_'
+      }
       this.requirements.set(req.id, req)
       let dt_arr = this.doctypes.get(doctype)
-      dt_arr.push(req.id)
-      this.doctypes.set(doctype, dt_arr) // keep status per doctype
+      if (!dt_arr.includes(req.id)) {
+        dt_arr.push(req.id)
+        this.doctypes.set(doctype, dt_arr) // keep status per doctype
+      } else {
+        //console.log("duplicate id ", req.id)
+      }
       //console.log(req);
     }
   }
@@ -80,16 +100,19 @@ class ReqM2Oreqm {
   add_fulfilledby_nodes() {
     // Create placeholders for absent fulfilledby requirements.
     // add doctype to needsobj if not present
-    const ids = this.requirements.keys()
-    let new_nodes = new Map()
-    for (const req_id of ids) {
+    const ids = Array.from(this.requirements.keys())
+    let new_nodes = new Map() // need a new container to add after loop
+    for (let j=0; j<ids.length; j++) {
+      let req_id = ids[j]
       const rec = this.requirements.get(req_id)
-      for (const ff_arr of rec.fulfilledby) {
+      let ffb_list = rec.fulfilledby
+      for (let i=0; i<ffb_list.length; i++) {
+        let ff_arr = ffb_list[i]
         const ff_id = ff_arr[0]
         const ff_doctype = ff_arr[1]
         const ff_version = ff_arr[2]
         if (!this.requirements.has(ff_id)) {
-            // Create dummy node
+            // Create placeholder for ffb node
             let new_node = {
               "comment": '',
               "dependson": [],
@@ -112,27 +135,42 @@ class ReqM2Oreqm {
               "tags": [],
               "usecase": "",
               "verifycrit": '',
-              "version": ff_version
+              "version": ff_version,
+              "ffb_placeholder" : true
             }
             new_nodes.set(ff_id, new_node)
+        } else {
+          // check for matching doctype
+          const real_dt = this.requirements.get(ff_id).doctype
+          if (real_dt !== ff_doctype) {
+            let problem = "ffbType {} does not match {} for <id> {}".format(ff_doctype, real_dt, ff_id)
+            this.problem_duplicate(problem)
+          }
         }
+        // Add pseudo needsobj with '*' suffix
         if (!rec.needsobj.includes(ff_doctype) &&
             !rec.needsobj.includes(ff_doctype+'*')) {
           rec.needsobj.push(ff_doctype+'*')
           this.requirements.set(req_id, rec)
         }
+        // Add new doctype list if unknown
         if (!this.doctypes.has(ff_doctype)) {
           this.doctypes.set(ff_doctype, [])
         }
+        // Add id to list if new
         let dt_arr = this.doctypes.get(ff_doctype)
-        dt_arr.push(ff_id)
-        this.doctypes.set(ff_doctype, dt_arr)
+        if (!dt_arr.includes(ff_id)) {
+          dt_arr.push(ff_id)
+          this.doctypes.set(ff_doctype, dt_arr)
+        }
       }
     }
     const new_keys = new_nodes.keys()
     for (const key of new_keys) {
       //console.log(key, new_nodes[key])
-      this.requirements.set(key, new_nodes.get(key))
+      if (!this.requirements.has(key)) {
+        this.requirements.set(key, new_nodes.get(key))
+      }
     }
   }
 
@@ -548,6 +586,147 @@ class ReqM2Oreqm {
 
   check_node_id(name) {
     return this.requirements.has(name)
+  }
+
+  scan_doctypes() {
+    // Scan all requirements and summarize the relationships between doctypes
+    // with counts of instances and relations (needsobj, linksto, fulfilledby)
+    let dt_keys = this.doctypes.keys()
+    let dt_map = new Map() // A map of { doctype_name : Doctype }
+    let processed_ids = new Set()
+    for (const doctype of dt_keys) {
+      let dt_instance = new Doctype(doctype)
+      //console.log("doctype: ", doctype)
+      let id_list = Array.from(this.doctypes.get(doctype))
+      for (let i=0; i<id_list.length; i++) {
+        let id = id_list[i]
+        if (this.requirements.get(id).ffb_placeholder === true) {
+          // skip placeholders
+          continue;
+        }
+        // Now scanning through id's of this doctype
+        dt_instance.add_instance()
+        if (processed_ids.has(id)) {
+          console.log("More than one doctype for:", id, doctype, this.requirements.get(id).doctype)
+        }
+        processed_ids.add(id)
+        //console.log("+1: ", id)
+        // linksto
+        if (this.linksto.has(id)) {
+          const linksto = Array.from(this.linksto.get(id))
+          for (let i=0; i<linksto.length; i++) {
+            let linked_id = linksto[i]
+            if (this.requirements.has(linked_id)) {
+              //console.log("add_linksto ", doctype, linked_id, this.requirements.get(linked_id).doctype)
+              dt_instance.add_linksto(this.requirements.get(linked_id).doctype)
+            }
+          }
+        }
+        // needsobj
+        let need_list = Array.from(this.requirements.get(id).needsobj)
+        for (let i=0; i<need_list.length; i++) {
+          let need = need_list[i]
+          if (!need.endsWith('*')) {
+            //console.log("add_needsobj ", need)
+            dt_instance.add_needsobj(need)
+          }
+        }
+        // fulfilledby
+        let ffb_list = Array.from(this.requirements.get(id).fulfilledby)
+        // if (ffb_list.length>10) {
+        //   console.log("ffb scan:", doctype, id, ffb_list.length)
+        // }
+        for (let i=0; i<ffb_list.length; i++) {
+          let ffb = ffb_list[i]
+          //console.log("add_fulfilledby ", ffb[1])
+          dt_instance.add_fulfilledby(ffb[1])
+        }
+      }
+      dt_map.set(doctype, dt_instance)
+      dt_instance = null
+    }
+    let graph = `digraph "" {
+      rankdir="TD"
+      node [shape=plaintext fontname="Arial" fontsize=16]
+      edge [color="black" dir="forward" arrowhead="normal" arrowtail="normal" fontname="Arial" fontsize=11];
+
+    `
+    // Define the doctype nodes - the order affects the layout
+    const dt_rank = this.doctypes_rank()
+    let doctype
+    let dt
+    for (let i=0; i<dt_rank.length; i++) {
+      doctype = dt_rank[i]
+      dt = dt_map.get(doctype)
+      let dt_node = `\
+      "{}" [label=<
+        <TABLE BGCOLOR="{}" BORDER="1" CELLSPACING="0" CELLBORDER="1" COLOR="black" >
+        <TR><TD CELLSPACING="0" >doctype: {}</TD></TR>
+        <TR><TD ALIGN="LEFT">specobject count: {}</TD></TR>
+        </TABLE>>];\n\n`.format(
+          doctype,
+          get_color(doctype),
+          doctype,
+          dt.count)
+      graph += dt_node
+    }
+    let count
+    // Loop over doctypes 
+    for (let i=0; i<dt_rank.length; i++) {
+      doctype = dt_rank[i]
+      dt = dt_map.get(doctype)
+      // Needsobj links
+      graph += '# linkage from {}\n'.format(doctype)
+      let need_keys = Array.from(dt.needsobj.keys())
+      for (let i=0; i<need_keys.length; i++) {
+        let nk = need_keys[i]
+        count = dt.needsobj.get(nk)
+        graph += ' {} -> {} [label="need({}) " style="dotted"]\n'.format(doctype, nk, count)
+      }
+      // linksto links
+      let lt_keys = Array.from(dt.linksto.keys())
+      for (let i=0; i<lt_keys.length; i++) {
+        let lk = lt_keys[i]
+        count = dt.linksto.get(lk)
+        graph += ' {} -> {} [label="linksto({}) " color="#00AA00"]\n'.format(doctype, lk, count)
+      }
+      let ffb_keys = Array.from(dt.fulfilledby.keys())
+      for (let i=0; i<ffb_keys.length; i++) {
+        let ffb = ffb_keys[i]
+        count = dt.fulfilledby.get(ffb)
+        graph += ' {} -> {} [label="fulfilledby({}) " color="purple"]\n'.format(doctype, ffb, count)
+      }
+    }
+    graph += '\n  label={}\n  labelloc=b\n  fontsize=14\n  fontcolor=black\n  fontname="Arial"\n'.format(construct_graph_title(false))
+    graph += '\n}\n'
+    //console.log(graph)
+    this.dot = graph
+    return graph
+  }
+
+  doctypes_rank() {
+    // Return an array of doctypes in abstraction level order. 
+    // Could be the order of initial declaration in oreqm
+    // For now this is it.
+    return Array.from(this.doctypes.keys())
+  }
+
+  doctype_graph() {
+    this.dot = "digraph { a -> b }"
+    this.scan_doctypes()
+    return this.dot
+  }
+
+  problem_duplicate(report) {
+    // report problem with diplicate
+    if (!this.problems.includes(report)) {
+      this.problems.push(report)
+    }
+  }
+
+  get_problems() {
+    // Get a list of problems as string. Empty string -> no problems
+    return this.problems.join('\n')
   }
 
 }

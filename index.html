@@ -25,11 +25,11 @@
             </table>
           </div>
           <p/>
-          <button type="button" onclick="get_main_oreqm_file()" >Load file</button>
+          <button type="button" onclick="get_main_oreqm_file()" >load file</button>
           <p/>
           <div id="ref_oreqm">
             <b>Reference .oreqm file</b>
-            <button id="clear_ref_oreqm" type="button" disabled="true" onclick="clear_reference()">Clear</button>
+            <button id="clear_ref_oreqm" type="button" disabled="true" onclick="clear_reference()">clear</button>
             <div id="drop_area_ref" >
               <table class="oreqm_file_table">
                 <tr><td width="1%">name</td><td id="ref_name" class="absorbing-column"></td></tr>
@@ -39,11 +39,11 @@
             </div>
           </div>
           <p/>
-          <button id="get_ref_oreqm" type="button" disabled="true" onclick="get_ref_oreqm_file()">Load file</button>
+          <button id="get_ref_oreqm" type="button" disabled="true" onclick="get_ref_oreqm_file()">load file</button>
           <p></p>
           <hr>
           <b>Selection criteria</b>
-          <button id="clear_filters" type="button" onclick="clear_search_regex()">Clear</button>
+          <button id="clear_filters" type="button" onclick="clear_search_regex()">clear</button>
           <textarea class="search_terms" id="search_regex" rows="3" cols="34"
                     wrap="off" placeholder="search regex&#13;&#10;newlines are ignored&#13;&#10;rem:|chg:|new: select changes"
                     onchange="filter_change()"
@@ -54,15 +54,16 @@
           </label>
           <p/>
           <b>Excluded &lt;id&gt;s</b>
-          <button id="clear_filters" type="button" onclick="clear_excluded_ids()">Clear</button>
+          <button id="clear_filters" type="button" onclick="clear_excluded_ids()">clear</button>
           <textarea class="search_terms" id="excluded_ids" rows="3" cols="25" spellcheck="false" onchange="filter_change()"
           wrap="off" placeholder="excluded <id>s&#13;&#10;separate with ',' or newline" ></textarea>
             <hr>
-            <button type="button" onclick="filter_graph()">Update graph</button>
+            <button type="button" onclick="filter_graph()">update graph</button>
             <input type="checkbox" id="auto_update" onchange="auto_update_click()">auto-update</button>
           <p/>
           <hr>
           <b>Doctypes</b><br><p/>
+          <button type="button" onclick="show_doctypes()">hierarchy</button>
           <button type="button" onclick="toggle_exclude()">toggle exclude</button>
           <p/>
           <div id="doctype_table"></div>
@@ -135,6 +136,7 @@
               </p>
               <p>
                 fabric.js 1.6.7<br/>
+                Copyright (c) 2008-2015 Printio (Juriy Zaytsev, Maxim Chernyak)<br/>
                 Licensed under MIT license<br/>
                 <a href="https://github.com/fabricjs/fabric.js/tree/v1.6.7">https://github.com/fabricjs/fabric.js/tree/v1.6.7</a><br/>
               </p>
@@ -175,6 +177,7 @@
     <script src="./modules/svg-pan-zoom/svg-pan-zoom-es.js"></script>
     <script src="./scripts/color.js"></script>
     <script src="./scripts/oreqm.js"></script>
+    <script src="./scripts/doctypes.js"></script>
     <script src="./scripts/reqm2oreqm.js"></script>
     <script src="./scripts/main.js"></script>
 
