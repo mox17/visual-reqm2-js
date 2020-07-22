@@ -100,7 +100,7 @@
     if (params.options.format === "png-image-element") {
       params.options.format = "svg";
     }
-    
+
     if (document.querySelector("#format select").value === 'dot-source') {
       updateOutput();
     } else {
@@ -221,7 +221,7 @@
         // } else if (e.ctrlKey && e.altKey && e.shiftKey && e.which == 85) {
         //   alert("Ctrl + Alt + Shift + U shortcut combination was pressed");
         }
-        console.log(e)
+        //console.log(e)
       };
 
       // context menu setup
@@ -440,6 +440,9 @@
   function auto_update_click() {
     //console.log("auto_update_click")
     auto_update = document.getElementById("auto_update").checked
+    if (auto_update) {
+      filter_graph()
+    }
   }
 
   function filter_change() {
@@ -493,6 +496,7 @@
     input.onchange = e => {
       // getting a hold of the file reference
       let file = e.target.files[0];
+      clear_diagram()
       load_file_main(file)
     }
     input.click();
