@@ -512,7 +512,7 @@
         oreqm_main.remove_ghost_requirements()
         oreqm_ref = new ReqM2Oreqm(readerEvent.target.result, [], [])
         oreqm_ref_filename = file.name
-        oreqm_ref_timestamp = oreqm_main.get_time()
+        oreqm_ref_timestamp = oreqm_ref.get_time()
         document.getElementById('ref_name').innerHTML = oreqm_ref_filename
         document.getElementById('ref_size').innerHTML = (Math.round(file.size/1024))+" KiB"
         document.getElementById('ref_timestamp').innerHTML = oreqm_ref_timestamp

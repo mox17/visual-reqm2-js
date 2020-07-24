@@ -67,8 +67,8 @@ class ReqM2Oreqm {
       req.safetyrationale = get_xml_text(comp, 'safetyrationale'),
       req.shortdesc       = get_xml_text(comp, 'shortdesc'),
       req.source          = get_xml_text(comp, 'source'),
-      req.sourcefile      = get_xml_text(comp, 'sourcefile'),
-      req.sourceline      = get_xml_text(comp, 'sourceline'),
+      req.sourcefile      = "" // this breaks comparisons // get_xml_text(comp, 'sourcefile'),
+      req.sourceline      = "" // this breaks comparisons // get_xml_text(comp, 'sourceline'),
       req.status          = get_xml_text(comp, 'status'),
       req.tags            = get_list_of(comp, 'tag'),
       req.usecase         = get_xml_text(comp, 'usecase'),
@@ -313,43 +313,46 @@ class ReqM2Oreqm {
   compare_requirements(old_reqs) {
     // Compare two sets of requirements (instances of ReqM2Oreqm)
     // and return lists of new, modified and removed <id>s"""
+    // Requirements with no description are ignored
     const new_ids = Array.from(this.requirements.keys())
     let new_reqs = []
     let updated_reqs = []
     let removed_reqs = []
     this.remove_ghost_requirements(false)
     for (const req_id of new_ids) {
-      if (old_reqs.requirements.has(req_id) &&
-        stringEqual(this.requirements.get(req_id), old_reqs.requirements.get(req_id))) { // compare json versions
-        continue // skip unchanged reqs
+      const rec = this.requirements.get(req_id)
+      // skip 'impl' and similar
+      if ((rec.description.length === 0) && (rec.shortdesc.length === 0)) {
+        continue;
       }
-      if (this.requirements.has(req_id)) {
-        const rec = this.requirements.get(req_id)
-        // Ignore requirements with no description, such as 'impl'
-        if (rec.description.length || rec.shortdesc.length) {
-          if (old_reqs.requirements.has(req_id)) {
-              updated_reqs.push(req_id)
-          } else {
-              new_reqs.push(req_id)
-          }
-        }
+      // compare json versions
+      if (stringEqual(this.requirements.get(req_id), old_reqs.requirements.get(req_id))) {
+        continue // skip unchanged or nondescript reqs
+      }
+      if (old_reqs.requirements.has(req_id)) {
+          updated_reqs.push(req_id)
+      } else {
+          new_reqs.push(req_id)
       }
     }
     const old_ids = old_reqs.requirements.keys()
     for (const req_id of old_ids) {
+      let old_rec = old_reqs.requirements.get(req_id)
+      if ((old_rec.description.length === 0) && (old_rec.shortdesc.length === 0)) {
+        continue;
+      }
       if (!new_ids.includes(req_id)) { // <id> no longer present -> removed
         removed_reqs.push(req_id)
         // Create 'ghost' requirement
-        let req = old_reqs.requirements.get(req_id)
-        this.requirements.set(req_id, req)
+        this.requirements.set(req_id, old_rec)
         // check if this introduces a new doctype
-        if (!this.doctypes.has(req.doctype)) {
-          this.doctypes.set(req.doctype, [])
+        if (!this.doctypes.has(old_rec.doctype)) {
+          this.doctypes.set(old_rec.doctype, [])
         }
         // Update doctype table with new counts (and types)
-        let dt_arr = this.doctypes.get(req.doctype)
+        let dt_arr = this.doctypes.get(old_rec.doctype)
         dt_arr.push(req_id)
-        this.doctypes.set(req.doctype, dt_arr)
+        this.doctypes.set(old_rec.doctype, dt_arr)
       }
     }
     this.find_links() // Select the changed ones (if wanted)
@@ -394,7 +397,7 @@ class ReqM2Oreqm {
     const rec = this.requirements.get(req_id)
     let id_str = this.decorate_id(req_id)
     let ffb = []
-    rec.fulfilledby.forEach(element => 
+    rec.fulfilledby.forEach(element =>
       ffb.push('ffb:'+element[0]))
     let all_text = rec.description
           + '\n' + rec.furtherinfo
@@ -671,7 +674,7 @@ class ReqM2Oreqm {
       graph += dt_node
     }
     let count
-    // Loop over doctypes 
+    // Loop over doctypes
     for (let i=0; i<dt_rank.length; i++) {
       doctype = dt_rank[i]
       dt = dt_map.get(doctype)
@@ -705,7 +708,7 @@ class ReqM2Oreqm {
   }
 
   doctypes_rank() {
-    // Return an array of doctypes in abstraction level order. 
+    // Return an array of doctypes in abstraction level order.
     // Could be the order of initial declaration in oreqm
     // For now this is it.
     return Array.from(this.doctypes.keys())
