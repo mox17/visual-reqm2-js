@@ -59,7 +59,7 @@ class ReqM2Oreqm {
       req.doctype         = doctype,
       req.fulfilledby     = get_fulfilledby(comp),
       req.furtherinfo     = get_xml_text(comp, 'furtherinfo'),
-      req.linksto         = get_list_of(comp, 'linksto'),
+      req.linksto         = get_linksto(comp),
       req.needsobj        = get_list_of(comp, 'needsobj'),
       req.platform        = get_list_of(comp, 'platform'),
       req.rationale       = get_xml_text(comp, 'rationale'),
@@ -191,15 +191,15 @@ class ReqM2Oreqm {
         if (!this.linksto.has(req_id)) {
             this.linksto.set(req_id, new Set())
         }
-        this.linksto.set(req_id, this.linksto.get(req_id).add(link))
+        this.linksto.set(req_id, this.linksto.get(req_id).add(link.linksto))
 
         // top-down
-        if (!this.linksto_rev.has(link)) {
-          this.linksto_rev.set(link, new Set())
+        if (!this.linksto_rev.has(link.linksto)) {
+          this.linksto_rev.set(link.linksto, new Set())
         }
-        lt_set = this.linksto_rev.get(link)
+        lt_set = this.linksto_rev.get(link.linksto)
         lt_set.add(req_id)
-        this.linksto_rev.set(link, lt_set)
+        this.linksto_rev.set(link.linksto, lt_set)
       }
       for (const ffb_arr of rec.fulfilledby) {
         const ffb_link = ffb_arr[0]
@@ -776,7 +776,14 @@ class ReqM2Oreqm {
       let list = rec[field]
       let template = "\n{}: {}"
       if (list.length) {
-        xml_txt = template.format(field, list.join(', '))
+        xml_txt = "\n{}: ".format(field)
+        if (field==='linksto') {
+          for (let i=0; i<list.length; i++) {
+            xml_txt += "{},{} ".format(list[i].linksto, list[i].dstversion)
+          }
+        } else {
+          xml_txt = template.format(field, list.join(', '))
+        }
       }
     }
     return xml_txt

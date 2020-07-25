@@ -56,6 +56,33 @@ function get_list_of(node, tag_name) {
   return result
 }
 
+function get_linksto(node) {
+  // return an array of objects with .linksto and .dstversion
+  var result = []
+  var items = node.getElementsByTagName('provcov')
+  var i;
+  for (i=0; i < items.length; i++) {
+    let linksto = items[i].getElementsByTagName('linksto')
+    if (linksto.length != 1) {
+      console.log("Multiple <linksto> in <provcov>")
+      continue
+    }
+    let dstversion = items[i].getElementsByTagName('dstversion')
+    let dstversion_txt
+    if (dstversion.length != 1) {
+      dstversion_txt = "multiple"
+    } else {
+      dstversion_txt = dstversion[0].textContent
+    }
+    let pair = {
+      linksto : linksto[0].textContent,
+      dstversion : dstversion_txt
+    }
+    result.push(pair)
+  }
+  return result
+}
+
 function get_fulfilledby(node) {
   //Return a list of arrays (id,doctype,version) of the ffbObj's
   var ff_list = []
