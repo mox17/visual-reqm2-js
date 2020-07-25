@@ -142,7 +142,7 @@ function dot_format(txt) {
     }
     */
     txt = normalize_indent(txt)
-    txt = txt.replace(re_xml_comments, '') // remove XML comments
+    txt = txt.split(re_xml_comments).join('') // remove XML comments
     // txt = txt.replace(re_unwanted_mu, '')  // Remove unwanted markup
     // Handle unicode literals
     txt = txt.replace(/&#([0-9]+);/g, function (whole, group1) {return String.fromCharCode(parseInt(group1, 10));})

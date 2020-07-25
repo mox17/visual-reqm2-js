@@ -732,4 +732,81 @@ class ReqM2Oreqm {
     return this.problems.join('\n')
   }
 
+/*
+  req.id              = get_xml_text(comp, 'id');
+  req.comment         = get_xml_text(comp, 'comment'),
+  req.dependson       = get_list_of(comp, 'dependson'),
+  req.description     = get_xml_text(comp, 'description');
+  req.doctype         = doctype,
+  req.fulfilledby     = get_fulfilledby(comp),
+  req.furtherinfo     = get_xml_text(comp, 'furtherinfo'),
+  req.linksto         = get_list_of(comp, 'linksto'),
+  req.needsobj        = get_list_of(comp, 'needsobj'),
+  req.platform        = get_list_of(comp, 'platform'),
+  req.rationale       = get_xml_text(comp, 'rationale'),
+  req.safetyclass     = get_xml_text(comp, 'safetyclass'),
+  req.safetyrationale = get_xml_text(comp, 'safetyrationale'),
+  req.shortdesc       = get_xml_text(comp, 'shortdesc'),
+  req.source          = get_xml_text(comp, 'source'),
+  req.sourcefile      = "" // this breaks comparisons // get_xml_text(comp, 'sourcefile'),
+  req.sourceline      = "" // this breaks comparisons // get_xml_text(comp, 'sourceline'),
+  req.status          = get_xml_text(comp, 'status'),
+  req.tags            = get_list_of(comp, 'tag'),
+  req.usecase         = get_xml_text(comp, 'usecase'),
+  req.verifycrit      = get_xml_text(comp, 'verifycrit'),
+  req.version         = get_xml_text(comp, 'version');
+  req.ffb_placeholder = false;
+*/
+
+  get_tag_text_formatted(rec, tag) {
+    let xml_txt = ''
+    if (rec.hasOwnProperty(tag)) {
+      let txt = rec[tag]
+      let template = "\n{}: {}"
+      if (txt.length) {
+        xml_txt = template.format(tag, txt)
+      }
+    }
+    return xml_txt
+  }
+
+  get_list_formatted(rec, field) {
+    let xml_txt = ''
+    if (rec.hasOwnProperty(field)) {
+      let list = rec[field]
+      let template = "\n{}: {}"
+      if (list.length) {
+        xml_txt = template.format(field, list.join(', '))
+      }
+    }
+    return xml_txt
+  }
+
+  get_node_text_formatted(id) {
+    // Reconstruct a XML representation
+    let xml_txt = ""
+    if (this.requirements.has(id)) {
+      let rec = this.requirements.get(id)
+      let indent = '      '
+      let template = `\
+id: '{}' version: {}  doctype: {}
+status: {}
+description: {}{}
+`
+      let optional = this.get_tag_text_formatted(rec, 'comment', indent)
+      optional    += this.get_tag_text_formatted(rec, 'verifycrit', indent)
+      optional    += this.get_tag_text_formatted(rec, 'rationale', indent)
+      optional    += this.get_tag_text_formatted(rec, 'safetyclass', indent)
+      optional    += this.get_tag_text_formatted(rec, 'safetyrationale', indent)
+      optional    += this.get_tag_text_formatted(rec, 'furtherinfo', indent)
+      optional    += this.get_tag_text_formatted(rec, 'source', indent)
+      optional    += this.get_list_formatted(rec, 'needsobj', indent)
+      optional    += this.get_list_formatted(rec, 'linksto', indent)
+      optional    += this.get_list_formatted(rec, 'tags', indent)
+      optional    += this.get_list_formatted(rec, 'platform', indent)
+      xml_txt = template.format(rec.id, rec.version, rec.doctype, rec.status, rec.description, optional)
+    }
+    return xml_txt
+  }
+
 }

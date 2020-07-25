@@ -97,8 +97,8 @@
               <label id="viz_working"></label>
             </p>
             <p class="alignright">
-              <!-- Trigger/Open The Modal -->
-              <button id="myBtn">About</button>
+              <!-- Trigger/Open The modal "about" dialog -->
+              <button id="aboutButton">About</button>
             </p>
           </div>
           <div style="clear: both;"></div>
@@ -109,14 +109,14 @@
       </div>
     </div>
 
-    <!-- The Modal -->
-    <div id="myModal" class="modal">
+    <!-- The "about" modal dialog -->
+    <div id="aboutPane" class="modal">
       <!-- Modal content -->
       <div class="modal-content row">
-        <span class="close">&times;</span>
+        <span id="aboutPaneClose" class="close">&times;</span>
         <div class="column">
           <h1>Visual ReqM2</h1>
-          <p>Version 0.92<br/>
+          <p>Version 0.93<br/>
           Copyright 2020 Erling Stage<br/>
           Licensed under MIT license<br/>
          <!-- <a href="https://github.com/mox17/visual-reqm2-js">https://github.com/mox17/visual-reqm2-js</a> -->
@@ -162,13 +162,25 @@
       </div>
     </div>
 
+    <!-- Raw req display dialog -->
+    <div id="nodeSource" class="modal">
+      <!-- Modal content -->
+      <div class="modal-content row">
+        <span id="nodeSourceClose" class="close">&times;</span>
+        <div><b>Node content in raw format:</b></div>
+        <div id="req_src" style="overflow-y: auto; height:600px; ">
+          Some sample text here
+        </div>
+      </div>
+    </div>
+
     <!-- ---- pop-up menu ---- -->
     <ul class='custom-menu' id="node-menu">
       <li id="menu_select"   onclick="select_node()">Select</li>
       <li id="menu_deselect" onclick="deselect_node()">De-select</li>
       <li id="menu_exclude"  onclick="exclude_node()">Exclude</li>
       <li id="menu_copy_id"  onclick="copy_id_node()">Copy &lt;id&gt;</li>
-     <!-- <li id="menu_save_svg" onclick="save_svg_node()">Save image</li> -->
+      <li id="menu_raw_txt"  onclick="show_source()">Show raw text</li>
     </ul>
 
     <script src="./modules/viz.js/viz.js"></script>

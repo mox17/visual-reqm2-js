@@ -343,6 +343,7 @@
       // a node was right-clicked
       document.getElementById('menu_copy_id').classList.remove('custom-menu_disabled')
       document.getElementById('menu_exclude').classList.remove('custom-menu_disabled')
+      document.getElementById('menu_raw_txt').classList.remove('custom-menu_disabled')
       if (selected_node_check(node_id)) {
         // it is a selected node
         document.getElementById('menu_select').classList.add('custom-menu_disabled')
@@ -357,6 +358,7 @@
       document.getElementById('menu_deselect').classList.add('custom-menu_disabled')
       document.getElementById('menu_exclude').classList.add('custom-menu_disabled')
       document.getElementById('menu_copy_id').classList.add('custom-menu_disabled')
+      document.getElementById('menu_raw_txt').classList.add('custom-menu_disabled')
     }
   }
 
@@ -725,36 +727,55 @@
     }
   }
 
-    // Get the modal
-  var modal = document.getElementById("myModal");
+  // Setup for the "about" dialog
+  var aboutPane = document.getElementById("aboutPane");
 
   // Get the button that opens the modal
-  var btn = document.getElementById("myBtn");
+  var aboutButton = document.getElementById("aboutButton");
 
   // Get the <span> element that closes the modal
-  var span = document.getElementsByClassName("close")[0];
+  var aboutPaneClose = document.getElementById("aboutPaneClose");
 
   // When the user clicks the button, open the modal
-  btn.onclick = function() {
-    modal.style.display = "block";
+  aboutButton.onclick = function() {
+    aboutPane.style.display = "block";
   }
 
   // When the user clicks on <span> (x), close the modal
-  span.onclick = function() {
-    modal.style.display = "none";
+  aboutPaneClose.onclick = function() {
+    aboutPane.style.display = "none";
   }
 
-  // When the user clicks anywhere outside of the modal, close it
-  window.onclick = function(event) {
-    if (event.target == modal) {
-      modal.style.display = "none";
-    }
+  // Setup for the raw node display dialog (raw text and diff (for changed reqs))
+  var nodeSource = document.getElementById("nodeSource");
+
+  // Get the <span> element that closes the modal
+  var nodeSourceClose = document.getElementById("nodeSourceClose");
+
+  function show_raw_node() {
+    nodeSource.style.display = "block";
+  }
+
+  // When the user clicks on <span> (x), close the modal
+  nodeSourceClose.onclick = function() {
+    nodeSource.style.display = "none";
   }
 
   // When the user clicks anywhere outside of the modal, close it
   window.onbeforeunload = function(event) {
     return //"Graph is going away..."
   }
+
+  // When the user clicks anywhere outside one of the modal dialogs, close it
+  window.onclick = function(event) {
+    if (event.target == aboutPane) {
+      aboutPane.style.display = "none";
+    } else if (event.target == nodeSource) {
+      nodeSource.style.display = "none";
+    }
+  }
+
+  // Selection/deselection of nodes by right-clicking the diagram
 
   function select_node() {
     // Add node to the selection criteria (if not already selected)
@@ -960,3 +981,19 @@
       updateGraph();
     }
   }
+
+  function xml_escape(txt) {
+    return txt.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  }
+
+  function show_source() {
+    // Show raw text of texted node
+    if (selected_node.length) {
+      /* hack to encode HTML entities */
+      var d = document.getElementById('req_src');
+      let txt = oreqm_main.requirements.get(selected_node).description
+      d.innerHTML = '<pre>{}</pre>'.format(xml_escape(oreqm_main.get_node_text_formatted(selected_node)))
+
+      nodeSource.style.display = "block";
+    }
+}
