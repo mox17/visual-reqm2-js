@@ -991,7 +991,7 @@
     if (selected_node.length) {
       /* hack to encode HTML entities */
       var ref = document.getElementById('req_src');
-      let header_main = "<h2>Raw text</h2>"
+      let header_main = "<h2>XML format</h2>"
       //let diff_ref = "<h2>Differences</h2>"
       if (oreqm_ref && oreqm_main.updated_reqs.includes(selected_node)) {
         // create a diff

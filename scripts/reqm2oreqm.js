@@ -790,12 +790,36 @@ class ReqM2Oreqm {
         } else if (field==='needsobj') {
           xml_txt = '\n    <needscoverage>'
           for (let i=0; i<list.length; i++) {
+            if (list[i].includes('*')) continue;
             xml_txt += `
-      <needscov>
-        <needsobj>{}</needsobj>
-      </needscov>`.format(list[i])
+      <needscov><needsobj>{}</needsobj></needscov>`.format(list[i])
           }
           xml_txt += '\n    </needscoverage>'
+        } else if (field==='tags') {
+          xml_txt = '\n    <tags>'
+          for (let i=0; i<list.length; i++) {
+            xml_txt += `
+      <tag>{}</tag>`.format(list[i])
+          }
+          xml_txt += '\n    </tags>'
+        } else if (field==='platform') {
+          xml_txt = '\n    <platforms>'
+          for (let i=0; i<list.length; i++) {
+            xml_txt += `
+      <platform>{}</platform>`.format(list[i])
+          }
+          xml_txt += '\n    </platforms>'
+        } else if (field==='fulfilledby') {
+          xml_txt = '\n    <fulfilledby>'
+          for (let i=0; i<list.length; i++) {
+            xml_txt += `
+      <ffbObj>
+        <ffbId>{}</ffbId>
+        <ffbType>{}</ffbType>
+        <ffbVersion>{}</ffbVersion>
+      </ffbObj>`.format(list[i][0], list[i][1], list[i][2])
+          }
+          xml_txt += '\n    </fulfilledby>'
         } else {
           xml_txt = template.format(field, list.join(', '), field)
         }
@@ -814,24 +838,28 @@ class ReqM2Oreqm {
 <specobjects doctype="{}">
   <specobject>
     <id>{}</id>
-    <version>{}</version>
-    <status>{}</status>
-    <description>{}</description>{}
+    <status>{}</status>{}
   </specobject>
 </specobjects>
 `
-      let optional = this.get_tag_text_formatted(rec, 'comment', indent)
-      optional    += this.get_tag_text_formatted(rec, 'verifycrit', indent)
+      let optional = ''
+      optional    += this.get_tag_text_formatted(rec, 'source', indent)
+      optional    += this.get_tag_text_formatted(rec, 'version', indent)
+      optional    += this.get_tag_text_formatted(rec, 'shortdesc', indent)
+      optional    += this.get_tag_text_formatted(rec, 'description', indent)
       optional    += this.get_tag_text_formatted(rec, 'rationale', indent)
+      optional    += this.get_tag_text_formatted(rec, 'comment', indent)
+      optional    += this.get_tag_text_formatted(rec, 'furtherinfo', indent)
       optional    += this.get_tag_text_formatted(rec, 'safetyclass', indent)
       optional    += this.get_tag_text_formatted(rec, 'safetyrationale', indent)
-      optional    += this.get_tag_text_formatted(rec, 'furtherinfo', indent)
+      optional    += this.get_tag_text_formatted(rec, 'verifycrit', indent)
       optional    += this.get_tag_text_formatted(rec, 'source', indent)
+      optional    += this.get_list_formatted(rec, 'tags', indent)
+      optional    += this.get_list_formatted(rec, 'fulfilledby', indent)
+      optional    += this.get_list_formatted(rec, 'platform', indent)
       optional    += this.get_list_formatted(rec, 'needsobj', indent)
       optional    += this.get_list_formatted(rec, 'linksto', indent)
-      optional    += this.get_list_formatted(rec, 'tags', indent)
-      optional    += this.get_list_formatted(rec, 'platform', indent)
-      xml_txt = template.format(rec.doctype, rec.id, rec.version, rec.status, rec.description, optional)
+      xml_txt = template.format(rec.doctype, rec.id, rec.status, optional)
     }
     return xml_txt
   }
