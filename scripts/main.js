@@ -990,10 +990,17 @@
     // Show raw text of texted node
     if (selected_node.length) {
       /* hack to encode HTML entities */
-      var d = document.getElementById('req_src');
-      let txt = oreqm_main.requirements.get(selected_node).description
-      d.innerHTML = '<pre>{}</pre>'.format(xml_escape(oreqm_main.get_node_text_formatted(selected_node)))
-
+      var main = document.getElementById('req_src_main');
+      var ref = document.getElementById('req_src_ref');
+      let header_main = "<h2>Main oreqm</h2>"
+      let header_ref = "<h2>Reference oreqm</h2>"
+      if (oreqm_ref && oreqm_main.updated_reqs.includes(selected_node)) {
+        ref.innerHTML  = '{}<pre>{}</pre>'.format(header_ref, xml_escape(oreqm_ref.get_node_text_formatted(selected_node)))
+        main.innerHTML = '{}<pre>{}</pre>'.format(header_main, xml_escape(oreqm_main.get_node_text_formatted(selected_node)))
+      } else {
+        ref.innerHTML = '{}<pre>{}</pre>'.format(header_main, xml_escape(oreqm_main.get_node_text_formatted(selected_node)))
+        main.innerHTML = ''
+      }
       nodeSource.style.display = "block";
     }
-}
+  }
