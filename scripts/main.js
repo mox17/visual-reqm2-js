@@ -990,16 +990,28 @@
     // Show raw text of texted node
     if (selected_node.length) {
       /* hack to encode HTML entities */
-      var main = document.getElementById('req_src_main');
-      var ref = document.getElementById('req_src_ref');
-      let header_main = "<h2>Main oreqm</h2>"
-      let header_ref = "<h2>Reference oreqm</h2>"
+      var ref = document.getElementById('req_src');
+      let header_main = "<h2>Raw text</h2>"
+      //let diff_ref = "<h2>Differences</h2>"
       if (oreqm_ref && oreqm_main.updated_reqs.includes(selected_node)) {
-        ref.innerHTML  = '{}<pre>{}</pre>'.format(header_ref, xml_escape(oreqm_ref.get_node_text_formatted(selected_node)))
-        main.innerHTML = '{}<pre>{}</pre>'.format(header_main, xml_escape(oreqm_main.get_node_text_formatted(selected_node)))
+        // create a diff
+        let text_ref = xml_escape(oreqm_ref.get_node_text_formatted(selected_node))
+        let text_main = xml_escape(oreqm_main.get_node_text_formatted(selected_node))
+        let result = '<h2>Differences</h2><pre>'
+        let diff = Diff.diffLines(text_ref, text_main)//, {newlineIsToken: true})
+        diff.forEach(function(part){
+          // green for additions, red for deletions, black for common parts
+          let color = part.added ? 'green' : part.removed ? 'red' : 'grey';
+          let font = 'normal'
+          if (part.added || part.removed) {
+            font = 'bold'
+          }
+          result += '<span style="color: {}; font-weight: {};">{}</span>'.format(color, font, part.value)
+        });
+        result += '</pre>'
+        ref.innerHTML = result
       } else {
         ref.innerHTML = '{}<pre>{}</pre>'.format(header_main, xml_escape(oreqm_main.get_node_text_formatted(selected_node)))
-        main.innerHTML = ''
       }
       nodeSource.style.display = "block";
     }

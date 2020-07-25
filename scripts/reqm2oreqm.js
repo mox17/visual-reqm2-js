@@ -762,9 +762,9 @@ class ReqM2Oreqm {
     let xml_txt = ''
     if (rec.hasOwnProperty(tag)) {
       let txt = rec[tag]
-      let template = "\n{}: {}"
+      let template = "\n    <{}>{}</{}>"
       if (txt.length) {
-        xml_txt = template.format(tag, txt)
+        xml_txt = template.format(tag, txt, tag)
       }
     }
     return xml_txt
@@ -774,15 +774,30 @@ class ReqM2Oreqm {
     let xml_txt = ''
     if (rec.hasOwnProperty(field)) {
       let list = rec[field]
-      let template = "\n{}: {}"
+      let template = "\n    <{}>{}</{}>"
       if (list.length) {
         xml_txt = "\n{}: ".format(field)
         if (field==='linksto') {
+          xml_txt = '\n    <providescoverage>'
           for (let i=0; i<list.length; i++) {
-            xml_txt += "{},{} ".format(list[i].linksto, list[i].dstversion)
+            xml_txt += `
+      <provcov>
+        <linksto>{}</linksto>
+        <dstversion>{}</dstversion>
+      </provcov>`.format(list[i].linksto, list[i].dstversion)
           }
+          xml_txt += '\n    </providescoverage>'
+        } else if (field==='needsobj') {
+          xml_txt = '\n    <needscoverage>'
+          for (let i=0; i<list.length; i++) {
+            xml_txt += `
+      <needscov>
+        <needsobj>{}</needsobj>
+      </needscov>`.format(list[i])
+          }
+          xml_txt += '\n    </needscoverage>'
         } else {
-          xml_txt = template.format(field, list.join(', '))
+          xml_txt = template.format(field, list.join(', '), field)
         }
       }
     }
@@ -796,9 +811,14 @@ class ReqM2Oreqm {
       let rec = this.requirements.get(id)
       let indent = '      '
       let template = `\
-id: '{}' version: {}  doctype: {}
-status: {}
-description: {}{}
+<specobjects doctype="{}">
+  <specobject>
+    <id>{}</id>
+    <version>{}</version>
+    <status>{}</status>
+    <description>{}</description>{}
+  </specobject>
+</specobjects>
 `
       let optional = this.get_tag_text_formatted(rec, 'comment', indent)
       optional    += this.get_tag_text_formatted(rec, 'verifycrit', indent)
@@ -811,7 +831,7 @@ description: {}{}
       optional    += this.get_list_formatted(rec, 'linksto', indent)
       optional    += this.get_list_formatted(rec, 'tags', indent)
       optional    += this.get_list_formatted(rec, 'platform', indent)
-      xml_txt = template.format(rec.id, rec.version, rec.doctype, rec.status, rec.description, optional)
+      xml_txt = template.format(rec.doctype, rec.id, rec.version, rec.status, rec.description, optional)
     }
     return xml_txt
   }
