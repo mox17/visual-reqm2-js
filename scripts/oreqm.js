@@ -297,7 +297,8 @@ function construct_graph_title(show_filters) {
         */
       }
       if (search_pattern.length) {
-        let pattern_string = search_pattern.trim().replace(/([^\n]{40,500}?\|)/g, '$1<BR ALIGN="LEFT"/>').replace(/\n/g, '<BR ALIGN="LEFT"/>')
+        let search_formatted = xml_escape(search_pattern.replace(/&/g, '&amp;'))
+        let pattern_string = search_formatted.trim().replace(/([^\n]{40,500}?\|)/g, '$1<BR ALIGN="LEFT"/>').replace(/\n/g, '<BR ALIGN="LEFT"/>')
         if (id_checkbox ) {
           title += '      <tr><td>Search &lt;id&gt;</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(pattern_string.replace('\\', '\\\\'))
         } else {
