@@ -16,30 +16,28 @@
       -->
       <div id="panes" class="split split-horizontal">
         <div id="oreqm_div" class="split">
-          <b>ReqM2 .oreqm file</b><br/>
           <div id="drop_area_main" >
+            <b>ReqM2 .oreqm file</b><br/>
             <table class="oreqm_file_table" >
               <tr><td width="1%">name</td><td id="name" class="absorbing-column"></td></tr>
               <tr><td width="1%">size</td><td id="size"></td></tr>
               <tr><td width="1%">date</td><td id="timestamp"></td></tr>
             </table>
+            <p/>
+            <button type="button" onclick="get_main_oreqm_file()" >load file</button>
           </div>
           <p/>
-          <button type="button" onclick="get_main_oreqm_file()" >load file</button>
-          <p/>
-          <div id="ref_oreqm">
+          <div id="drop_area_ref" >
             <b>Reference .oreqm file</b>
             <button id="clear_ref_oreqm" type="button" disabled="true" onclick="clear_reference()">clear</button>
-            <div id="drop_area_ref" >
-              <table class="oreqm_file_table">
-                <tr><td width="1%">name</td><td id="ref_name" class="absorbing-column"></td></tr>
-                <tr><td width="1%">size</td><td id="ref_size"></td></tr>
-                <tr><td width="1%">date</td><td id="ref_timestamp"></td></tr>
-              </table>
-            </div>
+            <table class="oreqm_file_table">
+              <tr><td width="1%">name</td><td id="ref_name" class="absorbing-column"></td></tr>
+              <tr><td width="1%">size</td><td id="ref_size"></td></tr>
+              <tr><td width="1%">date</td><td id="ref_timestamp"></td></tr>
+            </table>
+            <p/>
+            <button id="get_ref_oreqm" type="button" disabled="true" onclick="get_ref_oreqm_file()">load file</button>
           </div>
-          <p/>
-          <button id="get_ref_oreqm" type="button" disabled="true" onclick="get_ref_oreqm_file()">load file</button>
           <p></p>
           <hr>
           <b>Selection criteria</b>
