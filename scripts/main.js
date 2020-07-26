@@ -484,6 +484,9 @@
       display_doctypes_with_count(oreqm_main.get_doctypes())
       if (auto_update) {
         filter_graph()
+      } else {
+        oreqm_main.set_svg_guide()
+        updateGraph()
       }
       let ref_button = document.getElementById('get_ref_oreqm')
       ref_button.disabled = false
@@ -896,15 +899,24 @@
   // drop file handling
   const drop_area_main = document.getElementById('drop_area_main');
   const drop_area_ref = document.getElementById('drop_area_ref');
-  const app_area = document.getElementById('app');
 
-  // Main oreqm file
-  drop_area_main.addEventListener('dragover', (event) => {
-    event.stopPropagation();
-    event.preventDefault();
-    // Style the drag-and-drop as a "copy file" operation.
-    event.dataTransfer.dropEffect = 'copy';
-  });
+  // Prevent default drag behaviors
+  ;['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    drop_area_main.addEventListener(eventName, preventDefaults, false)
+    drop_area_ref.addEventListener(eventName, preventDefaults, false)
+    document.body.addEventListener(eventName, preventDefaults, false)
+  })
+
+  // Highlight drop area when item is dragged over it
+  ;['dragenter', 'dragover'].forEach(eventName => {
+    drop_area_main.addEventListener(eventName, highlight_main, false)
+    drop_area_ref.addEventListener(eventName, highlight_ref, false)
+  })
+
+  ;['dragleave', 'drop'].forEach(eventName => {
+    drop_area_main.addEventListener(eventName, unhighlight_main, false)
+    drop_area_ref.addEventListener(eventName, unhighlight_ref, false)
+  })
 
   drop_area_main.addEventListener('drop', (event) => {
     event.stopPropagation();
@@ -912,14 +924,6 @@
     const fileList = event.dataTransfer.files;
     //console.log(fileList);
     process_dropped_file(event, true)
-  });
-
-  // Reference oreqm file
-  drop_area_ref.addEventListener('dragover', (event) => {
-    event.stopPropagation();
-    event.preventDefault();
-    // Style the drag-and-drop as a "copy file" operation.
-    event.dataTransfer.dropEffect = 'copy';
   });
 
   drop_area_ref.addEventListener('drop', (event) => {
@@ -930,18 +934,53 @@
     process_dropped_file(event, false)
   });
 
-  // Prevent drag-drop elsewhere
-  app_area.addEventListener('dragover', (event) => {
+  function preventDefaults (e) {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+
+  function highlight_main(e) {
+    drop_area_main.classList.add('highlight')
+  }
+
+  function highlight_ref(e) {
+    if (oreqm_main) {
+      drop_area_ref.classList.add('highlight')
+    }
+  }
+
+  function unhighlight_main(e) {
+    drop_area_main.classList.remove('highlight')
+  }
+
+  function unhighlight_ref(e) {
+    drop_area_ref.classList.remove('highlight')
+  }
+
+  // Main oreqm file
+  drop_area_main.addEventListener('dragover', (event) => {
+    event.stopPropagation();
+    event.preventDefault();
+    // Style the drag-and-drop as a "copy file" operation.
+    event.dataTransfer.dropEffect = 'copy';
+  });
+
+  // Reference oreqm file
+  drop_area_ref.addEventListener('dragover', (event) => {
+    event.stopPropagation();
+    event.preventDefault();
+    // Style the drag-and-drop as a "copy file" operation.
+    if (oreqm_main) {
+      event.dataTransfer.dropEffect = 'copy';
+    } else {
+      event.dataTransfer.dropEffect = 'none';
+    }
+  });
+
+  document.addEventListener('dragover', (event) => {
     event.stopPropagation();
     event.preventDefault();
     event.dataTransfer.dropEffect = 'none';
-  });
-
-  app_area.addEventListener('drop', (event) => {
-    event.stopPropagation();
-    event.preventDefault();
-    const fileList = event.dataTransfer.files;
-    //console.log("app", fileList);
   });
 
   function process_dropped_file(ev, main_file) {
