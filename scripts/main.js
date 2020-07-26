@@ -237,7 +237,9 @@
           break;
         }
         selected_node = str
-        if ((menuNode.style.display==='none')||(menuNode.style.display==='initial')) {
+        if ((menuNode.style.display==='')||
+            (menuNode.style.display==='none')||
+            (menuNode.style.display==='initial')) {
           // show context menu
           let stage = document.getElementById('output');
           var containerRect = stage.getBoundingClientRect();
@@ -987,18 +989,15 @@
   }
 
   function show_source() {
-    // Show raw text of texted node
+    // Show selected node as XML
     if (selected_node.length) {
-      /* hack to encode HTML entities */
       var ref = document.getElementById('req_src');
-      let header_main = "<h2>XML format</h2>"
-      //let diff_ref = "<h2>Differences</h2>"
       if (oreqm_ref && oreqm_main.updated_reqs.includes(selected_node)) {
         // create a diff
         let text_ref = xml_escape(oreqm_ref.get_node_text_formatted(selected_node))
         let text_main = xml_escape(oreqm_main.get_node_text_formatted(selected_node))
-        let result = '<h2>Differences</h2><pre>'
-        let diff = Diff.diffLines(text_ref, text_main)//, {newlineIsToken: true})
+        let result = '<h2>XML format (changed specobject)</h2><pre>'
+        let diff = Diff.diffLines(text_ref, text_main)
         diff.forEach(function(part){
           // green for additions, red for deletions, black for common parts
           let color = part.added ? 'green' : part.removed ? 'red' : 'grey';
@@ -1011,6 +1010,12 @@
         result += '</pre>'
         ref.innerHTML = result
       } else {
+        let header_main = "<h2>XML format</h2>"
+        if (oreqm_main.removed_reqs.includes(selected_node)) {
+          header_main = "<h2>XML format (removed specobject)</h2>"
+        } else if (oreqm_main.new_reqs.includes(selected_node)) {
+          header_main = "<h2>XML format (new specobject)</h2>"
+        }
         ref.innerHTML = '{}<pre>{}</pre>'.format(header_main, xml_escape(oreqm_main.get_node_text_formatted(selected_node)))
       }
       nodeSource.style.display = "block";
