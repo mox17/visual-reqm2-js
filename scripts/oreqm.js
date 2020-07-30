@@ -299,22 +299,22 @@ function construct_graph_title(show_filters) {
       if (search_pattern.length) {
         let search_formatted = xml_escape(search_pattern.replace(/&/g, '&amp;'))
         let pattern_string = search_formatted.trim().replace(/([^\n]{40,500}?\|)/g, '$1<BR ALIGN="LEFT"/>').replace(/\n/g, '<BR ALIGN="LEFT"/>')
-        if (id_checkbox ) {
+        if (id_checkbox) {
           title += '      <tr><td>Search &lt;id&gt;</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(pattern_string.replace('\\', '\\\\'))
         } else {
           title += '      <tr><td>Search text</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(pattern_string.replace('\\', '\\\\'))
         }
       }
+    }
 
-      let ex_dt_list = get_excluded_doctypes()
-      if (ex_dt_list.length) {
-        title += '      <tr><td>excluded doctypes</td><td colspan="2">{}</td></tr>\n'.format(ex_dt_list.join(", "))
-      }
+    let ex_dt_list = get_excluded_doctypes()
+    if (ex_dt_list.length) {
+      title += '      <tr><td>excluded doctypes</td><td colspan="2">{}</td></tr>\n'.format(ex_dt_list.join(", "))
+    }
 
-      let excluded_ids = oreqm_main.get_excluded_ids()
-      if (excluded_ids.length) {
-        title += '      <tr><td>excluded &lt;id&gt;s</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(excluded_ids.join('<BR ALIGN="LEFT"/>'))
-      }
+    let excluded_ids = oreqm_main.get_excluded_ids()
+    if (excluded_ids.length) {
+      title += '      <tr><td>excluded &lt;id&gt;s</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(excluded_ids.join('<BR ALIGN="LEFT"/>'))
     }
     title += '    </table>>'
     //console.log(title)
