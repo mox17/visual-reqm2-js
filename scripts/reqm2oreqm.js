@@ -485,10 +485,13 @@ class ReqM2Oreqm {
     let node_count = 0
     let edge_count = 0
     let doctype_dict = new Map()
+    let selected_dict = new Map()
+    let sel_arr = []
     for (const req_id of ids) {
       const rec = this.requirements.get(req_id)
       if (!doctype_dict.has(rec.doctype)) {
         doctype_dict.set(rec.doctype, [])
+        selected_dict.set(rec.doctype, [])
       }
       if (selection_function(req_id, rec, this.color.get(req_id)) &&
           !this.excluded_doctypes.includes(rec.doctype) &&
@@ -497,6 +500,11 @@ class ReqM2Oreqm {
         let dt = doctype_dict.get(rec.doctype)
         dt.push(req_id)
         doctype_dict.set(rec.doctype, dt)
+        if (highlights.includes(req_id)) {
+          sel_arr = selected_dict.get(rec.doctype)
+          sel_arr.push(req_id)
+          selected_dict.set(rec.doctype, sel_arr)
+        }
       }
     }
     let show_top = this.doctypes.has(top_doctype) && !this.excluded_doctypes.includes(top_doctype)
@@ -555,6 +563,7 @@ class ReqM2Oreqm {
     result.node_count = node_count
     result.edge_count = edge_count
     result.doctype_dict = doctype_dict
+    result.selected_dict = selected_dict
     return result
   }
 
@@ -735,32 +744,6 @@ class ReqM2Oreqm {
     // Get a list of problems as string. Empty string -> no problems
     return this.problems.join('\n')
   }
-
-/*
-  req.id              = get_xml_text(comp, 'id');
-  req.comment         = get_xml_text(comp, 'comment'),
-  req.dependson       = get_list_of(comp, 'dependson'),
-  req.description     = get_xml_text(comp, 'description');
-  req.doctype         = doctype,
-  req.fulfilledby     = get_fulfilledby(comp),
-  req.furtherinfo     = get_xml_text(comp, 'furtherinfo'),
-  req.linksto         = get_list_of(comp, 'linksto'),
-  req.needsobj        = get_list_of(comp, 'needsobj'),
-  req.platform        = get_list_of(comp, 'platform'),
-  req.rationale       = get_xml_text(comp, 'rationale'),
-  req.safetyclass     = get_xml_text(comp, 'safetyclass'),
-  req.safetyrationale = get_xml_text(comp, 'safetyrationale'),
-  req.shortdesc       = get_xml_text(comp, 'shortdesc'),
-  req.source          = get_xml_text(comp, 'source'),
-  req.sourcefile      = "" // this breaks comparisons // get_xml_text(comp, 'sourcefile'),
-  req.sourceline      = "" // this breaks comparisons // get_xml_text(comp, 'sourceline'),
-  req.status          = get_xml_text(comp, 'status'),
-  req.tags            = get_list_of(comp, 'tag'),
-  req.usecase         = get_xml_text(comp, 'usecase'),
-  req.verifycrit      = get_xml_text(comp, 'verifycrit'),
-  req.version         = get_xml_text(comp, 'version');
-  req.ffb_placeholder = false;
-*/
 
   get_tag_text_formatted(rec, tag) {
     let xml_txt = ''

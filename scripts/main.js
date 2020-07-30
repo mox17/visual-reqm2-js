@@ -364,15 +364,33 @@
     }
   }
 
-  function set_doctype_count_shown(visible_nodes) {
+  function set_doctype_count_shown(visible_nodes, selected_nodes) {
     // Update doctype table with counts of nodes actually displayed
-    const doctypes = visible_nodes.keys()
+    let doctypes = visible_nodes.keys()
+    let shown_count = 0
     for (const doctype of doctypes) {
-      const cell_name = "doctype_shown_{}".format(doctype)
-      let cell = document.getElementById(cell_name)
-      if (cell) {
-        cell.innerHTML = visible_nodes.get(doctype).length
+      let shown_cell = document.getElementById("doctype_shown_{}".format(doctype))
+      if (shown_cell) {
+        shown_cell.innerHTML = visible_nodes.get(doctype).length
+        shown_count += visible_nodes.get(doctype).length
       }
+    }
+    let shown_cell_totals = document.getElementById("doctype_shown_totals")
+    if (shown_cell_totals) {
+      shown_cell_totals.innerHTML = shown_count
+    }
+    doctypes = selected_nodes.keys()
+    let selected_count = 0
+    for (const doctype of doctypes) {
+      let selected_cell = document.getElementById("doctype_select_{}".format(doctype))
+      if (selected_cell) {
+        selected_cell.innerHTML = selected_nodes.get(doctype).length
+        selected_count += selected_nodes.get(doctype).length
+      }
+    }
+    let selected_cell_totals = document.getElementById("doctype_select_totals")
+    if (selected_cell_totals) {
+      selected_cell_totals.innerHTML = selected_count
     }
   }
 
@@ -405,9 +423,12 @@
     cell = row.insertCell();
     cell.innerHTML = "<b>count</b>";
     cell = row.insertCell();
+    cell.innerHTML = "<b>shown</b>";
+    cell = row.insertCell();
     cell.innerHTML = "<b>select</b>";
     cell = row.insertCell();
     cell.innerHTML = "<b>exclude</b>";
+    let doctype_totals = 0
     for (var i of doctype_names) {
       row = table.insertRow();
       row.style.backgroundColor = get_color(i)
@@ -416,9 +437,13 @@
 
       cell = row.insertCell();
       cell.innerHTML = doctype_dict.get(i).length;
+      doctype_totals += doctype_dict.get(i).length;
 
       cell = row.insertCell();
       cell.innerHTML = '<div id="doctype_shown_{}">0</div>'.format(i)
+
+      cell = row.insertCell();
+      cell.innerHTML = '<div id="doctype_select_{}">0</div>'.format(i)
 
       cell = row.insertCell();
       let checked = excluded.includes(i)
@@ -427,6 +452,22 @@
         doctype_filter_change();
       });
     }
+    // Totals row
+    row = table.insertRow();
+    cell = row.insertCell();
+    cell.innerHTML = "totals:";
+
+    cell = row.insertCell();
+    cell.innerHTML = doctype_totals
+
+    cell = row.insertCell();
+    cell.innerHTML = '<div id="doctype_shown_totals">0</div>'
+
+    cell = row.insertCell();
+    cell.innerHTML = '<div id="doctype_select_totals">0</div>'
+
+    cell = row.insertCell();
+
     document.getElementById("doctype_table").appendChild(table);
   }
 
@@ -622,7 +663,7 @@
       } else {
         // no pattern specified
         const graph = oreqm_main.create_graph(select_all, "reqspec1", construct_graph_title(), [])
-        set_doctype_count_shown(graph.doctype_dict)
+        set_doctype_count_shown(graph.doctype_dict, graph.selected_dict)
       }
       updateGraph();
     }
@@ -705,7 +746,7 @@
     oreqm_main.clear_colors()
     oreqm_main.color_up_down(results, COLOR_UP, COLOR_DOWN)
     const graph = oreqm_main.create_graph(select_color, "reqspec1", construct_graph_title(true), results)
-    set_doctype_count_shown(graph.doctype_dict)
+    set_doctype_count_shown(graph.doctype_dict, graph.selected_dict)
   }
 
   function txt_search(regex) {
@@ -715,7 +756,7 @@
     oreqm_main.clear_colors()
     oreqm_main.color_up_down(results, COLOR_UP, COLOR_DOWN)
     const graph = oreqm_main.create_graph(select_color, "reqspec1", construct_graph_title(true), results)
-    set_doctype_count_shown(graph.doctype_dict)
+    set_doctype_count_shown(graph.doctype_dict, graph.selected_dict)
   }
 
   function clear_reference()

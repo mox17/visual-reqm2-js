@@ -342,5 +342,5 @@ function compare_oreqm() {
   document.getElementById("search_regex").value = raw_search
   //console.log(results)
   const graph = oreqm_main.create_graph(select_color, "reqspec1", construct_graph_title(true), [])
-  set_doctype_count_shown(graph.doctype_dict)
+  set_doctype_count_shown(graph.doctype_dict, graph.selected_dict)
 }
