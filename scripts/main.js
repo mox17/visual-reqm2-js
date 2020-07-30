@@ -504,6 +504,8 @@
 
 
   function load_file_main(file) {
+    clear_diagram()
+    viz_working_set()
     // setting up the reader
     let reader = new FileReader();
     reader.readAsText(file,'UTF-8');

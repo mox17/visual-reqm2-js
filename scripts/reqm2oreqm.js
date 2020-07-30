@@ -27,7 +27,7 @@ class ReqM2Oreqm {
     this.find_links();
     let problems = this.get_problems()
     if (problems) {
-      alert(problems)
+      //alert(problems)
     }
   }
 
@@ -421,10 +421,10 @@ class ReqM2Oreqm {
   find_reqs_with_text(regex) {
     // Check requirement texts against regex
     const ids = this.requirements.keys()
-    let rx = new RegExp(regex, 'i')
+    let rx = new RegExp(regex, 'im')
     let matches = []
     for (const id of ids) {
-      if (this.get_all_text(id).search(rx) >= 0)
+      if (rx.test(this.get_all_text(id)))
         matches.push(id)
     }
     return matches
