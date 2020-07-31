@@ -403,6 +403,13 @@
     }
   }
 
+  function clear_doctypes_table() {
+    const element = document.getElementById("dyn_doctype_table");
+    if (element) {
+      element.parentNode.removeChild(element);
+    }
+  }
+
   function display_doctypes_with_count(doctype_dict) {
     let doctype_names = Array.from(doctype_dict.keys())
     doctype_names.sort()
@@ -505,6 +512,7 @@
 
   function load_file_main(file) {
     clear_diagram()
+    clear_doctypes_table()
     viz_working_set()
     // setting up the reader
     let reader = new FileReader();
