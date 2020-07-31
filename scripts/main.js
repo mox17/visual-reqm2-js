@@ -1069,7 +1069,15 @@
   function show_doctypes() {
     // Show the graph of doctype relationships
     if (oreqm_main) {
-      const graph = oreqm_main.doctype_graph()
+      oreqm_main.scan_doctypes(false)
+      updateGraph();
+    }
+  }
+
+  function show_doctypes_safety() {
+    // Show the graph of doctype relationships
+    if (oreqm_main) {
+      oreqm_main.scan_doctypes(true)
       updateGraph();
     }
   }

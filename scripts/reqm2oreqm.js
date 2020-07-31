@@ -604,92 +604,145 @@ class ReqM2Oreqm {
     return this.requirements.has(name)
   }
 
-  scan_doctypes() {
+  safety_doctype(id, safety) {
+    // construct a doctype name, qualified with safetyclass
+    let rec = this.requirements.get(id)
+    if (safety) {
+      return "{}:{}".format(rec.doctype, rec.safetyclass)
+    } else {
+      return rec.doctype
+    }
+  }
+
+  linksto_safe(from, to) {
+    // permitted safetyclass for providescoverage <from_safetyclass>:<to_safetyclass>
+    const safety_class_links = [':', 'QM:', 'SIL-2:', 'QM:QM', 'SIL-2:QM', 'SIL-2:SIL-2']
+
+    let sc_from = from.includes(':') ? from.split(':')[1] : ''
+    let sc_to = to.includes(':') ? to.split(':')[1] : ''
+    let combo = "{}:{}".format(sc_from, sc_to)
+    return safety_class_links.includes(combo)
+  }
+
+  linksto_safe_color(from, to) {
+    return this.linksto_safe(from, to) ? '#00AA00' : '#FF0000'
+  }
+
+  scan_doctypes(doctype_safety) {
     // Scan all requirements and summarize the relationships between doctypes
     // with counts of instances and relations (needsobj, linksto, fulfilledby)
+    // When doctype_safety is true, the doctypes are qualified with the safetyclass
+    // of the requirement as in <doctype>:<safetyclass> and these are the nodes rendered
     let dt_keys = this.doctypes.keys()
     let dt_map = new Map() // A map of { doctype_name : Doctype }
-    let processed_ids = new Set()
-    for (const doctype of dt_keys) {
-      let dt_instance = new Doctype(doctype)
-      //console.log("doctype: ", doctype)
-      let id_list = Array.from(this.doctypes.get(doctype))
-      for (let i=0; i<id_list.length; i++) {
-        let id = id_list[i]
-        if (this.requirements.get(id).ffb_placeholder === true) {
-          // skip placeholders
-          continue;
-        }
-        // Now scanning through id's of this doctype
-        dt_instance.add_instance()
-        if (processed_ids.has(id)) {
-          console.log("More than one doctype for:", id, doctype, this.requirements.get(id).doctype)
-        }
-        processed_ids.add(id)
-        //console.log("+1: ", id)
-        // linksto
-        if (this.linksto.has(id)) {
-          const linksto = Array.from(this.linksto.get(id))
-          for (let i=0; i<linksto.length; i++) {
-            let linked_id = linksto[i]
-            if (this.requirements.has(linked_id)) {
-              //console.log("add_linksto ", doctype, linked_id, this.requirements.get(linked_id).doctype)
-              dt_instance.add_linksto(this.requirements.get(linked_id).doctype)
-            }
-          }
-        }
-        // needsobj
-        let need_list = Array.from(this.requirements.get(id).needsobj)
-        for (let i=0; i<need_list.length; i++) {
-          let need = need_list[i]
-          if (!need.endsWith('*')) {
-            //console.log("add_needsobj ", need)
-            dt_instance.add_needsobj(need)
-          }
-        }
-        // fulfilledby
-        let ffb_list = Array.from(this.requirements.get(id).fulfilledby)
-        // if (ffb_list.length>10) {
-        //   console.log("ffb scan:", doctype, id, ffb_list.length)
-        // }
-        for (let i=0; i<ffb_list.length; i++) {
-          let ffb = ffb_list[i]
-          //console.log("add_fulfilledby ", ffb[1])
-          dt_instance.add_fulfilledby(ffb[1])
+    let id_list = this.requirements.keys()
+    let doctype = null
+    let dest_doctype = null
+    let basic_doctype = null
+    let doctype_clusters = new Map() // {doctype : [doctype:safetyclass]}
+    for (const id of id_list) {
+      if (this.requirements.get(id).ffb_placeholder === true) {
+        // skip placeholders
+        continue;
+      }
+      // make a cluster of doctypes with the different safetyclasses
+      basic_doctype = this.requirements.get(id).doctype
+      if (!doctype_clusters.has(basic_doctype)) {
+        doctype_clusters.set(basic_doctype, [])
+      }
+      doctype = this.safety_doctype(id, doctype_safety)
+      if (!dt_map.has(doctype)) {
+        dt_map.set(doctype, new Doctype(doctype))
+        // Create clusters of refined doctypes, based on fundamental one
+        if (!doctype_clusters.get(basic_doctype).includes(doctype)) {
+          doctype_clusters.get(basic_doctype).push(doctype)
         }
       }
-      dt_map.set(doctype, dt_instance)
-      dt_instance = null
+
+      //
+      dt_map.get(doctype).add_instance()
+      // linksto
+      if (this.linksto.has(id)) {
+        const linksto = Array.from(this.linksto.get(id))
+        for (let i=0; i<linksto.length; i++) {
+          let linked_id = linksto[i]
+          if (this.requirements.has(linked_id)) {
+            dest_doctype = this.safety_doctype(linked_id, doctype_safety)
+            //console.log("add_linksto ", doctype, linked_id, dest_doctype)
+            dt_map.get(doctype).add_linksto(dest_doctype)
+          }
+        }
+      }
+      // needsobj
+      let need_list = Array.from(this.requirements.get(id).needsobj)
+      for (let i=0; i<need_list.length; i++) {
+        let need = need_list[i]
+        if (!need.endsWith('*')) {
+          if (doctype_safety) {
+            // will need at least its own safetyclass
+            dest_doctype = "{}:{}".format(need, this.requirements.get(id).safetyclass)
+          } else {
+            dest_doctype = need
+          }
+          //console.log("add_needsobj ", dest_doctype)
+          dt_map.get(doctype).add_needsobj(dest_doctype)
+        }
+      }
+      // fulfilledby
+      let ffb_list = Array.from(this.requirements.get(id).fulfilledby)
+      for (let i=0; i<ffb_list.length; i++) {
+        let ffb = ffb_list[i]
+        if (doctype_safety) {
+          // will need at least its own safetyclass
+          dest_doctype = "{}:{}".format(ffb[1], this.requirements.get(id).safetyclass)
+        } else {
+          dest_doctype = ffb[1]
+        }
+        //console.log("add_fulfilledby ", dest_doctype)
+        dt_map.get(doctype).add_fulfilledby(dest_doctype)
+      }
+
     }
     let graph = `digraph "" {
       rankdir="TD"
       node [shape=plaintext fontname="Arial" fontsize=16]
       edge [color="black" dir="forward" arrowhead="normal" arrowtail="normal" fontname="Arial" fontsize=11];
 
-    `
+`
     // Define the doctype nodes - the order affects the layout
-    const dt_rank = this.doctypes_rank()
-    let doctype
+    //const dt_rank = this.doctypes_rank()
+    const dt_rank = Array.from(doctype_clusters.keys())
     let dt
     for (let i=0; i<dt_rank.length; i++) {
       doctype = dt_rank[i]
-      dt = dt_map.get(doctype)
-      let dt_node = `\
-      "{}" [label=<
-        <TABLE BGCOLOR="{}" BORDER="1" CELLSPACING="0" CELLBORDER="1" COLOR="black" >
-        <TR><TD CELLSPACING="0" >doctype: {}</TD></TR>
-        <TR><TD ALIGN="LEFT">specobject count: {}</TD></TR>
-        </TABLE>>];\n\n`.format(
-          doctype,
-          get_color(doctype),
-          doctype,
-          dt.count)
-      graph += dt_node
+      let doctypes_in_cluster = doctype_clusters.get(doctype)
+      if (doctypes_in_cluster.length > 1) {
+        graph += '        subgraph "cluster_{}" {\n'.format(doctype)
+      }
+      for (const sub_doctype of doctypes_in_cluster) {
+        dt = dt_map.get(sub_doctype)
+        let dt_node = `\
+        "{}" [label=<
+          <TABLE BGCOLOR="{}" BORDER="1" CELLSPACING="0" CELLBORDER="1" COLOR="black" >
+          <TR><TD CELLSPACING="0" >doctype: {}</TD></TR>
+          <TR><TD ALIGN="LEFT">specobject count: {}</TD></TR>
+          </TABLE>>];\n`.format(
+            sub_doctype,
+            get_color(sub_doctype.split(':')[0]),
+            sub_doctype,
+            dt.count)
+        graph += dt_node
+      }
+      if (doctypes_in_cluster.length > 1) {
+        graph += '        }\n'
+      } else {
+        graph += '\n'
+      }
     }
     let count
+    let doctype_edges = Array.from(dt_map.keys())
     // Loop over doctypes
-    for (let i=0; i<dt_rank.length; i++) {
-      doctype = dt_rank[i]
+    for (let doctype of doctype_edges) {
       dt = dt_map.get(doctype)
       // Needsobj links
       graph += '# linkage from {}\n'.format(doctype)
@@ -697,20 +750,20 @@ class ReqM2Oreqm {
       for (let i=0; i<need_keys.length; i++) {
         let nk = need_keys[i]
         count = dt.needsobj.get(nk)
-        graph += ' {} -> {} [label="need({}) " style="dotted"]\n'.format(doctype, nk, count)
+        graph += ' "{}" -> "{}" [label="need({}) " style="dotted"]\n'.format(doctype, nk, count)
       }
       // linksto links
       let lt_keys = Array.from(dt.linksto.keys())
       for (let i=0; i<lt_keys.length; i++) {
         let lk = lt_keys[i]
         count = dt.linksto.get(lk)
-        graph += ' {} -> {} [label="linksto({}) " color="#00AA00"]\n'.format(doctype, lk, count)
+        graph += ' "{}" -> "{}" [label="linksto({}) " color="{}"]\n'.format(doctype, lk, count, this.linksto_safe_color(doctype, lk))
       }
       let ffb_keys = Array.from(dt.fulfilledby.keys())
       for (let i=0; i<ffb_keys.length; i++) {
         let ffb = ffb_keys[i]
         count = dt.fulfilledby.get(ffb)
-        graph += ' {} -> {} [label="fulfilledby({}) " color="purple"]\n'.format(doctype, ffb, count)
+        graph += ' "{}" -> "{}" [label="fulfilledby({}) " color="purple"]\n'.format(doctype, ffb, count)
       }
     }
     graph += '\n  label={}\n  labelloc=b\n  fontsize=14\n  fontcolor=black\n  fontname="Arial"\n'.format(construct_graph_title(false))
@@ -725,12 +778,6 @@ class ReqM2Oreqm {
     // Could be the order of initial declaration in oreqm
     // For now this is it.
     return Array.from(this.doctypes.keys())
-  }
-
-  doctype_graph() {
-    this.dot = "digraph { a -> b }"
-    this.scan_doctypes()
-    return this.dot
   }
 
   problem_duplicate(report) {
