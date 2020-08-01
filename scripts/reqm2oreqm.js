@@ -106,12 +106,10 @@ class ReqM2Oreqm {
     // add doctype to needsobj if not present
     const ids = Array.from(this.requirements.keys())
     let new_nodes = new Map() // need a new container to add after loop
-    for (let j=0; j<ids.length; j++) {
-      let req_id = ids[j]
+    for (let req_id of ids) {
       const rec = this.requirements.get(req_id)
-      let ffb_list = rec.fulfilledby
-      for (let i=0; i<ffb_list.length; i++) {
-        let ff_arr = ffb_list[i]
+      let ffb_list = Array.from(rec.fulfilledby)
+      for (let ff_arr of ffb_list) {
         const ff_id = ff_arr[0]
         const ff_doctype = ff_arr[1]
         const ff_version = ff_arr[2]
@@ -616,12 +614,25 @@ class ReqM2Oreqm {
 
   linksto_safe(from, to) {
     // permitted safetyclass for providescoverage <from_safetyclass>:<to_safetyclass>
-    const safety_class_links = [':', 'QM:', 'SIL-2:', 'QM:QM', 'SIL-2:QM', 'SIL-2:SIL-2']
+    const accepted_safety_class_links_re = [
+      /^\w+:>\w+:$/,           // no safetyclass -> no safetyclass
+      /^\w+:QM>\w+:$/,         // QM -> no safetyclass
+      /^\w+:SIL-2>\w+:$/,      // SIL-2 -> no safetyclass
+      /^\w+:QM>\w+:QM$/,       // QM -> QM
+      /^\w+:SIL-2>\w+:QM$/,    // SIL-2 -> QM
+      /^\w+:SIL-2>\w+:SIL-2$/, // SIL-2 -> SIL-2
+      /^impl.*>.*$/,           // impl can cover anything (maybe?)
+      /^swintts.*>.*$/,        // swintts can cover anything (maybe?)
+      /^swuts.*>.*$/           // swuts can cover anything (maybe?)
+    ]
 
-    let sc_from = from.includes(':') ? from.split(':')[1] : ''
-    let sc_to = to.includes(':') ? to.split(':')[1] : ''
-    let combo = "{}:{}".format(sc_from, sc_to)
-    return safety_class_links.includes(combo)
+    let combo = "{}>{}".format(from, to)
+    for (const re of accepted_safety_class_links_re) {
+      if (combo.match(re)) {
+        return true
+      }
+    }
+    return false
   }
 
   linksto_safe_color(from, to) {
@@ -664,8 +675,7 @@ class ReqM2Oreqm {
       // linksto
       if (this.linksto.has(id)) {
         const linksto = Array.from(this.linksto.get(id))
-        for (let i=0; i<linksto.length; i++) {
-          let linked_id = linksto[i]
+        for (let linked_id of linksto) {
           if (this.requirements.has(linked_id)) {
             dest_doctype = this.safety_doctype(linked_id, doctype_safety)
             //console.log("add_linksto ", doctype, linked_id, dest_doctype)
@@ -675,8 +685,7 @@ class ReqM2Oreqm {
       }
       // needsobj
       let need_list = Array.from(this.requirements.get(id).needsobj)
-      for (let i=0; i<need_list.length; i++) {
-        let need = need_list[i]
+      for (let need of need_list) {
         if (!need.endsWith('*')) {
           if (doctype_safety) {
             // will need at least its own safetyclass
@@ -690,8 +699,7 @@ class ReqM2Oreqm {
       }
       // fulfilledby
       let ffb_list = Array.from(this.requirements.get(id).fulfilledby)
-      for (let i=0; i<ffb_list.length; i++) {
-        let ffb = ffb_list[i]
+      for (let ffb of ffb_list) {
         if (doctype_safety) {
           // will need at least its own safetyclass
           dest_doctype = "{}:{}".format(ffb[1], this.requirements.get(id).safetyclass)
@@ -718,24 +726,21 @@ class ReqM2Oreqm {
       let count_total = 0
       let sc_list = Array.from(doctypes_in_cluster.keys())
       sc_list.sort()
-      let sc_str = ''
+      let sc_string = ''
       for (const sub_doctype of doctypes_in_cluster) {
         let dt = dt_map.get(sub_doctype)
         let sc = sub_doctype.split(':')[1]
-        if (sc === '') {
-          sc = 'none'
-        }
-        sc_str += '{}: {} '.format(sc, dt.count)
+        sc_string += '</TD><TD port="{}">{}: {} '.format(sc_str(sc), sc_str(sc), dt.count)
         count_total += dt.count
       }
       if (doctype_safety) {
-        sc_stats = '\n          <TR><TD>safetyclass: {}</TD></TR>'.format(sc_str)
+        sc_stats = '\n          <TR><TD>safetyclass:{}</TD></TR>'.format(sc_string)
       }
       let dt_node = `\
       "{}" [label=<
         <TABLE BGCOLOR="{}" BORDER="1" CELLSPACING="0" CELLBORDER="1" COLOR="black" >
-        <TR><TD CELLSPACING="0" >doctype: {}</TD></TR>
-        <TR><TD ALIGN="LEFT">specobject count: {}</TD></TR>{}
+        <TR><TD COLSPAN="5" CELLSPACING="0" >doctype: {}</TD></TR>
+        <TR><TD COLSPAN="5" ALIGN="LEFT">specobject count: {}</TD></TR>{}
       </TABLE>>];\n`.format(
           doctype,
           get_color(doctype),
@@ -753,18 +758,19 @@ class ReqM2Oreqm {
       // Needsobj links
       graph += '# linkage from {}\n'.format(doctype)
       let need_keys = Array.from(dt.needsobj.keys())
-      for (let i=0; i<need_keys.length; i++) {
-        let nk = need_keys[i]
-        count = dt.needsobj.get(nk)
-        graph += ' "{}" -> "{}" [label="need({}) " style="dotted"]\n'.format(
-          doctype.split(':')[0],
-          nk.split(':')[0],
-          count)
+      if (!doctype_safety) {
+        for (let nk of need_keys) {
+          count = dt.needsobj.get(nk)
+          graph += ' "{}" -> "{}" [label="need({}){} " style="dotted"]\n'.format(
+            doctype.split(':')[0],
+            nk.split(':')[0],
+            count,
+            doctype_safety ? '\n{}'.format(dt_sc_str(doctype)) : '')
+        }
       }
       // linksto links
       let lt_keys = Array.from(dt.linksto.keys())
-      for (let i=0; i<lt_keys.length; i++) {
-        let lk = lt_keys[i]
+      for (let lk of lt_keys) {
         count = dt.linksto.get(lk)
         graph += ' "{}" -> "{}" [label="linksto({}){} " color="{}"]\n'.format(
           doctype.split(':')[0],
@@ -773,14 +779,16 @@ class ReqM2Oreqm {
           doctype_safety ? '\n{}:{}'.format(dt_sc_str(doctype), dt_sc_str(lk)) : '',
           doctype_safety ? this.linksto_safe_color(doctype, lk) : 'black')
       }
+      // fulfilledby links
       let ffb_keys = Array.from(dt.fulfilledby.keys())
-      for (let i=0; i<ffb_keys.length; i++) {
-        let ffb = ffb_keys[i]
+      for (let ffb of ffb_keys) {
         count = dt.fulfilledby.get(ffb)
-        graph += ' "{}" -> "{}" [label="fulfilledby({}) " color="purple"]\n'.format(
+        graph += ' "{}" -> "{}" [label="fulfilledby({}){} " color="{}" style="dashed"]\n'.format(
           doctype.split(':')[0],
           ffb.split(':')[0],
-          count)
+          count,
+          doctype_safety ? '\n{}:{}'.format(dt_sc_str(ffb),dt_sc_str(doctype)) : '',
+          doctype_safety ? this.linksto_safe_color(ffb, doctype) : 'purple')
       }
     }
     graph += '\n  label={}\n  labelloc=b\n  fontsize=14\n  fontcolor=black\n  fontname="Arial"\n'.format(construct_graph_title(false))
