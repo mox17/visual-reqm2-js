@@ -703,6 +703,7 @@ class ReqM2Oreqm {
       }
 
     }
+    // DOT language start of diagram
     let graph = `digraph "" {
       rankdir="TD"
       node [shape=plaintext fontname="Arial" fontsize=16]
@@ -710,35 +711,40 @@ class ReqM2Oreqm {
 
 `
     // Define the doctype nodes - the order affects the layout
-    //const dt_rank = this.doctypes_rank()
-    const dt_rank = Array.from(doctype_clusters.keys())
-    let dt
-    for (let i=0; i<dt_rank.length; i++) {
-      doctype = dt_rank[i]
+    const doctype_array = Array.from(doctype_clusters.keys())
+    for (let doctype of doctype_array) {
       let doctypes_in_cluster = doctype_clusters.get(doctype)
-      if (doctypes_in_cluster.length > 1) {
-        graph += '        subgraph "cluster_{}" {\n'.format(doctype)
-      }
+      let sc_stats = ''
+      let count_total = 0
+      let sc_list = Array.from(doctypes_in_cluster.keys())
+      sc_list.sort()
+      let sc_str = ''
       for (const sub_doctype of doctypes_in_cluster) {
-        dt = dt_map.get(sub_doctype)
-        let dt_node = `\
-        "{}" [label=<
-          <TABLE BGCOLOR="{}" BORDER="1" CELLSPACING="0" CELLBORDER="1" COLOR="black" >
-          <TR><TD CELLSPACING="0" >doctype: {}</TD></TR>
-          <TR><TD ALIGN="LEFT">specobject count: {}</TD></TR>
-          </TABLE>>];\n`.format(
-            sub_doctype,
-            get_color(sub_doctype.split(':')[0]),
-            sub_doctype,
-            dt.count)
-        graph += dt_node
+        let dt = dt_map.get(sub_doctype)
+        let sc = sub_doctype.split(':')[1]
+        if (sc === '') {
+          sc = 'none'
+        }
+        sc_str += '{}: {} '.format(sc, dt.count)
+        count_total += dt.count
       }
-      if (doctypes_in_cluster.length > 1) {
-        graph += '        }\n'
-      } else {
-        graph += '\n'
+      if (doctype_safety) {
+        sc_stats = '\n          <TR><TD>safetyclass: {}</TD></TR>'.format(sc_str)
       }
+      let dt_node = `\
+      "{}" [label=<
+        <TABLE BGCOLOR="{}" BORDER="1" CELLSPACING="0" CELLBORDER="1" COLOR="black" >
+        <TR><TD CELLSPACING="0" >doctype: {}</TD></TR>
+        <TR><TD ALIGN="LEFT">specobject count: {}</TD></TR>{}
+      </TABLE>>];\n`.format(
+          doctype,
+          get_color(doctype),
+          doctype,
+          count_total,
+          sc_stats)
+      graph += dt_node
     }
+    let dt
     let count
     let doctype_edges = Array.from(dt_map.keys())
     // Loop over doctypes
@@ -750,20 +756,31 @@ class ReqM2Oreqm {
       for (let i=0; i<need_keys.length; i++) {
         let nk = need_keys[i]
         count = dt.needsobj.get(nk)
-        graph += ' "{}" -> "{}" [label="need({}) " style="dotted"]\n'.format(doctype, nk, count)
+        graph += ' "{}" -> "{}" [label="need({}) " style="dotted"]\n'.format(
+          doctype.split(':')[0],
+          nk.split(':')[0],
+          count)
       }
       // linksto links
       let lt_keys = Array.from(dt.linksto.keys())
       for (let i=0; i<lt_keys.length; i++) {
         let lk = lt_keys[i]
         count = dt.linksto.get(lk)
-        graph += ' "{}" -> "{}" [label="linksto({}) " color="{}"]\n'.format(doctype, lk, count, this.linksto_safe_color(doctype, lk))
+        graph += ' "{}" -> "{}" [label="linksto({}){} " color="{}"]\n'.format(
+          doctype.split(':')[0],
+          lk.split(':')[0],
+          count,
+          doctype_safety ? '\n{}:{}'.format(dt_sc_str(doctype), dt_sc_str(lk)) : '',
+          doctype_safety ? this.linksto_safe_color(doctype, lk) : 'black')
       }
       let ffb_keys = Array.from(dt.fulfilledby.keys())
       for (let i=0; i<ffb_keys.length; i++) {
         let ffb = ffb_keys[i]
         count = dt.fulfilledby.get(ffb)
-        graph += ' "{}" -> "{}" [label="fulfilledby({}) " color="purple"]\n'.format(doctype, ffb, count)
+        graph += ' "{}" -> "{}" [label="fulfilledby({}) " color="purple"]\n'.format(
+          doctype.split(':')[0],
+          ffb.split(':')[0],
+          count)
       }
     }
     graph += '\n  label={}\n  labelloc=b\n  fontsize=14\n  fontcolor=black\n  fontname="Arial"\n'.format(construct_graph_title(false))
@@ -898,4 +915,14 @@ class ReqM2Oreqm {
     return xml_txt
   }
 
+}
+
+function sc_str(sc) {
+  // Show the empty safetyclass as 'none'
+  return (sc === '') ? 'none' : sc
+}
+
+function dt_sc_str(doctype_with_safetyclass) {
+  // return string representation of safetyclass part of doctype
+  return sc_str(doctype_with_safetyclass.split(':')[1])
 }
