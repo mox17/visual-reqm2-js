@@ -83,7 +83,7 @@ class ReqM2Oreqm {
       if (this.requirements.has(req.id)) {
         let problem = "<id> duplicated: {} ".format(req.id)
         //console.log("redefinition of ", req.id)
-        this.problem_duplicate(problem)
+        this.problem_report(problem)
       }
       while (this.requirements.has(req.id)) {
         // Add suffix until unique
@@ -146,7 +146,7 @@ class ReqM2Oreqm {
           const real_dt = this.requirements.get(ff_id).doctype
           if (real_dt !== ff_doctype) {
             let problem = "ffbType {} does not match {} for <id> {}".format(ff_doctype, real_dt, ff_id)
-            this.problem_duplicate(problem)
+            this.problem_report(problem)
           }
         }
         // Add pseudo needsobj with '*' suffix
@@ -644,7 +644,6 @@ class ReqM2Oreqm {
     // with counts of instances and relations (needsobj, linksto, fulfilledby)
     // When doctype_safety is true, the doctypes are qualified with the safetyclass
     // of the requirement as in <doctype>:<safetyclass> and these are the nodes rendered
-    let dt_keys = this.doctypes.keys()
     let dt_map = new Map() // A map of { doctype_name : Doctype }
     let id_list = this.requirements.keys()
     let doctype = null
@@ -805,16 +804,22 @@ class ReqM2Oreqm {
     return Array.from(this.doctypes.keys())
   }
 
-  problem_duplicate(report) {
-    // report problem with diplicate
+  problem_report(report) {
+    // report problems and suppress duplicates
     if (!this.problems.includes(report)) {
       this.problems.push(report)
+      document.getElementById('issueCount').innerHTML = this.problems.length
     }
   }
 
   get_problems() {
     // Get a list of problems as string. Empty string -> no problems
     return this.problems.join('\n')
+  }
+
+  clear_problems() {
+    this.problems = []
+    document.getElementById('issueCount').innerHTML = this.problems.length
   }
 
   get_tag_text_formatted(rec, tag) {

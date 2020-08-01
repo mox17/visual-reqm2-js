@@ -96,6 +96,7 @@
               <label id="viz_working"></label>
             </p>
             <p class="alignright">
+              <button id="issuesButton"><span id="issueCount"></span> issues</button>
               <!-- Trigger/Open The modal "about" dialog -->
               <button id="aboutButton">About</button>
             </p>
@@ -168,6 +169,16 @@
       <div class="modal-content row">
         <div><span id="nodeSourceClose" class="close">&times;</span></div>
         <div id="req_src" style="overflow-y: auto; height:600px; ">
+        </div>
+      </div>
+    </div>
+
+    <!-- Problem display dialog -->
+    <div id="problemPopup" class="modal">
+      <!-- Modal content -->
+      <div class="modal-content row">
+        <div><span id="problemPopupClose" class="close">&times;</span></div>
+        <div id="problem_list" style="overflow-y: auto; height:600px; ">
         </div>
       </div>
     </div>

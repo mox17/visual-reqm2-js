@@ -822,12 +822,40 @@
     return //"Graph is going away..."
   }
 
+  var problemPopup = document.getElementById("problemPopup");
+
+  // Get the button that opens the modal
+  var issuesButton = document.getElementById("issuesButton");
+
+  // When the user clicks the button, open the modal
+  issuesButton.onclick = function() {
+    show_problems()
+  }
+
+  // Setup for the raw node display dialog (raw text and diff (for changed reqs))
+  var problemPopup = document.getElementById("problemPopup");
+
+  // Get the <span> element that closes the modal
+  var problemPopupClose = document.getElementById("problemPopupClose");
+
+  // When the user clicks on <span> (x), close the modal
+  problemPopupClose.onclick = function() {
+    problemPopup.style.display = "none";
+  }
+
+  // When the user clicks anywhere outside of the modal, close it
+  window.onbeforeunload = function(event) {
+    return //"Graph is going away..."
+  }
+
   // When the user clicks anywhere outside one of the modal dialogs, close it
   window.onclick = function(event) {
     if (event.target == aboutPane) {
       aboutPane.style.display = "none";
     } else if (event.target == nodeSource) {
       nodeSource.style.display = "none";
+    } else if (event.target == problemPopup) {
+      problemPopup.style.display = "none";
     }
   }
 
@@ -1117,5 +1145,27 @@
         ref.innerHTML = '{}<pre>{}</pre>'.format(header_main, xml_escape(oreqm_main.get_node_text_formatted(selected_node)))
       }
       nodeSource.style.display = "block";
+    }
+  }
+
+  function show_problems() {
+    // Show problems colleced in oreqm_main
+    var ref = document.getElementById('problem_list');
+    let header_main = `\
+<h2>Detected problems</h2>
+<button type="button" onclick="clear_problems()">clear</button>
+`
+    let problem_txt = 'Nothing to see here...'
+    if (oreqm_main) {
+      problem_txt =  xml_escape(oreqm_main.get_problems())
+    }
+    ref.innerHTML = '{}<pre>{}</pre>'.format(header_main, problem_txt)
+    problemPopup.style.display = "block";
+  }
+
+  function clear_problems() {
+    if (oreqm_main) {
+      oreqm_main.clear_problems()
+      show_problems()
     }
   }
