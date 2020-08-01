@@ -30,6 +30,8 @@ if (typeof(Array.prototype.remove) === "undefined")
   };
 }
 
+RegExp.prototype.toJSON = function() { return this.source; };
+
 function stringEqual(a, b) {
   const a_s = JSON.stringify(a)
   const b_s = JSON.stringify(b)
@@ -274,7 +276,7 @@ function select_color(node_id, rec, node_color) {
   return node_color.has(COLOR_UP) || node_color.has(COLOR_DOWN)
 }
 
-function construct_graph_title(show_filters) {
+function construct_graph_title(show_filters, extra=null) {
   let title = '""'
   if (oreqm_main) {
     title  = '<\n    <table border="1" cellspacing="0" cellborder="1">\n'
@@ -315,6 +317,9 @@ function construct_graph_title(show_filters) {
     let excluded_ids = oreqm_main.get_excluded_ids()
     if (excluded_ids.length) {
       title += '      <tr><td>excluded &lt;id&gt;s</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(excluded_ids.join('<BR ALIGN="LEFT"/>'))
+    }
+    if (extra && extra.length) {
+      title += '      <tr><td>extra info</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(extra)
     }
     title += '    </table>>'
     //console.log(title)

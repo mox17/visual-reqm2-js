@@ -1,6 +1,18 @@
 /* Main class for managing oreqm xml data */
 "use strict";
 
+const accepted_safety_class_links_re = [
+  /^\w+:>\w+:$/,           // no safetyclass -> no safetyclass
+  /^\w+:QM>\w+:$/,         // QM -> no safetyclass
+  /^\w+:SIL-2>\w+:$/,      // SIL-2 -> no safetyclass
+  /^\w+:QM>\w+:QM$/,       // QM -> QM
+  /^\w+:SIL-2>\w+:QM$/,    // SIL-2 -> QM
+  /^\w+:SIL-2>\w+:SIL-2$/, // SIL-2 -> SIL-2
+  /^impl.*>.*$/,           // impl can cover anything (maybe?)
+  /^swintts.*>.*$/,        // swintts can cover anything (maybe?)
+  /^swuts.*>.*$/           // swuts can cover anything (maybe?)
+]
+
 class ReqM2Oreqm {
   // This class reads and manages information in ReqM2 .oreqm files
   constructor(content, excluded_doctypes, excluded_ids) {
@@ -614,17 +626,6 @@ class ReqM2Oreqm {
 
   linksto_safe(from, to) {
     // permitted safetyclass for providescoverage <from_safetyclass>:<to_safetyclass>
-    const accepted_safety_class_links_re = [
-      /^\w+:>\w+:$/,           // no safetyclass -> no safetyclass
-      /^\w+:QM>\w+:$/,         // QM -> no safetyclass
-      /^\w+:SIL-2>\w+:$/,      // SIL-2 -> no safetyclass
-      /^\w+:QM>\w+:QM$/,       // QM -> QM
-      /^\w+:SIL-2>\w+:QM$/,    // SIL-2 -> QM
-      /^\w+:SIL-2>\w+:SIL-2$/, // SIL-2 -> SIL-2
-      /^impl.*>.*$/,           // impl can cover anything (maybe?)
-      /^swintts.*>.*$/,        // swintts can cover anything (maybe?)
-      /^swuts.*>.*$/           // swuts can cover anything (maybe?)
-    ]
 
     let combo = "{}>{}".format(from, to)
     for (const re of accepted_safety_class_links_re) {
@@ -670,7 +671,7 @@ class ReqM2Oreqm {
       }
 
       //
-      dt_map.get(doctype).add_instance()
+      dt_map.get(doctype).add_instance(id)
       // linksto
       if (this.linksto.has(id)) {
         const linksto = Array.from(this.linksto.get(id))
@@ -678,7 +679,7 @@ class ReqM2Oreqm {
           if (this.requirements.has(linked_id)) {
             dest_doctype = this.safety_doctype(linked_id, doctype_safety)
             //console.log("add_linksto ", doctype, linked_id, dest_doctype)
-            dt_map.get(doctype).add_linksto(dest_doctype)
+            dt_map.get(doctype).add_linksto(dest_doctype, linked_id)
           }
         }
       }
@@ -706,7 +707,7 @@ class ReqM2Oreqm {
           dest_doctype = ffb[1]
         }
         //console.log("add_fulfilledby ", dest_doctype)
-        dt_map.get(doctype).add_fulfilledby(dest_doctype)
+        dt_map.get(doctype).add_fulfilledby(dest_doctype, ffb[0])
       }
 
     }
@@ -740,7 +741,7 @@ class ReqM2Oreqm {
         <TABLE BGCOLOR="{}" BORDER="1" CELLSPACING="0" CELLBORDER="1" COLOR="black" >
         <TR><TD COLSPAN="5" CELLSPACING="0" >doctype: {}</TD></TR>
         <TR><TD COLSPAN="5" ALIGN="LEFT">specobject count: {}</TD></TR>{}
-      </TABLE>>];\n`.format(
+      </TABLE>>];\n\n`.format(
           doctype,
           get_color(doctype),
           doctype,
@@ -770,7 +771,7 @@ class ReqM2Oreqm {
       // linksto links
       let lt_keys = Array.from(dt.linksto.keys())
       for (let lk of lt_keys) {
-        count = dt.linksto.get(lk)
+        count = dt.linksto.get(lk).length
         graph += ' "{}" -> "{}" [label="linksto({}){} " color="{}"]\n'.format(
           doctype.split(':')[0],
           lk.split(':')[0],
@@ -781,7 +782,7 @@ class ReqM2Oreqm {
       // fulfilledby links
       let ffb_keys = Array.from(dt.fulfilledby.keys())
       for (let ffb of ffb_keys) {
-        count = dt.fulfilledby.get(ffb)
+        count = dt.fulfilledby.get(ffb).length
         graph += ' "{}" -> "{}" [label="fulfilledby({}){} " color="{}" style="dashed"]\n'.format(
           doctype.split(':')[0],
           ffb.split(':')[0],
@@ -790,7 +791,13 @@ class ReqM2Oreqm {
           doctype_safety ? this.linksto_safe_color(ffb, doctype) : 'purple')
       }
     }
-    graph += '\n  label={}\n  labelloc=b\n  fontsize=14\n  fontcolor=black\n  fontname="Arial"\n'.format(construct_graph_title(false))
+    let rules = ''
+    if (doctype_safety) {
+      rules = xml_escape(JSON.stringify(accepted_safety_class_links_re, 0, 2))
+      rules = rules.replace(/\n/mg, '<BR ALIGN="LEFT"/> ')
+    }
+    graph += '\n  label={}\n  labelloc=b\n  fontsize=14\n  fontcolor=black\n  fontname="Arial"\n'.format(
+      construct_graph_title(false, rules))
     graph += '\n}\n'
     //console.log(graph)
     this.dot = graph

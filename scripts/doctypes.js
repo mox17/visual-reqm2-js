@@ -6,13 +6,15 @@ class Doctype {
   constructor(name) {
     this.name = name
     this.count = 0               // Number of instances
-    this.needsobj = new Map()    // doctype : count
-    this.fulfilledby = new Map() // doctype : count
-    this.linksto = new Map()     // doctype : count
+    this.needsobj = new Map()    // doctype : [id]
+    this.fulfilledby = new Map() // doctype : [id]
+    this.linksto = new Map()     // doctype : [id]
+    this.id_list = []            // [id]
   }
 
-  add_instance() {
+  add_instance(id) {
     this.count++
+    this.id_list.push(id)
   }
 
   add_needsobj(doctype) {
@@ -24,21 +26,23 @@ class Doctype {
     }
   }
 
-  add_linksto(doctype) {
+  add_linksto(doctype, id) {
     if (this.linksto.has(doctype)) {
-      let count = this.linksto.get(doctype)
-      this.linksto.set(doctype, count+1)
+      //let count = this.linksto.get(doctype)
+      //this.linksto.set(doctype, count+1)
+      this.linksto.get(doctype).push(id)
     } else {
-      this.linksto.set(doctype, 1)
+      this.linksto.set(doctype, [id])
     }
   }
 
-  add_fulfilledby(doctype) {
+  add_fulfilledby(doctype, id) {
     if (this.fulfilledby.has(doctype)) {
-      let count = this.fulfilledby.get(doctype)
-      this.fulfilledby.set(doctype, count+1)
+      //let count = this.fulfilledby.get(doctype)
+      //this.fulfilledby.set(doctype, count+1)
+      this.fulfilledby.get(doctype).push(id)
     } else {
-      this.fulfilledby.set(doctype, 1)
+      this.fulfilledby.set(doctype, [id])
     }
   }
 
