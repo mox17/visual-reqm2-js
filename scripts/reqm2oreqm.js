@@ -637,6 +637,7 @@ class ReqM2Oreqm {
   }
 
   linksto_safe_color(from, to) {
+    // Color coded safefety
     return this.linksto_safe(from, to) ? '#00AA00' : '#FF0000'
   }
 
@@ -679,7 +680,7 @@ class ReqM2Oreqm {
           if (this.requirements.has(linked_id)) {
             dest_doctype = this.safety_doctype(linked_id, doctype_safety)
             //console.log("add_linksto ", doctype, linked_id, dest_doctype)
-            dt_map.get(doctype).add_linksto(dest_doctype, linked_id)
+            dt_map.get(doctype).add_linksto(dest_doctype, [linked_id, id])
           }
         }
       }
@@ -707,7 +708,7 @@ class ReqM2Oreqm {
           dest_doctype = ffb[1]
         }
         //console.log("add_fulfilledby ", dest_doctype)
-        dt_map.get(doctype).add_fulfilledby(dest_doctype, ffb[0])
+        dt_map.get(doctype).add_fulfilledby(dest_doctype, [id, ffb[0]])
       }
 
     }
@@ -778,6 +779,11 @@ class ReqM2Oreqm {
           count,
           doctype_safety ? '\n{}:{}'.format(dt_sc_str(doctype), dt_sc_str(lk)) : '',
           doctype_safety ? this.linksto_safe_color(doctype, lk) : 'black')
+        if (doctype_safety && !this.linksto_safe(doctype, lk)) {
+          let prov_list = dt.linksto.get(lk).map(x => '{} -> {}'.format(x[1], x[0]))
+          let problem = "{} provcov to {}\n  {}".format(doctype, lk, prov_list.join('\n  '))
+          this.problem_report(problem)
+        }
       }
       // fulfilledby links
       let ffb_keys = Array.from(dt.fulfilledby.keys())
@@ -789,12 +795,17 @@ class ReqM2Oreqm {
           count,
           doctype_safety ? '\n{}:{}'.format(dt_sc_str(ffb),dt_sc_str(doctype)) : '',
           doctype_safety ? this.linksto_safe_color(ffb, doctype) : 'purple')
+        if (doctype_safety && !this.linksto_safe(ffb, doctype)) {
+          let problem = "{} fulfilledby {}".format(ffb, doctype)
+          this.problem_report(problem)
+        }
       }
     }
-    let rules = ''
+    let rules = new Object()
     if (doctype_safety) {
-      rules = xml_escape(JSON.stringify(accepted_safety_class_links_re, 0, 2))
-      rules = rules.replace(/\n/mg, '<BR ALIGN="LEFT"/> ')
+      rules.text = xml_escape(JSON.stringify(accepted_safety_class_links_re, 0, 2))
+      rules.text = rules.text.replace(/\n/mg, '<BR ALIGN="LEFT"/> ')
+      rules.title = "Safety rules for coverage<BR/>list of regex<BR/>doctype:safetyclass&gt;doctype:safetyclass"
     }
     graph += '\n  label={}\n  labelloc=b\n  fontsize=14\n  fontcolor=black\n  fontname="Arial"\n'.format(
       construct_graph_title(false, rules))

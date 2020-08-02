@@ -26,23 +26,19 @@ class Doctype {
     }
   }
 
-  add_linksto(doctype, id) {
+  add_linksto(doctype, pair) {
     if (this.linksto.has(doctype)) {
-      //let count = this.linksto.get(doctype)
-      //this.linksto.set(doctype, count+1)
-      this.linksto.get(doctype).push(id)
+      this.linksto.get(doctype).push(pair)
     } else {
-      this.linksto.set(doctype, [id])
+      this.linksto.set(doctype, [pair])
     }
   }
 
-  add_fulfilledby(doctype, id) {
+  add_fulfilledby(doctype, pair) {
     if (this.fulfilledby.has(doctype)) {
-      //let count = this.fulfilledby.get(doctype)
-      //this.fulfilledby.set(doctype, count+1)
-      this.fulfilledby.get(doctype).push(id)
+      this.fulfilledby.get(doctype).push(pair)
     } else {
-      this.fulfilledby.set(doctype, [id])
+      this.fulfilledby.set(doctype, [pair])
     }
   }
 
