@@ -696,7 +696,8 @@
   var selected_index = 0
   var selected_node = null
   var selected_polygon = null
-  var selected_width = ""
+  var selected_width = ""  // width as a string
+  var selected_color = ""  // color as #RRGGBB string
 
   function reset_selection() {
     selected_nodes = []
@@ -714,19 +715,21 @@
 
   function clear_selection_highlight() {
     if (selected_polygon) {
-      selected_polygon.stroke_width = selected_width
+      selected_polygon.setAttribute('stroke-width', selected_width)
+      selected_polygon.setAttribute('stroke', selected_color)
       selected_polygon = null
     }
   }
 
   function set_selection_highlight(node) {
     clear_selection_highlight()
-    //let cluster_name = "cluster_{}".format()
-    let outline = document.querySelector('.polygon');
+    let outline = node.querySelector('.cluster > polygon');
     if (outline) {
       selected_polygon = outline
-      selected_width = selected_polygon.stroke_width
-      selected_polygon.stroke_width = "8"
+      selected_width = selected_polygon.getAttribute('stroke-width')
+      selected_color = selected_polygon.getAttribute('stroke')
+      selected_polygon.setAttribute('stroke-width', "8")
+      selected_polygon.setAttribute('stroke', "#FF0000")
     }
   }
 
@@ -925,8 +928,12 @@
   }
 
   function center_node(node_name) {
-    // Grab all the siblings of the element that was actually clicked on
     let found = false
+    // Get translation applied to svg coordinates by Graphviz
+    let graph0 = document.querySelectorAll('.graph')[0]
+    let trans_x = graph0.transform.baseVal[2].matrix.e
+    let trans_y = graph0.transform.baseVal[2].matrix.f
+    // Grab all the siblings of the element that was actually clicked on
     let titles = document.querySelectorAll('.node > title');
     let bb
     let node
@@ -934,23 +941,18 @@
       if (node.innerHTML === node_name) {
         found = true
         bb = node.parentNode.getBBox()
-        // console.log("BBox", bb, node_name)
         break;
       }
     }
     if (found) {
-      set_selection_highlight(node.parentNode)
+      set_selection_highlight(document.getElementById('sel_{}'.format(node_name)))
       let output = document.getElementById("output");
       let sizes = panZoom.getSizes()
       let rz = sizes.realZoom;
-      //let pan = panZoom.getPan()
       let window_width = output.clientWidth/rz
       let window_height = output.clientHeight/rz
       let req_center_x = bb.x + bb.width * 0.5
       let req_center_y = bb.y
-      //console.log("Sizes", sizes)
-      //console.log("ViewBox", sizes.viewBox)
-      //console.log("Pan", pan)
 
       let centerpos_x = sizes.viewBox.width * 0.5
       let centerpos_y = sizes.viewBox.height * 0.5
@@ -968,10 +970,10 @@
         centerpos_y -= (sizes.viewBox.height-window_height) * 0.5
       }
       // console.log(centerpos_x, centerpos_y)
-      let pan_vector_x = (centerpos_x - req_center_x)*rz
-      let pan_vector_y = (centerpos_y - req_center_y)*rz
+      let pan_vector_x = (centerpos_x - req_center_x - trans_x)*rz
+      let pan_vector_y = (centerpos_y - req_center_y - trans_y)*rz
       // console.log(pan_vector_x, pan_vector_y)
-      panZoom.pan({x: pan_vector_x, y: pan_vector_y*0.5});
+      panZoom.pan({x: pan_vector_x, y: pan_vector_y});
     }
   }
 
