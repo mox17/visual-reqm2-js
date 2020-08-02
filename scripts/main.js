@@ -702,11 +702,15 @@
   function reset_selection() {
     selected_nodes = []
     selected_index = 0
+    let nodeSelectEntries = document.getElementById('nodeSelect')
+    nodeSelectEntries.innerHTML = ''
   }
 
   function set_selection(selection) {
     selected_nodes = selection
     selected_index = 0
+    let nodeSelectEntries = document.getElementById('nodeSelect')
+    nodeSelectEntries.innerHTML = '<option>'+selected_nodes.join('</option>\n<option>')+'</option>'
   }
 
   function selected_node_check(node) {
@@ -733,13 +737,20 @@
     }
   }
 
+  function select_dropdown() {
+    clear_selection_highlight()
+    selected_index = document.getElementById("nodeSelect").selectedIndex
+    center_node(selected_nodes[selected_index])
+  }
+
   function prev_selected() {
     // step backwards through nodes and center display
     if (oreqm_main && selected_nodes.length) {
       if (selected_index > selected_nodes.length) selected_index = 0
-      center_node(selected_nodes[selected_index])
       selected_index--
       if (selected_index < 0) selected_index = selected_nodes.length - 1
+      document.getElementById("nodeSelect").selectedIndex = selected_index;
+      center_node(selected_nodes[selected_index])
     }
   }
 
@@ -747,9 +758,10 @@
     // step forwards through nodes and center display
     if (oreqm_main && selected_nodes.length) {
       if (selected_index > selected_nodes.length) selected_index = 0
-      center_node(selected_nodes[selected_index])
       selected_index++
       if (selected_index >= selected_nodes.length) selected_index = 0
+      document.getElementById("nodeSelect").selectedIndex = selected_index;
+      center_node(selected_nodes[selected_index])
     }
   }
 
@@ -764,8 +776,7 @@
 
   function txt_search(regex) {
     var results = oreqm_main.find_reqs_with_text(regex)
-    selected_nodes = results
-    selected_index = 0
+    set_selection(results)
     oreqm_main.clear_colors()
     oreqm_main.color_up_down(results, COLOR_UP, COLOR_DOWN)
     const graph = oreqm_main.create_graph(select_color, "reqspec1", construct_graph_title(true), results)
@@ -955,7 +966,7 @@
       let req_center_y = bb.y
 
       let centerpos_x = sizes.viewBox.width * 0.5
-      let centerpos_y = sizes.viewBox.height * 0.5
+      let centerpos_y = sizes.viewBox.height * 0.3
       if (window_width > sizes.viewBox.width) {
         centerpos_x += (window_width-sizes.viewBox.width) * 0.5
       }
@@ -963,11 +974,10 @@
         centerpos_x -= (sizes.viewBox.width-window_width) * 0.5
       }
       if (window_height > sizes.viewBox.height) {
-        //centerpos_y += (window_height-sizes.viewBox.height) * 0.5
-        req_center_y -= (window_height-sizes.viewBox.height) * 0.5
+        req_center_y -= (window_height-sizes.viewBox.height) * 0.3
       }
       if (window_height < sizes.viewBox.height) {
-        centerpos_y -= (sizes.viewBox.height-window_height) * 0.5
+        centerpos_y -= (sizes.viewBox.height-window_height) * 0.3
       }
       // console.log(centerpos_x, centerpos_y)
       let pan_vector_x = (centerpos_x - req_center_x - trans_x)*rz
