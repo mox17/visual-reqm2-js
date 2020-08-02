@@ -76,7 +76,7 @@
           <div id="options">
             <p class="alignleft">
               <label id="format">
-                Format:
+                format:
                 <select>
                   <option selected>svg</option>
                   <option>png-image-element</option>
@@ -90,14 +90,16 @@
               <label id="raw" style="visibility: hidden;">
                 <input type="checkbox" > raw
               </label>
+              <select id="nodeSelect" style="width:25%;max-width:40%;" onChange="select_dropdown()">
+              </select>
               <button type="button" onclick="prev_selected()">prev</button>
               <button type="button" onclick="next_selected()">next</button>
-              <label id="download_image"></label>
             </p>
             <p class="aligncenter">
               <label id="viz_working"></label>
             </p>
             <p class="alignright">
+              <label id="download_image"></label>
               <button id="issuesButton"><span id="issueCount"></span> issues</button>
               <!-- Trigger/Open The modal "about" dialog -->
               <button id="aboutButton">About</button>
