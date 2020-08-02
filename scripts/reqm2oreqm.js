@@ -803,7 +803,7 @@ class ReqM2Oreqm {
     }
     let rules = new Object()
     if (doctype_safety) {
-      rules.text = xml_escape(JSON.stringify(accepted_safety_class_links_re, 0, 2))
+      rules.text = xml_escape(JSON.stringify(accepted_safety_class_links_re, 0, 2)).replace(/\\/g, '\\\\')
       rules.text = rules.text.replace(/\n/mg, '<BR ALIGN="LEFT"/> ')
       rules.title = "Safety rules for coverage<BR/>list of regex<BR/>doctype:safetyclass&gt;doctype:safetyclass"
     }

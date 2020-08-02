@@ -305,9 +305,9 @@ function construct_graph_title(show_filters, extra=null) {
         let search_formatted = xml_escape(search_pattern.replace(/&/g, '&amp;'))
         let pattern_string = search_formatted.trim().replace(/([^\n]{40,500}?\|)/g, '$1<BR ALIGN="LEFT"/>').replace(/\n/g, '<BR ALIGN="LEFT"/>')
         if (id_checkbox) {
-          title += '      <tr><td>Search &lt;id&gt;</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(pattern_string.replace('\\', '\\\\'))
+          title += '      <tr><td>Search &lt;id&gt;</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(pattern_string.replace(/\\/g, '\\\\'))
         } else {
-          title += '      <tr><td>Search text</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(pattern_string.replace('\\', '\\\\'))
+          title += '      <tr><td>Search text</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(pattern_string.replace( /\\/g, '\\\\'))
         }
       }
     }
