@@ -1,7 +1,7 @@
 /* Main class for managing oreqm xml data */
 "use strict";
 
-const accepted_safety_class_links_re = [
+var accepted_safety_class_links_re = [
   /^\w+:>\w+:$/,           // no safetyclass -> no safetyclass
   /^\w+:QM>\w+:$/,         // QM -> no safetyclass
   /^\w+:SIL-2>\w+:$/,      // SIL-2 -> no safetyclass
@@ -956,4 +956,56 @@ function sc_str(sc) {
 function dt_sc_str(doctype_with_safetyclass) {
   // return string representation of safetyclass part of doctype
   return sc_str(doctype_with_safetyclass.split(':')[1])
+}
+
+function load_safety_rules()
+{
+  let input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json'
+
+  input.onchange = e => {
+    const file = e.target.files[0];
+    let reader = new FileReader();
+    let pass_test = true
+    let regex_array = []
+    reader.readAsText(file,'UTF-8');
+    reader.onload = readerEvent => {
+      const new_rules = JSON.parse(readerEvent.target.result);
+      console.log(new_rules)
+      if (new_rules.length > 0) {
+        for (let rule of new_rules) {
+          if (!typeof(rule)==='string') {
+            alert('Expected an array of rule regex strings')
+            pass_test = false
+            break;
+          }
+          if (!rule.includes('>')) {
+            alert('Expected ">" in regex')
+            pass_test = false
+            break
+          }
+          let regex_rule
+          try {
+            regex_rule = new RegExp(rule)
+          }
+          catch(err) {
+            alert('Malformed regex: {}'.format(err.message))
+            pass_test = false
+            break
+          }
+          regex_array.push(regex_rule)
+        }
+        if (pass_test) {
+          // Update tests
+          accepted_safety_class_links_re = regex_array
+          console.log(accepted_safety_class_links_re)
+        }
+      } else {
+        alert('Expected array of rule regex strings')
+      }
+    }
+  }
+
+  input.click();
 }
