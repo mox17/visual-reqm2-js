@@ -30,6 +30,8 @@ if (typeof(Array.prototype.remove) === "undefined")
   };
 }
 
+RegExp.prototype.toJSON = function() { return this.source; };
+
 function stringEqual(a, b) {
   const a_s = JSON.stringify(a)
   const b_s = JSON.stringify(b)
@@ -141,11 +143,9 @@ function normalize_indent(txt) {
 // Regexes for "make requirements readable" heuristics
 const re_xml_comments = new RegExp(/<!--.*?-->/g, 'm')
 //const re_unwanted_mu  = new RegExp(/<!\[CDATA\[\s*/g, 'm')
-const re_amp_quote    = new RegExp(/&/g, 'm')
+//const re_amp_quote    = new RegExp(/&/g, 'm')
 const re_list_heurist = new RegExp(/<li>[\s\n]*|<listitem>[\s\n]*/g, 'm')
 const re_tag_text     = new RegExp(/<a\s+type="xref"\s+href="[A-Z]+_([^"]+)"\s*\/>/g, 'm')
-//const re_newlines     = new RegExp(/<br\/>|<BR\/>/g, 'm')
-//const re_xml_remove   = new RegExp(/<\S.*?>/g, 'm')
 const re_xml_remove   = new RegExp(/<\/?ul>|<\/?itemizedlist>|<\/listitem>|<\/li>|<\/para>/g, 'm')
 const re_whitespace   = new RegExp(/^[\s\n]*|\s\n]*$/)
 const re_nbr_list     = new RegExp(/\n\s+(\d+)/g)
@@ -157,6 +157,7 @@ var tags_in_text = new Set()
 
 function dot_format(txt) {
   //Remove xml style formatting not compliant with dot
+  let txt2
   let new_txt = ''
   if (txt.length) {
     /*
@@ -172,9 +173,13 @@ function dot_format(txt) {
     txt = txt.split(re_xml_comments).join('') // remove XML comments
     // txt = txt.replace(re_unwanted_mu, '')  // Remove unwanted markup
     // Handle unicode literals
-    txt = txt.replace(/&#([0-9]+);/g, function (whole, group1) {return String.fromCharCode(parseInt(group1, 10));})
+    txt = txt.replace(/&#(\d+);/g, function (whole, group1) {return String.fromCharCode(parseInt(group1, 10));})
     //txt = txt.replace(/\\u([0-9a-f]{4})/g, function (whole, group1) {return String.fromCharCode(parseInt(group1, 16));})
-    txt = txt.replace(re_amp_quote, '&amp;')        // escape stray '&' characters
+    // neuter unknown, unepanded xml elements
+    txt2 = txt.split(/&(?!lt;|gt;|quot;|amp;|nbsp;)/gm)
+    if (txt2.length > 1) {
+      txt = txt2.join('&amp;')
+    }
     //new_txt = txt.replace(re_list_heurist, '&nbsp;&nbsp;* ') // heuristic for bulleted lists
     new_txt = txt.split(/<li>[\s\n]*|<listitem>[\s\n]*/).join('&nbsp;&nbsp;* ') // heuristic for bulleted lists
     // Dig out meaningful text from items like:
@@ -274,7 +279,7 @@ function select_color(node_id, rec, node_color) {
   return node_color.has(COLOR_UP) || node_color.has(COLOR_DOWN)
 }
 
-function construct_graph_title(show_filters) {
+function construct_graph_title(show_filters, extra=null) {
   let title = '""'
   if (oreqm_main) {
     title  = '<\n    <table border="1" cellspacing="0" cellborder="1">\n'
@@ -299,22 +304,25 @@ function construct_graph_title(show_filters) {
       if (search_pattern.length) {
         let search_formatted = xml_escape(search_pattern.replace(/&/g, '&amp;'))
         let pattern_string = search_formatted.trim().replace(/([^\n]{40,500}?\|)/g, '$1<BR ALIGN="LEFT"/>').replace(/\n/g, '<BR ALIGN="LEFT"/>')
-        if (id_checkbox ) {
-          title += '      <tr><td>Search &lt;id&gt;</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(pattern_string.replace('\\', '\\\\'))
+        if (id_checkbox) {
+          title += '      <tr><td>Search &lt;id&gt;</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(pattern_string.replace(/\\/g, '\\\\'))
         } else {
-          title += '      <tr><td>Search text</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(pattern_string.replace('\\', '\\\\'))
+          title += '      <tr><td>Search text</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(pattern_string.replace( /\\/g, '\\\\'))
         }
       }
+    }
 
-      let ex_dt_list = get_excluded_doctypes()
-      if (ex_dt_list.length) {
-        title += '      <tr><td>excluded doctypes</td><td colspan="2">{}</td></tr>\n'.format(ex_dt_list.join(", "))
-      }
+    let ex_dt_list = get_excluded_doctypes()
+    if (ex_dt_list.length) {
+      title += '      <tr><td>excluded doctypes</td><td colspan="2">{}</td></tr>\n'.format(ex_dt_list.join(", "))
+    }
 
-      let excluded_ids = oreqm_main.get_excluded_ids()
-      if (excluded_ids.length) {
-        title += '      <tr><td>excluded &lt;id&gt;s</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(excluded_ids.join('<BR ALIGN="LEFT"/>'))
-      }
+    let excluded_ids = oreqm_main.get_excluded_ids()
+    if (excluded_ids.length) {
+      title += '      <tr><td>excluded &lt;id&gt;s</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(excluded_ids.join('<BR ALIGN="LEFT"/>'))
+    }
+    if (extra && extra.title && extra.text && extra.title.length && extra.text.length) {
+      title += '      <tr><td>{}</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(extra.title, extra.text)
     }
     title += '    </table>>'
     //console.log(title)
@@ -342,5 +350,5 @@ function compare_oreqm() {
   document.getElementById("search_regex").value = raw_search
   //console.log(results)
   const graph = oreqm_main.create_graph(select_color, "reqspec1", construct_graph_title(true), [])
-  set_doctype_count_shown(graph.doctype_dict)
+  set_doctype_count_shown(graph.doctype_dict, graph.selected_dict)
 }

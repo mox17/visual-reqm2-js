@@ -62,12 +62,15 @@
           <hr>
           <b>Doctypes</b><br><p/>
           <button type="button" onclick="show_doctypes()">hierarchy</button>
+          <button type="button" onclick="show_doctypes_safety()">safety</button>
           <button type="button" onclick="toggle_exclude()">toggle exclude</button>
           <p/>
           <div id="doctype_table"></div>
           <p/>
           <button type="button" onclick="save_colors()">save colors</button>
           <button type="button" onclick="load_colors()">load colors</button>
+          <hr>
+          <button type="button" onclick="load_safety_rules()">load safety rules</button>
         </div>
         <div id="graph" class="split">
           <div id="options">
@@ -95,6 +98,7 @@
               <label id="viz_working"></label>
             </p>
             <p class="alignright">
+              <button id="issuesButton"><span id="issueCount"></span> issues</button>
               <!-- Trigger/Open The modal "about" dialog -->
               <button id="aboutButton">About</button>
             </p>
@@ -114,7 +118,7 @@
         <span id="aboutPaneClose" class="close">&times;</span>
         <div class="column">
           <h1>Visual ReqM2</h1>
-          <p>Version 0.93<br/>
+          <p>Version 0.94<br/>
           Copyright 2020 Erling Stage<br/>
           Licensed under MIT license<br/>
          <!-- <a href="https://github.com/mox17/visual-reqm2-js">https://github.com/mox17/visual-reqm2-js</a> -->
@@ -167,6 +171,16 @@
       <div class="modal-content row">
         <div><span id="nodeSourceClose" class="close">&times;</span></div>
         <div id="req_src" style="overflow-y: auto; height:600px; ">
+        </div>
+      </div>
+    </div>
+
+    <!-- Problem display dialog -->
+    <div id="problemPopup" class="modal">
+      <!-- Modal content -->
+      <div class="modal-content row">
+        <div><span id="problemPopupClose" class="close">&times;</span></div>
+        <div id="problem_list" style="overflow-y: auto; height:600px; ">
         </div>
       </div>
     </div>
