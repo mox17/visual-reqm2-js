@@ -801,7 +801,7 @@ class ReqM2Oreqm {
           doctype.split(':')[0],
           lk.split(':')[0],
           count,
-          doctype_safety ? '\n{}:{}'.format(dt_sc_str(doctype), dt_sc_str(lk)) : '',
+          doctype_safety ? '\\l{}>{}'.format(dt_sc_str(doctype), dt_sc_str(lk)) : '',
           doctype_safety ? this.linksto_safe_color(doctype, lk) : 'black')
         if (doctype_safety && !this.linksto_safe(doctype, lk)) {
           let prov_list = dt.linksto.get(lk).map(x => '{} -> {}'.format(x[1], x[0]))
@@ -817,7 +817,7 @@ class ReqM2Oreqm {
           doctype.split(':')[0],
           ffb.split(':')[0],
           count,
-          doctype_safety ? '\n{}:{}'.format(dt_sc_str(ffb),dt_sc_str(doctype)) : '',
+          doctype_safety ? '\n{}>{}'.format(dt_sc_str(ffb),dt_sc_str(doctype)) : '',
           doctype_safety ? this.linksto_safe_color(ffb, doctype) : 'purple')
         if (doctype_safety && !this.linksto_safe(ffb, doctype)) {
           let problem = "{} fulfilledby {}".format(ffb, doctype)
