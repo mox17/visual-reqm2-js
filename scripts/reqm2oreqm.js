@@ -1,7 +1,7 @@
 /* Main class for managing oreqm xml data */
 "use strict";
 
-var accepted_safety_class_links_re = [
+export var accepted_safety_class_links_re = [
   /^\w+:>\w+:$/,           // no safetyclass -> no safetyclass
   /^\w+:QM>\w+:$/,         // QM -> no safetyclass
   /^\w+:SIL-2>\w+:$/,      // SIL-2 -> no safetyclass
@@ -417,7 +417,7 @@ export default class ReqM2Specobjects {
     if (find_again) {
       this.find_links()
     }
-    update_doctype_table()
+    //TODO: update_doctype_table()
   }
 
   compare_requirements(old_reqs) {

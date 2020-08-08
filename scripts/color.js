@@ -76,28 +76,20 @@ function _get_color_string() {
                           _decimalToHex(color[2], 2))
 }
 
-function _get_color_array(size) {
-  // Return a list with size number of #RRGGBB string colors
-  let color_array = []
-  for (const i = 0; i<size; i++) {
-    const color = _get_color_string()
-    color_array.push(color)
-  }
-  return color_array
-}
-
 function _add_color(palette, doctype) {
   let doctypes = Object.keys(palette)
-  let new_color = _get_color_string()
-  while (true) {
+  let new_color
+  let same_color
+  do {
+    new_color = _get_color_string()
+    same_color = false
     for (const dt of doctypes) {
       if (new_color === palette[dt]) {
-        new_color = _get_color_string()
-        continue
+        same_color = true
+        break
       }
     }
-    break;
-  }
+  } while (same_color === true)
   palette[doctype] = new_color
   return new_color
 }

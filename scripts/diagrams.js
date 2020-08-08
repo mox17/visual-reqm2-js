@@ -1,10 +1,10 @@
 /* Main class for managing oreqm xml data */
 "use strict";
 
-import ReqM2Specobjects from './reqm2oreqm.js'
+import ReqM2Specobjects, {accepted_safety_class_links_re}  from './reqm2oreqm.js'
 import get_color from './color.js'
 import Doctype from './doctypes.js'
-import {xml_escape} from './main.js'
+import {xml_escape, search_pattern} from './main.js'
 
 function normalize_indent(txt) {
   // Normalize indentation of multiline string
@@ -470,9 +470,9 @@ export default class ReqM2Oreqm extends ReqM2Specobjects {
 
     if (show_filters) {
       if (oreqm_ref) {
-        let diff = oreqm_main.get_main_ref_diff()
         title += '      <tr><td>Ref. file</td><td>{}</td><td>{}</td></tr>\n'.format(oreqm_ref.filename, oreqm_ref.timestamp)
         /*
+        let diff = oreqm_main.get_main_ref_diff()
         if (diff.new_reqs.length) {
           title += '      <tr><td>New reqs</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(diff.new_reqs.join('<BR ALIGN="LEFT"/>'))
         }

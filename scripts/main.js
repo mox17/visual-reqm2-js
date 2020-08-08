@@ -1,7 +1,7 @@
   "use strict";
 
   import ReqM2Oreqm from './diagrams.js'
-  import {select_all} from './oreqm.js'
+  import {select_all, select_color, compare_oreqm, COLOR_UP, COLOR_DOWN} from './oreqm.js'
   import get_color, { load_colors } from './color.js'
 
   var beforeUnloadMessage = null;
@@ -25,8 +25,8 @@
   //var oreqm_main_filename = 'no file selected'
   //var oreqm_main_timestamp = 'no time'
   var oreqm_ref
-  var oreqm_ref_filename = ''
-  var oreqm_ref_timestamp = ''
+  //var oreqm_ref_filename = ''
+  //var oreqm_ref_timestamp = ''
   var image_type = 'none'
   var image_mime = ''
   var image_data = ''
@@ -367,7 +367,7 @@
     }
   }
 
-  function set_doctype_count_shown(visible_nodes, selected_nodes) {
+  export function set_doctype_count_shown(visible_nodes, selected_nodes) {
     // Update doctype table with counts of nodes actually displayed
     let doctypes = visible_nodes.keys()
     let shown_count = 0
@@ -483,7 +483,7 @@
     }
   }
 
-  function auto_update_click() {
+  export function auto_update_click() {
     //console.log("auto_update_click")
     auto_update = document.getElementById("auto_update").checked
     if (auto_update) {
@@ -491,7 +491,7 @@
     }
   }
 
-  function filter_change() {
+  export function filter_change() {
     //console.log("filter_change")
     if (auto_update) {
       filter_graph()
@@ -524,7 +524,7 @@
         set_auto_update(false)
       }
       if (oreqm_ref) { // if we have a reference do a compare
-        compare_oreqm()
+        compare_oreqm(oreqm_main, oreqm_ref)
       }
       display_doctypes_with_count(oreqm_main.get_doctypes())
       if (auto_update) {
@@ -562,13 +562,12 @@
       reader.onload = readerEvent => {
         //console.log( file );
         oreqm_main.remove_ghost_requirements()
+        update_doctype_table()
         oreqm_ref = new ReqM2Oreqm(file.name, readerEvent.target.result, [], [])
-        oreqm_ref_filename = file.name
-        oreqm_ref_timestamp = oreqm_ref.get_time()
-        document.getElementById('ref_name').innerHTML = oreqm_ref_filename
+        document.getElementById('ref_name').innerHTML = file.name
         document.getElementById('ref_size').innerHTML = (Math.round(file.size/1024))+" KiB"
-        document.getElementById('ref_timestamp').innerHTML = oreqm_ref_timestamp
-        compare_oreqm()
+        document.getElementById('ref_timestamp').innerHTML = oreqm_ref.get_time()
+        compare_oreqm(oreqm_main, oreqm_ref)
         display_doctypes_with_count(oreqm_main.get_doctypes())
         if (auto_update) {
           filter_graph()
@@ -666,7 +665,7 @@
         }
       } else {
         // no pattern specified
-        const graph = oreqm_main.create_graph(select_all, "reqspec1", oreqm_main.construct_graph_title(), [])
+        const graph = oreqm_main.create_graph(select_all, "reqspec1", oreqm_main.construct_graph_title(true, null, oreqm_ref), [])
         set_doctype_count_shown(graph.doctype_dict, graph.selected_dict)
       }
       updateGraph();
@@ -731,7 +730,7 @@
     }
   }
 
-  function select_dropdown() {
+  export function select_dropdown() {
     clear_selection_highlight()
     selected_index = document.getElementById("nodeSelect").selectedIndex
     center_node(selected_nodes[selected_index])
@@ -764,7 +763,7 @@
     set_selection(results)
     oreqm_main.clear_colors()
     oreqm_main.color_up_down(results, COLOR_UP, COLOR_DOWN)
-    const graph = oreqm_main.create_graph(select_color, "reqspec1", oreqm_main.construct_graph_title(true), results)
+    const graph = oreqm_main.create_graph(select_color, "reqspec1", oreqm_main.construct_graph_title(true, null, oreqm_ref), results)
     set_doctype_count_shown(graph.doctype_dict, graph.selected_dict)
   }
 
@@ -773,7 +772,7 @@
     set_selection(results)
     oreqm_main.clear_colors()
     oreqm_main.color_up_down(results, COLOR_UP, COLOR_DOWN)
-    const graph = oreqm_main.create_graph(select_color, "reqspec1", oreqm_main.construct_graph_title(true), results)
+    const graph = oreqm_main.create_graph(select_color, "reqspec1", oreqm_main.construct_graph_title(true, null, oreqm_ref), results)
     set_doctype_count_shown(graph.doctype_dict, graph.selected_dict)
   }
 
@@ -782,6 +781,7 @@
     if (oreqm_ref) {
       oreqm_ref = null
       oreqm_main.remove_ghost_requirements(true)
+      update_doctype_table()
       document.getElementById('ref_name').innerHTML = ''
       document.getElementById('ref_size').innerHTML = ''
       document.getElementById('ref_timestamp').innerHTML = ''
