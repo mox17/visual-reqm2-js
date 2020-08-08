@@ -1,7 +1,6 @@
-// Manage color palettes for doctypes
 "use strict";
 
-function hsv_to_rgb(hue, saturation, value) {
+function _hsv_to_rgb(hue, saturation, value) {
   // HSV values in [0..1]
   //  returns [r, g, b] values from 0 to 255
   let red, green, blue
@@ -48,18 +47,18 @@ const GOLDEN_RATIO_CONJUGATE = 0.618033988749895
 var HUE_START = 0.314159265359 // use "random" start value
 var HUE = HUE_START
 
-function get_random_color() {
+function _get_random_color() {
   // Calculate next pseudo random color
   HUE += GOLDEN_RATIO_CONJUGATE
   HUE %= 1
-  return hsv_to_rgb(HUE, 0.3, 0.99)
+  return _hsv_to_rgb(HUE, 0.3, 0.99)
 }
 
 function _color_random_reset() {
   HUE = HUE_START
 }
 
-function decimalToHex(d, padding) {
+function _decimalToHex(d, padding) {
   var hex = Number(d).toString(16).toUpperCase();
   padding = typeof (padding) === "undefined" || padding === null ? padding = 2 : padding;
 
@@ -69,31 +68,31 @@ function decimalToHex(d, padding) {
   return hex;
 }
 
-function get_color_string() {
+function _get_color_string() {
   // Return color as #RRGGBB string"""
-  const color = get_random_color()
-  return "#{}{}{}".format(decimalToHex(color[0], 2),
-                          decimalToHex(color[1], 2),
-                          decimalToHex(color[2], 2))
+  const color = _get_random_color()
+  return "#{}{}{}".format(_decimalToHex(color[0], 2),
+                          _decimalToHex(color[1], 2),
+                          _decimalToHex(color[2], 2))
 }
 
-function get_color_array(size) {
+function _get_color_array(size) {
   // Return a list with size number of #RRGGBB string colors
   let color_array = []
   for (const i = 0; i<size; i++) {
-    const color = get_color_string()
+    const color = _get_color_string()
     color_array.push(color)
   }
   return color_array
 }
 
-function add_color(palette, doctype) {
+function _add_color(palette, doctype) {
   let doctypes = Object.keys(palette)
-  let new_color = get_color_string()
+  let new_color = _get_color_string()
   while (true) {
     for (const dt of doctypes) {
       if (new_color === palette[dt]) {
-        new_color = get_color_string()
+        new_color = _get_color_string()
         continue
       }
     }
@@ -103,23 +102,25 @@ function add_color(palette, doctype) {
   return new_color
 }
 
-var my_palette =
+// Storage of the color mapping
+var _my_palette =
 {
   "none": "#FFFFFF"
 };
 
-function get_color(key) {
+export default function get_color(key) {
+  // pucblic function to get color
   let color
-  if (key in my_palette) {
-    color = my_palette[key]
+  if (key in _my_palette) {
+    color = _my_palette[key]
   } else {
-    color = add_color(my_palette, key)
+    color = _add_color(_my_palette, key)
   }
   return color
 }
 
 
-function downloadObjectAsJson(exportObj, exportName){
+function _downloadObjectAsJson(exportObj, exportName){
   var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj, 0, 2));
   var downloadAnchorNode = document.createElement('a');
   downloadAnchorNode.setAttribute("href",     dataStr);
@@ -129,13 +130,15 @@ function downloadObjectAsJson(exportObj, exportName){
   downloadAnchorNode.remove();
 }
 
-function save_colors() {
+export function save_colors() {
+  // Public function
   // Download color object and store it in Web storage
-  downloadObjectAsJson(my_palette, "visual_reqm2_colors")
-  store_colors(my_palette)
+  _downloadObjectAsJson(_my_palette, "visual_reqm2_colors")
+  _store_colors(_my_palette)
 }
 
-function load_colors() {
+export function load_colors(update_function) {
+  // Public function
   let input = document.createElement('input');
   input.type = 'file';
   input.accept = '.json'
@@ -147,18 +150,18 @@ function load_colors() {
     reader.readAsText(file,'UTF-8');
     reader.onload = readerEvent => {
       const colors = JSON.parse(readerEvent.target.result);
-      store_colors(colors)
+      _store_colors(colors)
       //console.log(colors)
-      my_palette = colors
+      _my_palette = colors
       _color_random_reset()
-      update_doctype_table()
+      update_function()
     }
   }
   input.click();
 }
 
 const color_storage_name = 'Visual_ReqM2_color_palette'
-function store_colors(colors) {
+function _store_colors(colors) {
   if (typeof(Storage) !== "undefined") {
     const color_string = JSON.stringify(colors)
     localStorage.setItem(color_storage_name, color_string);
@@ -172,7 +175,7 @@ if (typeof(Storage) !== "undefined") {
   //console.log("storage:", color_string, typeof(color_string))
   if (typeof(color_string) === 'string') {
     const colors = JSON.parse(color_string)
-    my_palette = colors
+    _my_palette = colors
   }
 } else {
   // Sorry! No Web Storage support..
