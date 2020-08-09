@@ -1,5 +1,9 @@
   "use strict";
 
+  import ReqM2Oreqm from './diagrams.js'
+  import {select_all, select_color, compare_oreqm, COLOR_UP, COLOR_DOWN} from './oreqm.js'
+  import get_color, { load_colors } from './color.js'
+
   var beforeUnloadMessage = null;
 
   var resizeEvent = new Event("paneresize");
@@ -16,20 +20,15 @@
   var parser = new DOMParser();
   var worker;
   var result;
-  var title
   var oreqm_main
-  var oreqm_main_filename = 'no file selected'
-  var oreqm_main_timestamp = 'no time'
   var oreqm_ref
-  var oreqm_ref_filename = ''
-  var oreqm_ref_timestamp = ''
   var image_type = 'none'
   var image_mime = ''
   var image_data = ''
   var image_data_url = ''
   var auto_update = true
-  var search_pattern = '' // regex for matching requirements
-  var id_checkbox = false // flag for scope of search
+  export var search_pattern = '' // regex for matching requirements
+  export var id_checkbox = false // flag for scope of search
   var dot_source = ''
   var panZoom = null
 
@@ -109,7 +108,6 @@
     }
   }
 
-  var selected_node = ''
   var svg_element = null
 
   function clear_diagram() {
@@ -171,10 +169,10 @@
         zoomScaleSensitivity: 0.3
       });
 
-      svg_element.addEventListener('paneresize', function(e) {
+      svg_element.addEventListener('paneresize', function() {
         panZoom.resize();
       }, false);
-      window.addEventListener('resize', function(e) {
+      window.addEventListener('resize', function() {
         panZoom.resize();
       });
 
@@ -202,7 +200,7 @@
       }); */
 
       svg_element.addEventListener('focus', function() {
-        this.addEventListener('keypress', function(e) {
+        this.addEventListener('keypress', function() {
             //console.log(e.keyCode);
         });
       }, svg_element);
@@ -284,18 +282,18 @@
       image_mime = 'image/png'
       image_data = image
     } else if (document.querySelector("#format select").value === "dot-source") {
-      var text = document.createElement("div");
-      text.id = "text";
-      text.appendChild(document.createTextNode(dot_source));
-      graph.appendChild(text);
+      var dot_text = document.createElement("div");
+      dot_text.id = "text";
+      dot_text.appendChild(document.createTextNode(dot_source));
+      graph.appendChild(dot_text);
       image_type = 'dot'
       image_mime = 'text/vnd.graphviz'
       image_data = result
     } else {
-      var text = document.createElement("div");
-      text.id = "text";
-      text.appendChild(document.createTextNode(result));
-      graph.appendChild(text);
+      var plain_text = document.createElement("div");
+      plain_text.id = "text";
+      plain_text.appendChild(document.createTextNode(result));
+      graph.appendChild(plain_text);
       image_type = 'txt'
       image_mime = 'text/plain'
       image_data = result
@@ -303,11 +301,11 @@
     set_download_link()
   }
 
-  window.addEventListener("beforeunload", function(e) {
+  window.addEventListener("beforeunload", function() {
     return beforeUnloadMessage;
   });
 
-  function copy_id_node() {
+  export function copy_id_node() {
     const ta = document.createElement('textarea');
     ta.value = selected_node
     ta.setAttribute('readonly', '');
@@ -364,7 +362,7 @@
     }
   }
 
-  function set_doctype_count_shown(visible_nodes, selected_nodes) {
+  export function set_doctype_count_shown(visible_nodes, selected_nodes) {
     // Update doctype table with counts of nodes actually displayed
     let doctypes = visible_nodes.keys()
     let shown_count = 0
@@ -391,15 +389,6 @@
     let selected_cell_totals = document.getElementById("doctype_select_totals")
     if (selected_cell_totals) {
       selected_cell_totals.innerHTML = selected_count
-    }
-  }
-
-  function update_doctype_table() {
-    if (oreqm_main) {
-      display_doctypes_with_count(oreqm_main.doctypes)
-      if (auto_update) {
-        filter_graph()
-      }
     }
   }
 
@@ -489,7 +478,7 @@
     }
   }
 
-  function auto_update_click() {
+  export function auto_update_click() {
     //console.log("auto_update_click")
     auto_update = document.getElementById("auto_update").checked
     if (auto_update) {
@@ -497,7 +486,7 @@
     }
   }
 
-  function filter_change() {
+  export function filter_change() {
     //console.log("filter_change")
     if (auto_update) {
       filter_graph()
@@ -519,18 +508,16 @@
     reader.readAsText(file,'UTF-8');
     reader.onload = readerEvent => {
       //console.log( file );
-      oreqm_main = new ReqM2Oreqm(readerEvent.target.result, [], [])
-      oreqm_main_filename = file.name
-      oreqm_main_timestamp = oreqm_main.get_time()
-      document.getElementById('name').innerHTML = oreqm_main_filename
+      oreqm_main = new ReqM2Oreqm(file.name, readerEvent.target.result, [], [])
+      document.getElementById('name').innerHTML = oreqm_main.filename
       document.getElementById('size').innerHTML = (Math.round(file.size/1024))+" KiB"
-      document.getElementById('timestamp').innerHTML = oreqm_main_timestamp
+      document.getElementById('timestamp').innerHTML = oreqm_main.timestamp
       const node_count = oreqm_main.get_node_count()
       if (auto_update && node_count > 500) {
         set_auto_update(false)
       }
       if (oreqm_ref) { // if we have a reference do a compare
-        compare_oreqm()
+        compare_oreqm(oreqm_main, oreqm_ref)
       }
       display_doctypes_with_count(oreqm_main.get_doctypes())
       if (auto_update) {
@@ -546,7 +533,7 @@
     }
   }
 
-  function get_main_oreqm_file() {
+  export function get_main_oreqm_file() {
     let input = document.createElement('input');
     input.type = 'file';
     input.accept = '.oreqm'
@@ -568,13 +555,12 @@
       reader.onload = readerEvent => {
         //console.log( file );
         oreqm_main.remove_ghost_requirements()
-        oreqm_ref = new ReqM2Oreqm(readerEvent.target.result, [], [])
-        oreqm_ref_filename = file.name
-        oreqm_ref_timestamp = oreqm_ref.get_time()
-        document.getElementById('ref_name').innerHTML = oreqm_ref_filename
+        update_doctype_table()
+        oreqm_ref = new ReqM2Oreqm(file.name, readerEvent.target.result, [], [])
+        document.getElementById('ref_name').innerHTML = file.name
         document.getElementById('ref_size').innerHTML = (Math.round(file.size/1024))+" KiB"
-        document.getElementById('ref_timestamp').innerHTML = oreqm_ref_timestamp
-        compare_oreqm()
+        document.getElementById('ref_timestamp').innerHTML = oreqm_ref.get_time()
+        compare_oreqm(oreqm_main, oreqm_ref)
         display_doctypes_with_count(oreqm_main.get_doctypes())
         if (auto_update) {
           filter_graph()
@@ -585,7 +571,7 @@
     }
   }
 
-  function get_ref_oreqm_file() {
+  export function get_ref_oreqm_file() {
     let input = document.createElement('input');
     input.type = 'file';
     input.accept = '.oreqm'
@@ -613,7 +599,7 @@
     link.download = "visual_reqm2.{}".format(image_type);
   }
 
-  function get_excluded_doctypes() {
+  export function get_excluded_doctypes() {
     // Get the list of doctypes with checked 'excluded' status
     let excluded_list = []
     if (oreqm_main) {
@@ -631,7 +617,7 @@
     return excluded_list
   }
 
-  function toggle_exclude() {
+  export function toggle_exclude() {
     if (oreqm_main) {
       toggle_doctype_exclude = true
       const doctypes = oreqm_main.get_doctypes()
@@ -656,7 +642,7 @@
     return clean_search
   }
 
-  function filter_graph() {
+  export function filter_graph() {
     reset_selection()
     if (oreqm_main) {
       handle_pruning()
@@ -672,7 +658,7 @@
         }
       } else {
         // no pattern specified
-        const graph = oreqm_main.create_graph(select_all, "reqspec1", construct_graph_title(), [])
+        const graph = oreqm_main.create_graph(select_all, "reqspec1", oreqm_main.construct_graph_title(true, null, oreqm_ref), [])
         set_doctype_count_shown(graph.doctype_dict, graph.selected_dict)
       }
       updateGraph();
@@ -737,13 +723,13 @@
     }
   }
 
-  function select_dropdown() {
+  export function select_dropdown() {
     clear_selection_highlight()
     selected_index = document.getElementById("nodeSelect").selectedIndex
     center_node(selected_nodes[selected_index])
   }
 
-  function prev_selected() {
+  export function prev_selected() {
     // step backwards through nodes and center display
     if (oreqm_main && selected_nodes.length) {
       if (selected_index > selected_nodes.length) selected_index = 0
@@ -754,7 +740,7 @@
     }
   }
 
-  function next_selected() {
+  export function next_selected() {
     // step forwards through nodes and center display
     if (oreqm_main && selected_nodes.length) {
       if (selected_index > selected_nodes.length) selected_index = 0
@@ -770,7 +756,7 @@
     set_selection(results)
     oreqm_main.clear_colors()
     oreqm_main.color_up_down(results, COLOR_UP, COLOR_DOWN)
-    const graph = oreqm_main.create_graph(select_color, "reqspec1", construct_graph_title(true), results)
+    const graph = oreqm_main.create_graph(select_color, "reqspec1", oreqm_main.construct_graph_title(true, null, oreqm_ref), results)
     set_doctype_count_shown(graph.doctype_dict, graph.selected_dict)
   }
 
@@ -779,15 +765,16 @@
     set_selection(results)
     oreqm_main.clear_colors()
     oreqm_main.color_up_down(results, COLOR_UP, COLOR_DOWN)
-    const graph = oreqm_main.create_graph(select_color, "reqspec1", construct_graph_title(true), results)
+    const graph = oreqm_main.create_graph(select_color, "reqspec1", oreqm_main.construct_graph_title(true, null, oreqm_ref), results)
     set_doctype_count_shown(graph.doctype_dict, graph.selected_dict)
   }
 
-  function clear_reference()
+  export function clear_reference()
   {
     if (oreqm_ref) {
       oreqm_ref = null
       oreqm_main.remove_ghost_requirements(true)
+      update_doctype_table()
       document.getElementById('ref_name').innerHTML = ''
       document.getElementById('ref_size').innerHTML = ''
       document.getElementById('ref_timestamp').innerHTML = ''
@@ -822,17 +809,13 @@
   // Get the <span> element that closes the modal
   var nodeSourceClose = document.getElementById("nodeSourceClose");
 
-  function show_raw_node() {
-    nodeSource.style.display = "block";
-  }
-
-  // When the user clicks on <span> (x), close the modal
+   // When the user clicks on <span> (x), close the modal
   nodeSourceClose.onclick = function() {
     nodeSource.style.display = "none";
   }
 
   // When the user clicks anywhere outside of the modal, close it
-  window.onbeforeunload = function(event) {
+  window.onbeforeunload = function() {
     return //"Graph is going away..."
   }
 
@@ -847,8 +830,6 @@
   }
 
   // Setup for the raw node display dialog (raw text and diff (for changed reqs))
-  var problemPopup = document.getElementById("problemPopup");
-
   // Get the <span> element that closes the modal
   var problemPopupClose = document.getElementById("problemPopupClose");
 
@@ -858,7 +839,7 @@
   }
 
   // When the user clicks anywhere outside of the modal, close it
-  window.onbeforeunload = function(event) {
+  window.onbeforeunload = function() {
     return //"Graph is going away..."
   }
 
@@ -875,7 +856,7 @@
 
   // Selection/deselection of nodes by right-clicking the diagram
 
-  function select_node() {
+  export function select_node() {
     // Add node to the selection criteria (if not already selected)
     let node = selected_node
     let node_select_str = "{}$".format(node)
@@ -893,7 +874,7 @@
     }
   }
 
-  function deselect_node() {
+  export function deselect_node() {
     // Remove node to the selection criteria (if not already selected)
     let node = selected_node
     let node_select_str = new RegExp("(^|\\|){}\\$".format(node))
@@ -914,7 +895,7 @@
     }
   }
 
-  function exclude_node() {
+  export function exclude_node() {
     // Add node to the exclusion list
     if (oreqm_main && oreqm_main.check_node_id(selected_node)) {
         var excluded_ids = document.getElementById("excluded_ids").value.trim()
@@ -928,12 +909,12 @@
     }
   }
 
-  function clear_search_regex() {
+  export function clear_search_regex() {
     document.getElementById("search_regex").value = ""
     filter_change()
   }
 
-  function clear_excluded_ids() {
+  export function clear_excluded_ids() {
     document.getElementById("excluded_ids").value = ""
     filter_change()
   }
@@ -992,7 +973,7 @@
   const drop_area_ref = document.getElementById('drop_area_ref');
 
   // Prevent default drag behaviors
-  ;['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
     drop_area_main.addEventListener(eventName, preventDefaults, false)
     drop_area_ref.addEventListener(eventName, preventDefaults, false)
     document.body.addEventListener(eventName, preventDefaults, false)
@@ -1012,16 +993,14 @@
   drop_area_main.addEventListener('drop', (event) => {
     event.stopPropagation();
     event.preventDefault();
-    const fileList = event.dataTransfer.files;
-    //console.log(fileList);
+    //console.log(event.dataTransfer.files);
     process_dropped_file(event, true)
   });
 
   drop_area_ref.addEventListener('drop', (event) => {
     event.stopPropagation();
     event.preventDefault();
-    const fileList = event.dataTransfer.files;
-    //console.log(fileList);
+    //console.log(event.dataTransfer.files);
     process_dropped_file(event, false)
   });
 
@@ -1030,21 +1009,21 @@
     e.stopPropagation()
   }
 
-  function highlight_main(e) {
+  function highlight_main() {
     drop_area_main.classList.add('highlight')
   }
 
-  function highlight_ref(e) {
+  function highlight_ref() {
     if (oreqm_main) {
       drop_area_ref.classList.add('highlight')
     }
   }
 
-  function unhighlight_main(e) {
+  function unhighlight_main() {
     drop_area_main.classList.remove('highlight')
   }
 
-  function unhighlight_ref(e) {
+  function unhighlight_ref() {
     drop_area_ref.classList.remove('highlight')
   }
 
@@ -1078,9 +1057,10 @@
     // Process dropped file, if there is just one file
     let dropped_file
     let count = 0
+    let i = 0
     if (ev.dataTransfer.items) {
       // Use DataTransferItemList interface to access the file(s)
-      for (var i = 0; i < ev.dataTransfer.items.length; i++) {
+      for (i = 0; i < ev.dataTransfer.items.length; i++) {
         // If dropped items aren't files, reject them
         if (ev.dataTransfer.items[i].kind === 'file') {
           count++
@@ -1091,7 +1071,7 @@
       }
     } else {
       // Use DataTransfer interface to access the file(s)
-      for (var i = 0; i < ev.dataTransfer.files.length; i++) {
+      for (i = 0; i < ev.dataTransfer.files.length; i++) {
         //console.log('... file[' + i + '].name = ' + ev.dataTransfer.files[i].name);
         dropped_file = ev.dataTransfer.files[i]
         count++
@@ -1106,7 +1086,7 @@
     }
   }
 
-  function show_doctypes() {
+  export function show_doctypes() {
     // Show the graph of doctype relationships
     if (oreqm_main) {
       oreqm_main.scan_doctypes(false)
@@ -1114,7 +1094,7 @@
     }
   }
 
-  function show_doctypes_safety() {
+  export function show_doctypes_safety() {
     // Show the graph of doctype relationships
     if (oreqm_main) {
       oreqm_main.scan_doctypes(true)
@@ -1122,11 +1102,11 @@
     }
   }
 
-  function xml_escape(txt) {
+  export function xml_escape(txt) {
     return txt.replace(/</g, '&lt;').replace(/>/g, '&gt;')
   }
 
-  function show_source() {
+  export function show_source() {
     // Show selected node as XML
     if (selected_node.length) {
       var ref = document.getElementById('req_src');
@@ -1165,7 +1145,7 @@
     var ref = document.getElementById('problem_list');
     let header_main = `\
 <h2>Detected problems</h2>
-<button type="button" onclick="clear_problems()">clear</button>
+<button type="button" onclick="window.clear_problems()">clear</button>
 `
     let problem_txt = 'Nothing to see here...'
     if (oreqm_main) {
@@ -1175,9 +1155,22 @@
     problemPopup.style.display = "block";
   }
 
-  function clear_problems() {
+  export function clear_problems() {
     if (oreqm_main) {
       oreqm_main.clear_problems()
       show_problems()
     }
+  }
+
+  function update_doctype_table() {
+    if (oreqm_main) {
+      display_doctypes_with_count(oreqm_main.doctypes)
+      if (auto_update) {
+        filter_graph()
+      }
+    }
+  }
+
+  export function load_color_scheme() {
+    load_colors(update_doctype_table)
   }

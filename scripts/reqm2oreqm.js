@@ -1,7 +1,7 @@
 /* Main class for managing oreqm xml data */
 "use strict";
 
-var accepted_safety_class_links_re = [
+export var accepted_safety_class_links_re = [
   /^\w+:>\w+:$/,           // no safetyclass -> no safetyclass
   /^\w+:QM>\w+:$/,         // QM -> no safetyclass
   /^\w+:SIL-2>\w+:$/,      // SIL-2 -> no safetyclass
@@ -28,9 +28,80 @@ function tryParseXML(xmlString) {
   return dom;
 }
 
-class ReqM2Oreqm {
+// XML extract utilities
+function get_xml_text(node, tag_name) {
+  var result = ""
+  var item = node.getElementsByTagName(tag_name)
+  if (item.length > 0) {
+    result = item[0].textContent
+  }
+  return result
+}
+
+function get_list_of(node, tag_name) {
+  var result = []
+  var items = node.getElementsByTagName(tag_name)
+  var i;
+  for (i=0; i < items.length; i++) {
+    result.push(items[i].textContent)
+  }
+  return result
+}
+
+function get_linksto(node) {
+  // return an array of objects with .linksto and .dstversion
+  var result = []
+  var items = node.getElementsByTagName('provcov')
+  var i;
+  for (i=0; i < items.length; i++) {
+    let linksto = items[i].getElementsByTagName('linksto')
+    if (linksto.length != 1) {
+      console.log("Multiple <linksto> in <provcov>")
+      continue
+    }
+    let dstversion = items[i].getElementsByTagName('dstversion')
+    let dstversion_txt
+    if (dstversion.length != 1) {
+      dstversion_txt = "multiple"
+    } else {
+      dstversion_txt = dstversion[0].textContent
+    }
+    let pair = {
+      linksto : linksto[0].textContent,
+      dstversion : dstversion_txt
+    }
+    result.push(pair)
+  }
+  return result
+}
+
+function get_fulfilledby(node) {
+  //Return a list of arrays (id,doctype,version) of the ffbObj's
+  var ff_list = []
+  var ffbobj_list = node.getElementsByTagName('ffbObj')
+  var i;
+  for (i = 0; i < ffbobj_list.length; i++) {
+    var ffbobj = ffbobj_list[i]
+    var ff_entry = []
+    ff_entry[0] = get_xml_text(ffbobj, 'ffbId')
+    ff_entry[1] = get_xml_text(ffbobj, 'ffbType')
+    ff_entry[2] = get_xml_text(ffbobj, 'ffbVersion')
+    ff_list.push(ff_entry)
+  }
+  return ff_list
+}
+
+function stringEqual(a, b) {
+  const a_s = JSON.stringify(a)
+  const b_s = JSON.stringify(b)
+  return a_s === b_s
+}
+
+export default class ReqM2Specobjects {
   // This class reads and manages information in ReqM2 .oreqm files
-  constructor(content, excluded_doctypes, excluded_ids) {
+  constructor(filename, content, excluded_doctypes, excluded_ids) {
+    this.filename = filename;      // basename of oreqm file
+    this.timestamp = ''            // recorded time of ReqM2 run
     this.root = null;              // xml tree
     this.doctypes = new Map();     // { doctype : [id] }  List of ids of a specific doctype
     this.requirements = new Map(); // { id : Requirement}
@@ -46,13 +117,14 @@ class ReqM2Oreqm {
     this.visible_nodes = new Map(); // {doctype:[id]}
     this.problems = []             // [ Str ] problems reports
     this.dot = 'digraph "" {label="Select filter criteria and exclusions, then click\\l                    [update graph]\\l(Unfiltered graphs may be too large to render)"\n  labelloc=b\n  fontsize=24\n  fontcolor=grey\n  fontname="Arial"\n}\n'
-
+    
     // Initialization logic
     let success = this.process_oreqm_content(content);
     if (success) {
       this.read_req_descriptions();
       this.add_fulfilledby_nodes();
       this.find_links();
+      this.timestamp = this.get_time()
       let problems = this.get_problems()
       if (problems) {
         //alert(problems)
@@ -345,7 +417,6 @@ class ReqM2Oreqm {
     if (find_again) {
       this.find_links()
     }
-    update_doctype_table()
   }
 
   compare_requirements(old_reqs) {
@@ -491,116 +562,6 @@ class ReqM2Oreqm {
     return this.dot
   }
 
-  // Fixed texts that form part of dot file
-  static get DOT_PREAMBLE() {
-    const preamble =
-`digraph "" {
-  rankdir="RL"
-  node [shape=plaintext fontname="Arial" fontsize=16]
-  edge [color="blue",dir="forward",arrowhead="normal",arrowtail="normal"];
-
-`;
-    return preamble;
-  }
-
-  static get DOT_EPILOGUE() {
-    const epilogue = '\n}\n';
-    return epilogue;
-  }
-
-  create_graph(selection_function, top_doctype, title, highlights) {
-    // Return a 'dot' compatible graph with the subset of nodes nodes
-    // accepted by the selection_function.
-    // The 'TOP' node forces a sensible layout for highest level requirements
-    // (some level of visual proximity and aligned to the left of the graph)
-    let graph = ReqM2Oreqm.DOT_PREAMBLE;
-    let subset = []
-    const ids = this.requirements.keys()
-    let node_count = 0
-    let edge_count = 0
-    let doctype_dict = new Map()
-    let selected_dict = new Map()
-    let sel_arr = []
-    for (const req_id of ids) {
-      const rec = this.requirements.get(req_id)
-      if (!doctype_dict.has(rec.doctype)) {
-        doctype_dict.set(rec.doctype, [])
-        selected_dict.set(rec.doctype, [])
-      }
-      if (selection_function(req_id, rec, this.color.get(req_id)) &&
-          !this.excluded_doctypes.includes(rec.doctype) &&
-          !this.excluded_ids.includes(req_id)) {
-        subset.push(req_id)
-        let dt = doctype_dict.get(rec.doctype)
-        dt.push(req_id)
-        doctype_dict.set(rec.doctype, dt)
-        if (highlights.includes(req_id)) {
-          sel_arr = selected_dict.get(rec.doctype)
-          sel_arr.push(req_id)
-          selected_dict.set(rec.doctype, sel_arr)
-        }
-      }
-    }
-    let show_top = this.doctypes.has(top_doctype) && !this.excluded_doctypes.includes(top_doctype)
-    if (show_top) {
-      graph += '  "TOP" [fontcolor=lightgray];\n\n'
-    }
-    for (const req_id of subset) {
-        // nodes
-        const ghost = this.removed_reqs.includes(req_id)
-        let node = format_node(req_id, this.requirements.get(req_id), ghost)
-        let dot_id = req_id //.replace(/\./g, '_').replace(' ', '_')
-        if (this.new_reqs.includes(req_id)) {
-          node = 'subgraph "cluster_{}_new" { color=limegreen penwidth=1 label="new" fontname="Arial" labelloc="t"\n{}}\n'.format(dot_id, node)
-        } else if (this.updated_reqs.includes(req_id)) {
-          node = 'subgraph "cluster_{}_changed" { color=goldenrod1 penwidth=1 label="changed" fontname="Arial" labelloc="t"\n{}}\n'.format(dot_id, node)
-        } else if (this.removed_reqs.includes(req_id)) {
-          node = 'subgraph "cluster_{}_removed" { color=red penwidth=1 label="removed" fontname="Arial" labelloc="t"\n{}}\n'.format(dot_id, node)
-        }
-        if (highlights.includes(req_id)) {
-          node = 'subgraph "cluster_{}" { id="sel_{}" color=maroon3 penwidth=3 label=""\n{}}\n'.format(dot_id, dot_id, node)
-        }
-        graph += node + '\n'
-        node_count += 1
-    }
-    graph += '\n  # Edges\n'
-    if (show_top) {
-      for (const req_id of subset) {
-        if (this.requirements.get(req_id).doctype === top_doctype) {
-          graph += format_edge(req_id, 'TOP')
-        }
-      }
-    }
-    let kind = ''
-    for (const req_id of subset) {
-      // edges
-      if (this.linksto.has(req_id)) {
-        for (const link of this.linksto.get(req_id)) {
-          // Do not reference non-selected specobjets
-          if (subset.includes(link)) {
-            if (this.fulfilledby.has(req_id) && this.fulfilledby.get(req_id).has(link)) {
-              kind = "fulfilledby"
-            } else {
-              kind = null
-            }
-            graph += format_edge(req_id, link, kind)
-            edge_count += 1
-          }
-        }
-      }
-    }
-    graph += '\n  label={}\n  labelloc=b\n  fontsize=18\n  fontcolor=black\n  fontname="Arial"\n'.format(title)
-    graph += ReqM2Oreqm.DOT_EPILOGUE
-    this.dot = graph
-    let result = new Object()
-    //result.graph = graph
-    result.node_count = node_count
-    result.edge_count = edge_count
-    result.doctype_dict = doctype_dict
-    result.selected_dict = selected_dict
-    return result
-  }
-
   set_excluded_doctypes(doctypes) {
     // Set excluded doctypes
     this.excluded_doctypes = doctypes
@@ -611,15 +572,17 @@ class ReqM2Oreqm {
     this.excluded_ids = ids
   }
 
+  /*
   get_excluded_doctypes() {
     // Get excluded doctypes
     return this.excluded_doctypes
-  }
+  }*/
 
+  /*
   get_excluded_ids() {
     // Get excluded doctypes
     return this.excluded_ids
-  }
+  } */
 
   get_main_ref_diff() {
     // Return the lists of ids
@@ -660,185 +623,6 @@ class ReqM2Oreqm {
     return false
   }
 
-  linksto_safe_color(from, to) {
-    // Color coded safefety
-    return this.linksto_safe(from, to) ? '#00AA00' : '#FF0000'
-  }
-
-  scan_doctypes(doctype_safety) {
-    // Scan all requirements and summarize the relationships between doctypes
-    // with counts of instances and relations (needsobj, linksto, fulfilledby)
-    // When doctype_safety is true, the doctypes are qualified with the safetyclass
-    // of the requirement as in <doctype>:<safetyclass> and these are the nodes rendered
-    let dt_map = new Map() // A map of { doctype_name : Doctype }
-    let id_list = this.requirements.keys()
-    let doctype = null
-    let dest_doctype = null
-    let basic_doctype = null
-    let doctype_clusters = new Map() // {doctype : [doctype:safetyclass]}
-    for (const id of id_list) {
-      if (this.requirements.get(id).ffb_placeholder === true) {
-        // skip placeholders
-        continue;
-      }
-      // make a cluster of doctypes with the different safetyclasses
-      basic_doctype = this.requirements.get(id).doctype
-      if (!doctype_clusters.has(basic_doctype)) {
-        doctype_clusters.set(basic_doctype, [])
-      }
-      doctype = this.safety_doctype(id, doctype_safety)
-      if (!dt_map.has(doctype)) {
-        dt_map.set(doctype, new Doctype(doctype))
-        // Create clusters of refined doctypes, based on fundamental one
-        if (!doctype_clusters.get(basic_doctype).includes(doctype)) {
-          doctype_clusters.get(basic_doctype).push(doctype)
-        }
-      }
-
-      //
-      dt_map.get(doctype).add_instance(id)
-      // linksto
-      if (this.linksto.has(id)) {
-        const linksto = Array.from(this.linksto.get(id))
-        for (let linked_id of linksto) {
-          if (this.requirements.has(linked_id)) {
-            dest_doctype = this.safety_doctype(linked_id, doctype_safety)
-            //console.log("add_linksto ", doctype, linked_id, dest_doctype)
-            dt_map.get(doctype).add_linksto(dest_doctype, [linked_id, id])
-          }
-        }
-      }
-      // needsobj
-      let need_list = Array.from(this.requirements.get(id).needsobj)
-      for (let need of need_list) {
-        if (!need.endsWith('*')) {
-          if (doctype_safety) {
-            // will need at least its own safetyclass
-            dest_doctype = "{}:{}".format(need, this.requirements.get(id).safetyclass)
-          } else {
-            dest_doctype = need
-          }
-          //console.log("add_needsobj ", dest_doctype)
-          dt_map.get(doctype).add_needsobj(dest_doctype)
-        }
-      }
-      // fulfilledby
-      let ffb_list = Array.from(this.requirements.get(id).fulfilledby)
-      for (let ffb of ffb_list) {
-        if (doctype_safety) {
-          // will need at least its own safetyclass
-          dest_doctype = "{}:{}".format(ffb[1], this.requirements.get(id).safetyclass)
-        } else {
-          dest_doctype = ffb[1]
-        }
-        //console.log("add_fulfilledby ", dest_doctype)
-        dt_map.get(doctype).add_fulfilledby(dest_doctype, [id, ffb[0]])
-      }
-
-    }
-    // DOT language start of diagram
-    let graph = `digraph "" {
-      rankdir="{}"
-      node [shape=plaintext fontname="Arial" fontsize=16]
-      edge [color="black" dir="forward" arrowhead="normal" arrowtail="normal" fontname="Arial" fontsize=11];
-
-`.format(doctype_safety ? 'BT' : 'TD')
-    // Define the doctype nodes - the order affects the layout
-    const doctype_array = Array.from(doctype_clusters.keys())
-    for (let doctype of doctype_array) {
-      let doctypes_in_cluster = doctype_clusters.get(doctype)
-      let sc_stats = ''
-      let count_total = 0
-      let sc_list = Array.from(doctypes_in_cluster.keys())
-      sc_list.sort()
-      let sc_string = ''
-      for (const sub_doctype of doctypes_in_cluster) {
-        let dt = dt_map.get(sub_doctype)
-        let sc = sub_doctype.split(':')[1]
-        sc_string += '</TD><TD port="{}">{}: {} '.format(sc_str(sc), sc_str(sc), dt.count)
-        count_total += dt.count
-      }
-      if (doctype_safety) {
-        sc_stats = '\n          <TR><TD>safetyclass:{}</TD></TR>'.format(sc_string)
-      }
-      let dt_node = `\
-      "{}" [label=<
-        <TABLE BGCOLOR="{}" BORDER="1" CELLSPACING="0" CELLBORDER="1" COLOR="black" >
-        <TR><TD COLSPAN="5" CELLSPACING="0" >doctype: {}</TD></TR>
-        <TR><TD COLSPAN="5" ALIGN="LEFT">specobject count: {}</TD></TR>{}
-      </TABLE>>];\n\n`.format(
-          doctype,
-          get_color(doctype),
-          doctype,
-          count_total,
-          sc_stats)
-      graph += dt_node
-    }
-    let dt
-    let count
-    let doctype_edges = Array.from(dt_map.keys())
-    // Loop over doctypes
-    for (let doctype of doctype_edges) {
-      dt = dt_map.get(doctype)
-      // Needsobj links
-      graph += '# linkage from {}\n'.format(doctype)
-      let need_keys = Array.from(dt.needsobj.keys())
-      if (!doctype_safety) {
-        for (let nk of need_keys) {
-          count = dt.needsobj.get(nk)
-          graph += ' "{}" -> "{}" [label="need({}){} " style="dotted"]\n'.format(
-            doctype.split(':')[0],
-            nk.split(':')[0],
-            count,
-            doctype_safety ? '\n{}'.format(dt_sc_str(doctype)) : '')
-        }
-      }
-      // linksto links
-      let lt_keys = Array.from(dt.linksto.keys())
-      for (let lk of lt_keys) {
-        count = dt.linksto.get(lk).length
-        graph += ' "{}" -> "{}" [label="linksto({}){} " color="{}"]\n'.format(
-          doctype.split(':')[0],
-          lk.split(':')[0],
-          count,
-          doctype_safety ? '\\l{}>{}'.format(dt_sc_str(doctype), dt_sc_str(lk)) : '',
-          doctype_safety ? this.linksto_safe_color(doctype, lk) : 'black')
-        if (doctype_safety && !this.linksto_safe(doctype, lk)) {
-          let prov_list = dt.linksto.get(lk).map(x => '{} -> {}'.format(x[1], x[0]))
-          let problem = "{} provcov to {}\n  {}".format(doctype, lk, prov_list.join('\n  '))
-          this.problem_report(problem)
-        }
-      }
-      // fulfilledby links
-      let ffb_keys = Array.from(dt.fulfilledby.keys())
-      for (let ffb of ffb_keys) {
-        count = dt.fulfilledby.get(ffb).length
-        graph += ' "{}" -> "{}" [label="fulfilledby({}){} " color="{}" style="dashed"]\n'.format(
-          doctype.split(':')[0],
-          ffb.split(':')[0],
-          count,
-          doctype_safety ? '\n{}>{}'.format(dt_sc_str(ffb),dt_sc_str(doctype)) : '',
-          doctype_safety ? this.linksto_safe_color(ffb, doctype) : 'purple')
-        if (doctype_safety && !this.linksto_safe(ffb, doctype)) {
-          let problem = "{} fulfilledby {}".format(ffb, doctype)
-          this.problem_report(problem)
-        }
-      }
-    }
-    let rules = new Object()
-    if (doctype_safety) {
-      rules.text = xml_escape(JSON.stringify(accepted_safety_class_links_re, 0, 2)).replace(/\\/g, '\\\\')
-      rules.text = rules.text.replace(/\n/mg, '<BR ALIGN="LEFT"/> ')
-      rules.title = "Safety rules for coverage<BR/>list of regex<BR/>doctype:safetyclass&gt;doctype:safetyclass"
-    }
-    graph += '\n  label={}\n  labelloc=b\n  fontsize=14\n  fontcolor=black\n  fontname="Arial"\n'.format(
-      construct_graph_title(false, rules))
-    graph += '\n}\n'
-    //console.log(graph)
-    this.dot = graph
-    return graph
-  }
-
   doctypes_rank() {
     // Return an array of doctypes in abstraction level order.
     // Could be the order of initial declaration in oreqm
@@ -866,7 +650,9 @@ class ReqM2Oreqm {
 
   get_tag_text_formatted(rec, tag) {
     let xml_txt = ''
-    if (rec.hasOwnProperty(tag)) {
+
+    //if (rec.hasOwnProperty(tag)) {
+    if (Object.prototype.hasOwnProperty.call(rec, tag)) {
       let txt = rec[tag]
       let template = "\n    <{}>{}</{}>"
       if (txt.length) {
@@ -878,7 +664,8 @@ class ReqM2Oreqm {
 
   get_list_formatted(rec, field) {
     let xml_txt = ''
-    if (rec.hasOwnProperty(field)) {
+    //if (rec.hasOwnProperty(field)) {
+    if (Object.prototype.hasOwnProperty.call(rec, field)) {
       let list = rec[field]
       let template = "\n    <{}>{}</{}>"
       if (list.length) {
@@ -972,17 +759,7 @@ class ReqM2Oreqm {
 
 }
 
-function sc_str(sc) {
-  // Show the empty safetyclass as 'none'
-  return (sc === '') ? 'none' : sc
-}
-
-function dt_sc_str(doctype_with_safetyclass) {
-  // return string representation of safetyclass part of doctype
-  return sc_str(doctype_with_safetyclass.split(':')[1])
-}
-
-function load_safety_rules()
+export function load_safety_rules()
 {
   let input = document.createElement('input');
   input.type = 'file';
@@ -999,7 +776,7 @@ function load_safety_rules()
       console.log(new_rules)
       if (new_rules.length > 0) {
         for (let rule of new_rules) {
-          if (!typeof(rule)==='string') {
+          if (!(typeof(rule)==='string')) {
             alert('Expected an array of rule regex strings')
             pass_test = false
             break;
