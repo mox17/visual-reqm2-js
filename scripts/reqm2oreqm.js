@@ -74,7 +74,7 @@ function get_linksto(node) {
   }
   return result
 }
-  
+
 function get_fulfilledby(node) {
   //Return a list of arrays (id,doctype,version) of the ffbObj's
   var ff_list = []
@@ -417,7 +417,6 @@ export default class ReqM2Specobjects {
     if (find_again) {
       this.find_links()
     }
-    //TODO: update_doctype_table()
   }
 
   compare_requirements(old_reqs) {
@@ -651,7 +650,9 @@ export default class ReqM2Specobjects {
 
   get_tag_text_formatted(rec, tag) {
     let xml_txt = ''
-    if (rec.hasOwnProperty(tag)) {
+
+    //if (rec.hasOwnProperty(tag)) {
+    if (Object.prototype.hasOwnProperty.call(rec, tag)) {
       let txt = rec[tag]
       let template = "\n    <{}>{}</{}>"
       if (txt.length) {
@@ -663,7 +664,8 @@ export default class ReqM2Specobjects {
 
   get_list_formatted(rec, field) {
     let xml_txt = ''
-    if (rec.hasOwnProperty(field)) {
+    //if (rec.hasOwnProperty(field)) {
+    if (Object.prototype.hasOwnProperty.call(rec, field)) {
       let list = rec[field]
       let template = "\n    <{}>{}</{}>"
       if (list.length) {

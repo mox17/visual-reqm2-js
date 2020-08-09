@@ -20,13 +20,8 @@
   var parser = new DOMParser();
   var worker;
   var result;
-  //var title
   var oreqm_main
-  //var oreqm_main_filename = 'no file selected'
-  //var oreqm_main_timestamp = 'no time'
   var oreqm_ref
-  //var oreqm_ref_filename = ''
-  //var oreqm_ref_timestamp = ''
   var image_type = 'none'
   var image_mime = ''
   var image_data = ''
@@ -514,8 +509,6 @@
     reader.onload = readerEvent => {
       //console.log( file );
       oreqm_main = new ReqM2Oreqm(file.name, readerEvent.target.result, [], [])
-      //oreqm_main_filename = file.name
-      //oreqm_main_timestamp = oreqm_main.get_time()
       document.getElementById('name').innerHTML = oreqm_main.filename
       document.getElementById('size').innerHTML = (Math.round(file.size/1024))+" KiB"
       document.getElementById('timestamp').innerHTML = oreqm_main.timestamp
@@ -816,11 +809,7 @@
   // Get the <span> element that closes the modal
   var nodeSourceClose = document.getElementById("nodeSourceClose");
 
-  function show_raw_node() {
-    nodeSource.style.display = "block";
-  }
-
-  // When the user clicks on <span> (x), close the modal
+   // When the user clicks on <span> (x), close the modal
   nodeSourceClose.onclick = function() {
     nodeSource.style.display = "none";
   }
@@ -841,7 +830,6 @@
   }
 
   // Setup for the raw node display dialog (raw text and diff (for changed reqs))
-  
   // Get the <span> element that closes the modal
   var problemPopupClose = document.getElementById("problemPopupClose");
 
@@ -851,7 +839,7 @@
   }
 
   // When the user clicks anywhere outside of the modal, close it
-  window.onbeforeunload = function(event) {
+  window.onbeforeunload = function() {
     return //"Graph is going away..."
   }
 
@@ -1005,16 +993,14 @@
   drop_area_main.addEventListener('drop', (event) => {
     event.stopPropagation();
     event.preventDefault();
-    const fileList = event.dataTransfer.files;
-    //console.log(fileList);
+    //console.log(event.dataTransfer.files);
     process_dropped_file(event, true)
   });
 
   drop_area_ref.addEventListener('drop', (event) => {
     event.stopPropagation();
     event.preventDefault();
-    const fileList = event.dataTransfer.files;
-    //console.log(fileList);
+    //console.log(event.dataTransfer.files);
     process_dropped_file(event, false)
   });
 

@@ -33,7 +33,8 @@ if (typeof(Array.prototype.remove) === "undefined")
 RegExp.prototype.toJSON = function() { return this.source; };
 
 // some ways to select a subset of specobjects
-export function select_all(node_id, rec, node_color) {
+// eslint-disable-next-line no-unused-vars
+export function select_all(_node_id, _rec, _node_color) {
   // Select all - no need to inspect input
   return true
 }

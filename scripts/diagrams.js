@@ -4,7 +4,7 @@
 import ReqM2Specobjects, {accepted_safety_class_links_re}  from './reqm2oreqm.js'
 import get_color from './color.js'
 import Doctype from './doctypes.js'
-import {xml_escape, search_pattern} from './main.js'
+import {xml_escape, search_pattern, id_checkbox} from './main.js'
 
 function normalize_indent(txt) {
   // Normalize indentation of multiline string
@@ -495,12 +495,12 @@ export default class ReqM2Oreqm extends ReqM2Specobjects {
       }
     }
 
-    let ex_dt_list = this.excluded_doctypes // TODO: removeget_excluded_doctypes()
+    let ex_dt_list = this.excluded_doctypes
     if (ex_dt_list.length) {
       title += '      <tr><td>excluded doctypes</td><td colspan="2">{}</td></tr>\n'.format(ex_dt_list.join(", "))
     }
 
-    let excluded_ids = this.excluded_ids // TODO: remove oreqm_main.get_excluded_ids()
+    let excluded_ids = this.excluded_ids
     if (excluded_ids.length) {
       title += '      <tr><td>excluded &lt;id&gt;s</td><td colspan="2">{}<BR ALIGN="LEFT"/></td></tr>\n'.format(excluded_ids.join('<BR ALIGN="LEFT"/>'))
     }
@@ -511,7 +511,5 @@ export default class ReqM2Oreqm extends ReqM2Specobjects {
     //console.log(title)
     return title
   }
-  
-  
 
 }
