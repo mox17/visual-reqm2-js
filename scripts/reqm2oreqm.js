@@ -13,6 +13,21 @@ var accepted_safety_class_links_re = [
   /^swuts.*>.*$/           // swuts can cover anything (maybe?)
 ]
 
+function tryParseXML(xmlString) {
+  var parser = new DOMParser();
+  var parsererrorNS = parser.parseFromString('INVALID', 'text/xml').getElementsByTagName("parsererror")[0].namespaceURI;
+  var dom = parser.parseFromString(xmlString, 'text/xml');
+  let errors = dom.getElementsByTagNameNS(parsererrorNS, 'parsererror')
+  if(errors.length > 0) {
+    let text = ''
+    for (let t of errors[0].childNodes ) {
+      text += t.textContent + '\n'
+    }
+    throw new Error(text);
+  }
+  return dom;
+}
+
 class ReqM2Oreqm {
   // This class reads and manages information in ReqM2 .oreqm files
   constructor(content, excluded_doctypes, excluded_ids) {
@@ -33,13 +48,15 @@ class ReqM2Oreqm {
     this.dot = 'digraph "" {label="Select filter criteria and exclusions, then click\\l                    [update graph]\\l(Unfiltered graphs may be too large to render)"\n  labelloc=b\n  fontsize=24\n  fontcolor=grey\n  fontname="Arial"\n}\n'
 
     // Initialization logic
-    this.process_oreqm_content(content);
-    this.read_req_descriptions();
-    this.add_fulfilledby_nodes();
-    this.find_links();
-    let problems = this.get_problems()
-    if (problems) {
-      //alert(problems)
+    let success = this.process_oreqm_content(content);
+    if (success) {
+      this.read_req_descriptions();
+      this.add_fulfilledby_nodes();
+      this.find_links();
+      let problems = this.get_problems()
+      if (problems) {
+        //alert(problems)
+      }
     }
   }
 
@@ -48,11 +65,18 @@ class ReqM2Oreqm {
   }
 
   process_oreqm_content(content) {
-    let parser = new DOMParser();
-    this.root = parser.parseFromString(content, "text/xml");
+    // Attempt to load XML and report if error detected
+    try {
+      this.root = tryParseXML(content)
+    } catch (err) {
+      alert(err)
+      return false
+    }
+    return true
   }
 
   read_req_descriptions() {
+    // Handle all sections with specobjects
     let specobjects_list = this.root.getElementsByTagName("specobjects");
     for (const specobjects of specobjects_list) {
       let doctype = specobjects.getAttributeNode("doctype").value;
@@ -64,7 +88,7 @@ class ReqM2Oreqm {
   }
 
   read_specobject_list(node, doctype) {
-    // Read individual specobjects
+    // Read individual specobject
     let specobject_list = node.getElementsByTagName("specobject");
     for (const comp of specobject_list) {
       let req = new Object();
@@ -98,7 +122,7 @@ class ReqM2Oreqm {
         this.problem_report(problem)
       }
       while (this.requirements.has(req.id)) {
-        // Add suffix until unique
+        // Add suffix until id is unique
         req.id += '_dup_'
       }
       this.requirements.set(req.id, req)
@@ -714,11 +738,11 @@ class ReqM2Oreqm {
     }
     // DOT language start of diagram
     let graph = `digraph "" {
-      rankdir="TD"
+      rankdir="{}"
       node [shape=plaintext fontname="Arial" fontsize=16]
       edge [color="black" dir="forward" arrowhead="normal" arrowtail="normal" fontname="Arial" fontsize=11];
 
-`
+`.format(doctype_safety ? 'BT' : 'TD')
     // Define the doctype nodes - the order affects the layout
     const doctype_array = Array.from(doctype_clusters.keys())
     for (let doctype of doctype_array) {
@@ -777,7 +801,7 @@ class ReqM2Oreqm {
           doctype.split(':')[0],
           lk.split(':')[0],
           count,
-          doctype_safety ? '\n{}:{}'.format(dt_sc_str(doctype), dt_sc_str(lk)) : '',
+          doctype_safety ? '\\l{}>{}'.format(dt_sc_str(doctype), dt_sc_str(lk)) : '',
           doctype_safety ? this.linksto_safe_color(doctype, lk) : 'black')
         if (doctype_safety && !this.linksto_safe(doctype, lk)) {
           let prov_list = dt.linksto.get(lk).map(x => '{} -> {}'.format(x[1], x[0]))
@@ -793,7 +817,7 @@ class ReqM2Oreqm {
           doctype.split(':')[0],
           ffb.split(':')[0],
           count,
-          doctype_safety ? '\n{}:{}'.format(dt_sc_str(ffb),dt_sc_str(doctype)) : '',
+          doctype_safety ? '\n{}>{}'.format(dt_sc_str(ffb),dt_sc_str(doctype)) : '',
           doctype_safety ? this.linksto_safe_color(ffb, doctype) : 'purple')
         if (doctype_safety && !this.linksto_safe(ffb, doctype)) {
           let problem = "{} fulfilledby {}".format(ffb, doctype)
