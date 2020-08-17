@@ -305,9 +305,28 @@
     return beforeUnloadMessage;
   });
 
-  export function copy_id_node() {
+  export function copy_id_node(ffb_format) {
     const ta = document.createElement('textarea');
-    ta.value = selected_node
+    if (ffb_format) {
+      let rec = oreqm_main.requirements.get(selected_node)
+      ta.value = '{}:{}:{}'.format(selected_node, rec.doctype, rec.version)
+    } else {
+      ta.value = selected_node
+    }
+    ta.setAttribute('readonly', '');
+    ta.style = { position: 'absolute', left: '-9999px' };
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  }
+
+  export function copy_svg() {
+    // Copy svg image to clipboard as <img src="data:image/svg;base64,..." width="" height="" alt="diagram" />
+    let clip_txt = '<img src="data:image/svg;base64,{}" width="{}" height="{}" alt="diagram"/>'.format(
+      btoa(result), svg_element.getAttribute('width'), svg_element.getAttribute('height'))
+    const ta = document.createElement('textarea'); // 'img' ??
+    ta.value = clip_txt
     ta.setAttribute('readonly', '');
     ta.style = { position: 'absolute', left: '-9999px' };
     document.body.appendChild(ta);
@@ -342,6 +361,7 @@
     if (oreqm_main && oreqm_main.check_node_id(node_id)) {
       // a node was right-clicked
       document.getElementById('menu_copy_id').classList.remove('custom-menu_disabled')
+      document.getElementById('menu_copy_ffb').classList.remove('custom-menu_disabled')
       document.getElementById('menu_exclude').classList.remove('custom-menu_disabled')
       document.getElementById('menu_raw_txt').classList.remove('custom-menu_disabled')
       if (selected_node_check(node_id)) {
@@ -358,6 +378,7 @@
       document.getElementById('menu_deselect').classList.add('custom-menu_disabled')
       document.getElementById('menu_exclude').classList.add('custom-menu_disabled')
       document.getElementById('menu_copy_id').classList.add('custom-menu_disabled')
+      document.getElementById('menu_copy_ffb').classList.add('custom-menu_disabled')
       document.getElementById('menu_raw_txt').classList.add('custom-menu_disabled')
     }
   }
@@ -517,7 +538,8 @@
         set_auto_update(false)
       }
       if (oreqm_ref) { // if we have a reference do a compare
-        compare_oreqm(oreqm_main, oreqm_ref)
+        let gr = compare_oreqm(oreqm_main, oreqm_ref)
+        set_doctype_count_shown(gr.doctype_dict, gr.selected_dict)
       }
       display_doctypes_with_count(oreqm_main.get_doctypes())
       if (auto_update) {
@@ -560,7 +582,8 @@
         document.getElementById('ref_name').innerHTML = file.name
         document.getElementById('ref_size').innerHTML = (Math.round(file.size/1024))+" KiB"
         document.getElementById('ref_timestamp').innerHTML = oreqm_ref.get_time()
-        compare_oreqm(oreqm_main, oreqm_ref)
+        let gr = compare_oreqm(oreqm_main, oreqm_ref)
+        set_doctype_count_shown(gr.doctype_dict, gr.selected_dict)
         display_doctypes_with_count(oreqm_main.get_doctypes())
         if (auto_update) {
           filter_graph()
