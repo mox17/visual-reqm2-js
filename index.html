@@ -118,7 +118,7 @@
         <span id="aboutPaneClose" class="close">&times;</span>
         <div class="column">
           <h1>Visual ReqM2</h1>
-          <p>Version 0.95<br/>
+          <p>Version 0.96<br/>
           Copyright 2020 Erling Stage<br/>
           Licensed under MIT license<br/>
          <!-- <a href="https://github.com/mox17/visual-reqm2-js">https://github.com/mox17/visual-reqm2-js</a> -->
@@ -190,7 +190,9 @@
       <li id="menu_select"   onclick="window.select_node()">Select</li>
       <li id="menu_deselect" onclick="window.deselect_node()">De-select</li>
       <li id="menu_exclude"  onclick="window.exclude_node()">Exclude</li>
-      <li id="menu_copy_id"  onclick="window.copy_id_node()">Copy &lt;id&gt;</li>
+      <li id="menu_copy_id"  onclick="window.copy_id_node(false)">Copy &lt;id&gt;</li>
+      <li id="menu_copy_ffb" onclick="window.copy_id_node(true)">Copy &lt;id&gt;:&lt;doctype&gt;:&lt;ver&gt;</li>
+      <li id="menu_copy_svg" onclick="window.copy_svg()">Copy SVG</li>
       <li id="menu_raw_txt"  onclick="window.show_source()">Show XML</li>
     </ul>
 
@@ -221,7 +223,8 @@
         load_color_scheme,
         auto_update_click,
         select_dropdown,
-        clear_problems
+        clear_problems,
+        copy_svg
       } from "./scripts/main.js";
       import {load_safety_rules} from './scripts/reqm2oreqm.js'
       import {load_colors, save_colors} from './scripts/color.js'
@@ -250,6 +253,7 @@
       window.save_colors          = save_colors;
       window.load_colors          = load_colors;
       window.load_color_scheme    = load_color_scheme;
+      window.copy_svg             = copy_svg;
     </script>
 
 </body>

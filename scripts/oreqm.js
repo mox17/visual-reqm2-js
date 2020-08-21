@@ -47,8 +47,6 @@ export function select_color(node_id, rec, node_color) {
   return node_color.has(COLOR_UP) || node_color.has(COLOR_DOWN)
 }
 
-import {set_doctype_count_shown} from './main.js'
-
 export function compare_oreqm(oreqm_main, oreqm_ref) {
   // Both main and reference oreqm have been read.
   // Highlight new, changed and removed nodes in main oreqm (removed are added as 'ghosts')
@@ -69,5 +67,5 @@ export function compare_oreqm(oreqm_main, oreqm_ref) {
   document.getElementById("search_regex").value = raw_search
   //console.log(results)
   const graph = oreqm_main.create_graph(select_color, "reqspec1", oreqm_main.construct_graph_title(true, null, oreqm_ref), [])
-  set_doctype_count_shown(graph.doctype_dict, graph.selected_dict)
+  return graph
 }
