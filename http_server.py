@@ -14,7 +14,7 @@ if sys.version_info.major == 2:
           ".js": "application/javascript",
     });
     httpd = SocketServer.TCPServer(("", PORT), Handler)
-    print "serving at port", PORT
+    print("serving at port", PORT)
     httpd.serve_forever()
 else:
     print("Starting http.server under python {}.{}".format(sys.version_info.major, sys.version_info.minor))
@@ -27,5 +27,5 @@ else:
           ".js": "application/javascript",
     });
     httpd = socketserver.TCPServer(("", PORT), Handler)
-    print "serving at port", PORT
+    print("serving at port", PORT)
     httpd.serve_forever()
