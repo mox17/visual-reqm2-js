@@ -45,7 +45,7 @@ function normalize_indent(txt) {
       min_leading = 0
     }
   }
-  // Heuristic that 1st line may mave no indentation because of the xml is written
+  // Heuristic that 1st line may mave no indentation because of the way xml is often written
   if (line_arr.length > 1) {
     if (first_length < min_leading) {
       line_arr[0] = ' '.repeat(min_leading-first_length) + line_arr[0]
@@ -61,17 +61,44 @@ function normalize_indent(txt) {
   return txt
 }
 
+// Translation of markup to DOT table 'html-like' markup
+// The trailing spaces in end tags are deliberate because of apparent layout problems in the used viz version.
+function recognized_tags(txt) {
+  txt = txt.replace(/&lt;b&gt;/gm, '<b>')
+  txt = txt.replace(/&lt;\/b&gt;/gm, '</b>&nbsp;')
+  txt = txt.replace(/&lt;i&gt;/gm, '<i>')
+  txt = txt.replace(/&lt;\/i&gt;/gm, '</i>&nbsp;')
+  txt = txt.replace(/&lt;command&gt;/gm, '<font face="courier">')
+  txt = txt.replace(/&lt;\/command&gt;/gm, '</font>&nbsp;')
+  txt = txt.replace(/&lt;filename&gt;/gm, '<font face="courier">')
+  txt = txt.replace(/&lt;\/filename&gt;/gm, '</font>&nbsp;')
+  txt = txt.replace(/&lt;code&gt;/gm, '<font face="courier">')
+  txt = txt.replace(/&lt;\/code&gt;/gm, '</font>&nbsp;')
+  txt = txt.replace(/&lt;function&gt;/gm, '<font face="courier">')
+  txt = txt.replace(/&lt;\/function&gt;/gm, '</font>&nbsp;')
+  txt = txt.replace(/&lt;option&gt;/gm, '<font face="courier"><b>')
+  txt = txt.replace(/&lt;\/option&gt;/gm, '</b></font>&nbsp;')
+  txt = txt.replace(/&lt;parameter&gt;/gm, '<font face="courier">')
+  txt = txt.replace(/&lt;\/parameter&gt;/gm, '</font>&nbsp;')
+  txt = txt.replace(/&lt;constant&gt;/gm, '<font face="courier">')
+  txt = txt.replace(/&lt;\/constant&gt;/gm, '</font>&nbsp;')
+  txt = txt.replace(/&lt;varname&gt;/gm, '<font face="courier">')
+  txt = txt.replace(/&lt;\/varname&gt;/gm, '</font>&nbsp;')
+  txt = txt.replace(/&lt;literal&gt;/gm, '<font face="courier">')
+  txt = txt.replace(/&lt;\/literal&gt;/gm, '</font>&nbsp;')
+  return txt
+}
+
 // Regexes for "make requirements readable" heuristics
 const re_xml_comments = new RegExp(/<!--.*?-->/g, 'm')
+const re_emphasis_role_bold = new RegExp(/<emphasis role="bold">(.*)?<\/emphasis>/m)
+const re_emphasis_role_italic = new RegExp(/<emphasis role="italic">(.*)?<\/emphasis>/m)
+const re_emphasis_role_underline = new RegExp(/<emphasis role="underline">(.*)?<\/emphasis>/m)
 //const re_unwanted_mu  = new RegExp(/<!\[CDATA\[\s*/g, 'm')
-//const re_amp_quote    = new RegExp(/&/g, 'm')
-//const re_list_heurist = new RegExp(/<li>[\s\n]*|<listitem>[\s\n]*/g, 'm')
 const re_tag_text     = new RegExp(/<a\s+type="xref"\s+href="[A-Z]+_([^"]+)"\s*\/>/g, 'm')
-//const re_xml_remove   = new RegExp(/<\/?ul>|<\/?itemizedlist>|<\/listitem>|<\/li>|<\/para>/g, 'm')
 const re_whitespace   = new RegExp(/^[\s\n]*|\s\n]*$/)
 const re_nbr_list     = new RegExp(/\n\s+(\d+)/g)
 const re_line_length  = new RegExp(/([^\n]{110,500}?(:|;| ))/g)
-//const re_keep_nl      = new RegExp(/\s*\n\s*/)
 const re_empty_lines  = new RegExp(/<BR ALIGN="LEFT"\/>(\s*&nbsp;<BR ALIGN="LEFT"\/>)+/, 'm')
 
 function dot_format(txt) {
@@ -84,23 +111,26 @@ function dot_format(txt) {
     // txt = txt.replace(re_unwanted_mu, '')  // Remove unwanted markup
     // Handle unicode literals
     txt = txt.replace(/&#(\d+);/g, function (whole, group1) {return String.fromCharCode(parseInt(group1, 10));})
-    //txt = txt.replace(/\\u([0-9a-f]{4})/g, function (whole, group1) {return String.fromCharCode(parseInt(group1, 16));})
     // neuter unknown, unepanded xml elements
     txt2 = txt.split(/&(?!lt;|gt;|quot;|amp;|nbsp;)/gm)
     if (txt2.length > 1) {
       txt = txt2.join('&amp;')
     }
-    //new_txt = txt.replace(re_list_heurist, '&nbsp;&nbsp;* ') // heuristic for bulleted lists
-    new_txt = txt.split(/<li>[\s\n]*|<listitem>[\s\n]*/).join('&nbsp;&nbsp;* ') // heuristic for bulleted lists
+    new_txt = txt
+    new_txt = new_txt.split(/<listitem>[\s\n]*/).join('&nbsp;&nbsp;* ') // heuristic for bulleted lists
+    new_txt = new_txt.split(/<\/listitem>/).join('') // and remove the closing tags
+    new_txt = new_txt.split(/<li>[\s\n]*/).join('&nbsp;&nbsp;* ') // heuristic for bulleted lists
+    new_txt = new_txt.split(/<\/li>/).join('') // and remove the closing tags
     // Dig out meaningful text from items like:
     // <a type="xref" href="TERM_UNAUTHORIZED_EXECUTABLE_ENTITIES"/>
     new_txt = new_txt.replace(re_tag_text, '$1')
     new_txt = new_txt.split(/<br\s*\/>|<\/?p>/i).join('&nbsp;\n') // keep deliberate newlines
-    new_txt = new_txt.split(/<\/?ul>|<\/?itemizedlist>|<\/listitem>|<\/li>|<\/?para>|<a\s[^>/]*\/?>|<\/a>|<\/?filename>|<\/?code>|<\/?function>|<\/?pre>|<\/glossterm>|<glossterm [^>]+>/).join('') // remove xml markup
+    new_txt = new_txt.split(/<\/?ul>|<\/?ol>|<\/?itemizedlist>|<\/?para>|<a\s[^>/]*\/?>|<\/a>|<\/?pre>|<\/glossterm>|<glossterm [^>]+>/).join('') // remove xml markup
     new_txt = new_txt.replace(re_whitespace, '') // remove leading and trailing whitespace
     new_txt = new_txt.replace(/"/g, '&quot;')
     new_txt = new_txt.replace(/</g, '&lt;')
     new_txt = new_txt.replace(/>/g, '&gt;')
+    new_txt = recognized_tags(new_txt)
     new_txt = new_txt.replace(re_nbr_list, '\n&nbsp;&nbsp;$1') // heuristic for numbered lists
     new_txt = new_txt.replace(re_line_length, '$1\n') // limit line length
     new_txt = new_txt.split(/\s*\n/).join('<BR ALIGN="LEFT"/>') // preserve newlines
