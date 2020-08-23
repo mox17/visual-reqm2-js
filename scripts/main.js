@@ -1129,6 +1129,17 @@
     return txt.replace(/</g, '&lt;').replace(/>/g, '&gt;')
   }
 
+  function src_add_plus_minus(part) {
+    // Add git style '+', '-' in front of changed lines.
+    // The part can be multi-line and is expected to end with a newline
+    let insert = part.added ? '+' : part.removed ? '-' : ' '
+    let txt = part.value
+    let last_char = txt.slice(-1)
+    txt = txt.slice(0,-1)
+    txt = insert + txt.split(/\n/gm).join('\n'+insert)
+    return txt + last_char
+  }
+
   export function show_source() {
     // Show selected node as XML
     if (selected_node.length) {
@@ -1146,7 +1157,7 @@
           if (part.added || part.removed) {
             font = 'bold'
           }
-          result += '<span style="color: {}; font-weight: {};">{}</span>'.format(color, font, part.value)
+          result += '<span style="color: {}; font-weight: {};">{}</span>'.format(color, font, src_add_plus_minus(part))
         });
         result += '</pre>'
         ref.innerHTML = result
