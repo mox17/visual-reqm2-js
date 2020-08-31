@@ -484,18 +484,32 @@
     cell.innerHTML = '<div id="doctype_select_totals">0</div>'
 
     cell = row.insertCell();
+    cell.innerHTML = '<input type="checkbox" id="doctype_all">'
+    cell.addEventListener("click", function() {
+      doctype_filter_all_change();
+    });
 
     document.getElementById("doctype_table").appendChild(table);
   }
 
-  var toggle_doctype_exclude = false
+  var toggle_doctype_exclude = false // Flag to suppress updates by simulated clicks
 
   function doctype_filter_change() {
+    set_doctype_all_checkbox()
     if (!toggle_doctype_exclude) {
       //console.log("doctype_filter_change")
       if (auto_update) {
         filter_graph()
       }
+    }
+  }
+
+  function doctype_filter_all_change() {
+    toggle_doctype_exclude = true
+    toggle_exclude()
+    toggle_doctype_exclude = false
+    if (auto_update) {
+      filter_graph()
     }
   }
 
@@ -640,7 +654,7 @@
     return excluded_list
   }
 
-  export function toggle_exclude() {
+  function toggle_exclude() {
     if (oreqm_main) {
       toggle_doctype_exclude = true
       const doctypes = oreqm_main.get_doctypes()
@@ -657,6 +671,41 @@
       toggle_doctype_exclude = false
       doctype_filter_change();
     }
+  }
+
+  export function invert_exclude() {
+    // Invert the exclusion status of all doctypes
+    if (oreqm_main) {
+      toggle_doctype_exclude = true
+      const doctypes = oreqm_main.get_doctypes()
+      const names = doctypes.keys()
+      for (const doctype of names) {
+        const checkbox_id = "doctype_{}".format(doctype)
+        var elm = document.getElementById(checkbox_id);
+        elm.click();
+      }
+      toggle_doctype_exclude = false
+      doctype_filter_change();
+    }
+  }
+
+  function set_doctype_all_checkbox() {
+    // Set the checkbox to reflect overall status
+    const doctypes = oreqm_main.get_doctypes()
+    const names = doctypes.keys()
+    let ex_list = get_excluded_doctypes()
+    const dt_all = document.getElementById("doctype_all");
+    if (ex_list.length === 0) {
+      dt_all.indeterminate = false
+      dt_all.checked = false
+    } else if (ex_list.length === Array.from(names).length) {
+      dt_all.indeterminate = false
+      dt_all.checked = true
+    } else {
+      dt_all.indeterminate = true
+      dt_all.checked = true
+    }
+
   }
 
   function get_search_regex_clean() {
