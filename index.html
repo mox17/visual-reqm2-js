@@ -63,7 +63,7 @@
           <b>Doctypes</b><br><p/>
           <button type="button" onclick="window.show_doctypes()">hierarchy</button>
           <button type="button" onclick="window.show_doctypes_safety()">safety</button>
-          <button type="button" onclick="window.toggle_exclude()">toggle exclude</button>
+          <button type="button" onclick="window.invert_exclude()">invert exclude</button>
           <p/>
           <div id="doctype_table"></div>
           <p/>
@@ -118,7 +118,7 @@
         <span id="aboutPaneClose" class="close">&times;</span>
         <div class="column">
           <h1>Visual ReqM2</h1>
-          <p>Version 0.96<br/>
+          <p>Version 0.97.0<br/>
           Copyright 2020 Erling Stage<br/>
           Licensed under MIT license<br/>
          <!-- <a href="https://github.com/mox17/visual-reqm2-js">https://github.com/mox17/visual-reqm2-js</a> -->
@@ -217,7 +217,7 @@
         clear_excluded_ids,
         filter_graph,
         filter_change,
-        toggle_exclude,
+        invert_exclude,
         prev_selected,
         next_selected,
         load_color_scheme,
@@ -243,7 +243,7 @@
       window.clear_excluded_ids   = clear_excluded_ids;
       window.filter_graph         = filter_graph;
       window.filter_change        = filter_change;
-      window.toggle_exclude       = toggle_exclude;
+      window.invert_exclude       = invert_exclude;
       window.prev_selected        = prev_selected;
       window.next_selected        = next_selected;
       window.auto_update_click    = auto_update_click;

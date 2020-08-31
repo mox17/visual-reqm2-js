@@ -98,9 +98,23 @@ function dot_format(txt) {
   return new_txt
 }
 
-function format_node(node_id, rec, ghost) {
+function format_violations(vlist, rules) {
+  let str = '<b><BR ALIGN="LEFT"/>'
+  for (const v of vlist) {
+    if (rules.has(v)) {
+      str += '&nbsp;*&nbsp;' + rules.get(v) + '<BR ALIGN="LEFT"/>'
+    } else {
+      str += '&nbsp;*&nbsp;' + v + '<BR ALIGN="LEFT"/>'
+    }
+  }
+  str += '</b>'
+  return str
+}
+
+function format_node(node_id, rec, ghost, oreqm) {
   // Create 'dot' style 'html' table entry for the specobject. Rows without data are left out
   let node_table = ""
+  let violations    = rec.violations.length ? '        <TR><TD COLSPAN="3" ALIGN="LEFT" BGCOLOR="#FF6666">violations: {}</TD></TR>\n'.format(format_violations(rec.violations, oreqm.rules)) : ''
   let furtherinfo     = rec.furtherinfo     ? '        <TR><TD COLSPAN="3" ALIGN="LEFT">furtherinfo: {}</TD></TR>\n'.format(dot_format(rec.furtherinfo)) : ''
   let safetyrationale = rec.safetyrationale ? '        <TR><TD COLSPAN="3" ALIGN="LEFT">safetyrationale: {}</TD></TR>\n'.format(dot_format(rec.safetyrationale)) : ''
   let shortdesc       = rec.shortdesc       ? '        <TR><TD COLSPAN="3" ALIGN="LEFT">shortdesc: {}</TD></TR>\n'.format(dot_format(rec.shortdesc)) : ''
@@ -112,7 +126,7 @@ function format_node(node_id, rec, ghost) {
   node_table     = `
       <TABLE BGCOLOR="{}{}" BORDER="1" CELLSPACING="0" CELLBORDER="1" COLOR="{}" >
         <TR><TD CELLSPACING="0" >{}</TD><TD>{}</TD><TD>{}</TD></TR>
-        <TR><TD COLSPAN="2" ALIGN="LEFT">{}</TD><TD>{}</TD></TR>\n{}{}{}{}{}{}{}{}      </TABLE>`.format(
+        <TR><TD COLSPAN="2" ALIGN="LEFT">{}</TD><TD>{}</TD></TR>\n{}{}{}{}{}{}{}{}{}      </TABLE>`.format(
                         get_color(rec.doctype),
                         ghost ? ':white' : '',
                         ghost ? 'grey' : 'black',
@@ -125,7 +139,8 @@ function format_node(node_id, rec, ghost) {
                         comment,
                         furtherinfo,
                         source,
-                        status)
+                        status,
+                        violations)
   let node = '  "{}" [id="{}" label=<{}>];\n'.format(node_id, node_id, node_table)
   return node
 }
@@ -231,7 +246,7 @@ export default class ReqM2Oreqm extends ReqM2Specobjects {
     for (const req_id of subset) {
         // nodes
         const ghost = this.removed_reqs.includes(req_id)
-        let node = format_node(req_id, this.requirements.get(req_id), ghost)
+        let node = format_node(req_id, this.requirements.get(req_id), ghost, this)
         let dot_id = req_id //.replace(/\./g, '_').replace(' ', '_')
         if (this.new_reqs.includes(req_id)) {
           node = 'subgraph "cluster_{}_new" { color=limegreen penwidth=1 label="new" fontname="Arial" labelloc="t"\n{}}\n'.format(dot_id, node)

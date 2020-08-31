@@ -86,19 +86,21 @@ expression will be shown and highlighted with a maroon outline. Furthermore all 
 **selected** nodes will also be shown. All other nodes are left out.
 The regular expression can be applied to the \<id> only, or to a combined string.
 
-The combined string combines the raw text from xml tags in the order below, separated by newlines.
+The combined string combines the raw text from xml tags with some prefixes in the order below, separated by newlines.
 
-* `<description>`
-* `<furtherinfo>`
-* `<rationale>`
-* `<safetyrationale>`
-* `<shortdesc>`
-* `<usecase>`
-* `<verifycrit>`
-* `<comment>`
-* `<tags>\<tag>*`
-* `<platform>`
-* `<id>`
+* `dt:<doctype>`
+* `de:<description>`
+* `fi:<furtherinfo>`
+* `rt:<rationale>`
+* `sr:<safetyrationale>`
+* `sc:<safetyclass>`
+* `sd:<shortdesc>`
+* `uc:<usecase>`
+* `vc:<verifycrit>`
+* `co:<comment>`
+* `tag:<tag>`
+* `plt:<platform>`
+* `id:<id>`
 
 **Note**: The `<id>` is deliberately the last item in this string. This means that a regex ending
 with `$` will match `<id>`.
@@ -108,6 +110,10 @@ and `new:` for removed, changed and new nodes.respectively.
 
 **Note**: It is possible to locate requirements with `fulfilledby` links, by using the text search
 prefix `ffb:` for the referred doctype, or just `ffb:` to select them all.
+
+**Note**: It is possible to search for text in specified fields, by constructing a search string that
+respects the order of fields listed above. For example requirements of \<safetyclass> SIL-2 with the word
+'kernel' in the \<id>: `sc:sil-2.*id:.*kernel`
 
 Nodes can also be selected by right-clicking them and choosing 'Select' in the menu. This will update
 the regex in the search box.

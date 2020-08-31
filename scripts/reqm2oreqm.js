@@ -105,6 +105,7 @@ export default class ReqM2Specobjects {
     this.root = null;              // xml tree
     this.doctypes = new Map();     // { doctype : [id] }  List of ids of a specific doctype
     this.requirements = new Map(); // { id : Requirement}
+    this.rules = new Map();        // {rule_id : description}
     this.color = new Map();        // {id:[color]}
     this.linksto = new Map();      // {id:{id}} -- map to set of linked ids
     this.linksto_rev = new Map();  // {id:{id}} -- reverse direction of linksto. i.e. top-down
@@ -121,6 +122,7 @@ export default class ReqM2Specobjects {
     // Initialization logic
     let success = this.process_oreqm_content(content);
     if (success) {
+      this.read_rules();
       this.read_req_descriptions();
       this.add_fulfilledby_nodes();
       this.find_links();
@@ -146,6 +148,19 @@ export default class ReqM2Specobjects {
     }
     return true
   }
+
+ read_rules() {
+   // Read rules and store descriptions in map
+   let rule_list = this.root.getElementsByTagName("rule");
+   for (const rule of rule_list) {
+     let rule_id_arr = rule.getElementsByTagName("name")
+     let rule_description_arr = rule.getElementsByTagName("description")
+     if (rule_id_arr.length === 1 && rule_description_arr.length === 1) {
+       //console.log(rule_id_arr[0].textContent, rule_description_arr[0].textContent)
+       this.rules.set(rule_id_arr[0].textContent, rule_description_arr[0].textContent)
+     }
+   }
+ }
 
   read_req_descriptions() {
     // Handle all sections with specobjects
@@ -185,7 +200,8 @@ export default class ReqM2Specobjects {
       req.tags            = get_list_of(comp, 'tag'),
       req.usecase         = get_xml_text(comp, 'usecase'),
       req.verifycrit      = get_xml_text(comp, 'verifycrit'),
-      req.version         = get_xml_text(comp, 'version');
+      req.version         = get_xml_text(comp, 'version'),
+      req.violations      = get_list_of(comp, 'ruleid');
       req.ffb_placeholder = false;
 
       if (this.requirements.has(req.id)) {
@@ -246,6 +262,7 @@ export default class ReqM2Specobjects {
               "usecase": "",
               "verifycrit": '',
               "version": ff_version,
+              "violations": [],
               "ffb_placeholder" : true
             }
             new_nodes.set(ff_id, new_node)
@@ -508,25 +525,33 @@ export default class ReqM2Specobjects {
     let ffb = []
     rec.fulfilledby.forEach(element =>
       ffb.push('ffb:'+element[0]))
-    let all_text = rec.description
-          + '\n' + rec.furtherinfo
-          + '\n' + rec.rationale
-          + '\n' + rec.safetyrationale
-          + '\n' + rec.shortdesc
-          + '\n' + rec.usecase
-          + '\n' + rec.verifycrit
-          + '\n' + rec.comment
+    let tags = []
+    rec.tags.forEach(element =>
+      tags.push('tag:'+element))
+    let plat = []
+    rec.platform.forEach(element =>
+      plat.push('plt:'+element))
+    let all_text = 'dt:' + rec.doctype
+          + '\nde:' + rec.description
+          + '\nfi:' + rec.furtherinfo
+          + '\nrt:' + rec.rationale
+          + '\nsr:' + rec.safetyrationale
+          + '\nsc:' + rec.safetyclass
+          + '\nsd:' + rec.shortdesc
+          + '\nuc:' + rec.usecase
+          + '\nvc:' + rec.verifycrit
+          + '\nco:' + rec.comment
           + '\n' + ffb.join('\n')
-          + '\n' + rec.tags.join('\n')
-          + '\n' + rec.platform.join('\n')
-          + '\n' + id_str  // req_id is last to ensure regex search for <id>$ will succeed
+          + '\n' + tags.join('\n')
+          + '\n' + plat.join('\n')
+          + '\nid:' + id_str  // req_id is last to ensure regex search for <id>$ will succeed
     return all_text
   }
 
   find_reqs_with_text(regex) {
     // Check requirement texts against regex
     const ids = this.requirements.keys()
-    let rx = new RegExp(regex, 'im')
+    let rx = new RegExp(regex, 'ims')
     let matches = []
     for (const id of ids) {
       if (rx.test(this.get_all_text(id)))
