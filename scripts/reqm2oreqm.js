@@ -526,9 +526,6 @@ export default class ReqM2Specobjects {
     rec.fulfilledby.forEach(element =>
       ffb.push('ffb:'+element[0]))
     let tags = []
-    if (rec.tags.length > 0) {
-      console.log(req_id)
-    }
     rec.tags.forEach(element =>
       tags.push('tag:'+element))
     let plat = []
