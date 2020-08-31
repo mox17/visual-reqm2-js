@@ -262,7 +262,7 @@ export default class ReqM2Specobjects {
               "usecase": "",
               "verifycrit": '',
               "version": ff_version,
-              "violations": "",
+              "violations": [],
               "ffb_placeholder" : true
             }
             new_nodes.set(ff_id, new_node)
