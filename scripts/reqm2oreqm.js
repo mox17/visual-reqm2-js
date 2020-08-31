@@ -525,25 +525,36 @@ export default class ReqM2Specobjects {
     let ffb = []
     rec.fulfilledby.forEach(element =>
       ffb.push('ffb:'+element[0]))
-    let all_text = rec.description
-          + '\n' + rec.furtherinfo
-          + '\n' + rec.rationale
-          + '\n' + rec.safetyrationale
-          + '\n' + rec.shortdesc
-          + '\n' + rec.usecase
-          + '\n' + rec.verifycrit
-          + '\n' + rec.comment
+    let tags = []
+    if (rec.tags.length > 0) {
+      console.log(req_id)
+    }
+    rec.tags.forEach(element =>
+      tags.push('tag:'+element))
+    let plat = []
+    rec.platform.forEach(element =>
+      plat.push('plt:'+element))
+    let all_text = 'dt:' + rec.doctype
+          + '\nde:' + rec.description
+          + '\nfi:' + rec.furtherinfo
+          + '\nrt:' + rec.rationale
+          + '\nsr:' + rec.safetyrationale
+          + '\nsc:' + rec.safetyclass
+          + '\nsd:' + rec.shortdesc
+          + '\nuc:' + rec.usecase
+          + '\nvc:' + rec.verifycrit
+          + '\nco:' + rec.comment
           + '\n' + ffb.join('\n')
-          + '\n' + rec.tags.join('\n')
-          + '\n' + rec.platform.join('\n')
-          + '\n' + id_str  // req_id is last to ensure regex search for <id>$ will succeed
+          + '\n' + tags.join('\n')
+          + '\n' + plat.join('\n')
+          + '\nid:' + id_str  // req_id is last to ensure regex search for <id>$ will succeed
     return all_text
   }
 
   find_reqs_with_text(regex) {
     // Check requirement texts against regex
     const ids = this.requirements.keys()
-    let rx = new RegExp(regex, 'im')
+    let rx = new RegExp(regex, 'ims')
     let matches = []
     for (const id of ids) {
       if (rx.test(this.get_all_text(id)))
