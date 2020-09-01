@@ -99,22 +99,22 @@ function dot_format(txt) {
 }
 
 function format_violations(vlist, rules) {
-  let str = '<b><BR ALIGN="LEFT"/>'
+  let str = 'violations:\n  <itemizedlist>\n'
   for (const v of vlist) {
     if (rules.has(v)) {
-      str += '&nbsp;*&nbsp;' + rules.get(v) + '<BR ALIGN="LEFT"/>'
+      str += '    <listitem>' + rules.get(v) + '</listitem>\n'
     } else {
-      str += '&nbsp;*&nbsp;' + v + '<BR ALIGN="LEFT"/>'
+      str += '    <listitem>' + v + '</listitem>\n'
     }
   }
-  str += '</b>'
+  str += '  </itemizedlist>\n'
   return str
 }
 
 function format_node(node_id, rec, ghost, oreqm) {
   // Create 'dot' style 'html' table entry for the specobject. Rows without data are left out
   let node_table = ""
-  let violations    = rec.violations.length ? '        <TR><TD COLSPAN="3" ALIGN="LEFT" BGCOLOR="#FF6666">violations: {}</TD></TR>\n'.format(format_violations(rec.violations, oreqm.rules)) : ''
+  let violations    = rec.violations.length ? '        <TR><TD COLSPAN="3" ALIGN="LEFT" BGCOLOR="#FF6666">{}</TD></TR>\n'.format(dot_format(format_violations(rec.violations, oreqm.rules))) : ''
   let furtherinfo     = rec.furtherinfo     ? '        <TR><TD COLSPAN="3" ALIGN="LEFT">furtherinfo: {}</TD></TR>\n'.format(dot_format(rec.furtherinfo)) : ''
   let safetyrationale = rec.safetyrationale ? '        <TR><TD COLSPAN="3" ALIGN="LEFT">safetyrationale: {}</TD></TR>\n'.format(dot_format(rec.safetyrationale)) : ''
   let shortdesc       = rec.shortdesc       ? '        <TR><TD COLSPAN="3" ALIGN="LEFT">shortdesc: {}</TD></TR>\n'.format(dot_format(rec.shortdesc)) : ''
