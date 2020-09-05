@@ -71,6 +71,18 @@
     document.getElementById("viz_working").innerHTML = '<span style="color: #ff0000">WORKING</span>'
   }
 
+  function viz_loading_set() {
+    document.getElementById("viz_working").innerHTML = '<span style="color: #ff0000">LOADING</span>'
+  }
+
+  function viz_parsing_set() {
+    document.getElementById("viz_working").innerHTML = '<span style="color: #ff0000">PARSING</span>'
+  }
+
+  function viz_comparing_set() {
+    document.getElementById("viz_working").innerHTML = '<span style="color: #ff0000">COMPARING</span>'
+  }
+
   function viz_working_clear() {
     document.getElementById("viz_working").innerHTML = '<span style="color: #000000"></span>'
   }
@@ -570,12 +582,13 @@
   function load_file_main(file) {
     clear_diagram()
     clear_doctypes_table()
-    viz_working_set()
+    viz_loading_set()
     // setting up the reader
     let reader = new FileReader();
     reader.readAsText(file,'UTF-8');
     reader.onload = readerEvent => {
       //console.log( file );
+      viz_parsing_set()
       oreqm_main = new ReqM2Oreqm(file.name, readerEvent.target.result, [], [])
       document.getElementById('name').innerHTML = oreqm_main.filename
       document.getElementById('size').innerHTML = (Math.round(file.size/1024))+" KiB"
@@ -585,9 +598,11 @@
         set_auto_update(false)
       }
       if (oreqm_ref) { // if we have a reference do a compare
+        viz_comparing_set()
         let gr = compare_oreqm(oreqm_main, oreqm_ref)
         set_doctype_count_shown(gr.doctype_dict, gr.selected_dict)
       }
+      viz_working_clear()
       display_doctypes_with_count(oreqm_main.get_doctypes())
       if (auto_update) {
         filter_graph()
@@ -619,17 +634,21 @@
   function load_file_ref(file) {
     // Load reference file
     if (oreqm_main) {
+      viz_loading_set();
       let reader = new FileReader();
       reader.readAsText(file,'UTF-8');
       reader.onload = readerEvent => {
         //console.log( file );
         oreqm_main.remove_ghost_requirements()
         update_doctype_table()
+        viz_parsing_set()
         oreqm_ref = new ReqM2Oreqm(file.name, readerEvent.target.result, [], [])
         document.getElementById('ref_name').innerHTML = file.name
         document.getElementById('ref_size').innerHTML = (Math.round(file.size/1024))+" KiB"
         document.getElementById('ref_timestamp').innerHTML = oreqm_ref.get_time()
+        viz_comparing_set()
         let gr = compare_oreqm(oreqm_main, oreqm_ref)
+        viz_working_clear();
         set_doctype_count_shown(gr.doctype_dict, gr.selected_dict)
         display_doctypes_with_count(oreqm_main.get_doctypes())
         if (auto_update) {
