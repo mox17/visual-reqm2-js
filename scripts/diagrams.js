@@ -4,7 +4,11 @@
 import ReqM2Specobjects, {accepted_safety_class_links_re}  from './reqm2oreqm.js'
 import get_color from './color.js'
 import Doctype from './doctypes.js'
-import {xml_escape, search_pattern, id_checkbox} from './main.js'
+
+export function xml_escape(txt) {
+  // Escape string for usen in XML
+  return txt.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
 
 function normalize_indent(txt) {
   // Normalize indentation of multiline string
@@ -478,7 +482,7 @@ export default class ReqM2Oreqm extends ReqM2Specobjects {
     return graph
   }
 
-  construct_graph_title(show_filters, extra, oreqm_ref) {
+  construct_graph_title(show_filters, extra, oreqm_ref, id_checkbox, search_pattern) {
     let title = '""'
     title  = '<\n    <table border="1" cellspacing="0" cellborder="1">\n'
     title += '      <tr><td cellspacing="0" >File</td><td>{}</td><td>{}</td></tr>\n'.format(this.filename, this.timestamp)
