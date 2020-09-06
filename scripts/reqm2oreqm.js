@@ -108,6 +108,7 @@ export default class ReqM2Specobjects {
     this.dot = 'digraph "" {label="Select filter criteria and exclusions, then click\\l                    [update graph]\\l(Unfiltered graphs may be too large to render)"\n  labelloc=b\n  fontsize=24\n  fontcolor=grey\n  fontname="Arial"\n}\n'
     
     // Initialization logic
+    this.clear_problems()
     let success = this.process_oreqm_content(content);
     if (success) {
       this.read_rules();
