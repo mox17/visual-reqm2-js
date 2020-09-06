@@ -60,6 +60,7 @@
   var image_data = ''
   var image_data_url = ''
   var auto_update = true
+  var no_rejects = true
   var search_pattern = '' // regex for matching requirements
   var id_checkbox = false // flag for scope of search
   var dot_source = ''
@@ -566,7 +567,7 @@
     }
   }
 
-  document.getElementById('auto_update').addEventListener("click", function() {  
+  document.getElementById('auto_update').addEventListener("click", function() {
     //console.log("auto_update_click")
     auto_update = document.getElementById("auto_update").checked
     if (auto_update) {
@@ -802,6 +803,7 @@
   function filter_graph() {
     reset_selection()
     if (oreqm_main) {
+      oreqm_main.set_no_rejects(no_rejects)
       handle_pruning()
       // Collect filter criteria and generate .dot data
       id_checkbox = document.querySelector("#id_checkbox input").checked
@@ -815,7 +817,7 @@
         }
       } else {
         // no pattern specified
-        const graph = oreqm_main.create_graph(select_all, "reqspec1", 
+        const graph = oreqm_main.create_graph(select_all, "reqspec1",
           oreqm_main.construct_graph_title(true, null, oreqm_ref, false, ""), [])
         set_doctype_count_shown(graph.doctype_dict, graph.selected_dict)
       }
@@ -1385,7 +1387,18 @@
   document.getElementById('save_colors').addEventListener("click", function() {
     save_colors()
   });
-  
+
+  document.getElementById('no_rejects').addEventListener("click", function() {
+    no_rejects_click()
+  });
+
+  function no_rejects_click() {
+    no_rejects = document.getElementById("no_rejects").checked
+    if (auto_update) {
+      filter_graph()
+    }
+  }
+
   function compare_oreqm(oreqm_main, oreqm_ref) {
     // Both main and reference oreqm have been read.
     // Highlight new, changed and removed nodes in main oreqm (removed are added as 'ghosts')
@@ -1411,8 +1424,11 @@
 
   // some ways to select a subset of specobjects
   // eslint-disable-next-line no-unused-vars
-  function select_all(_node_id, _rec, _node_color) {
+  function select_all(_node_id, rec, _node_color) {
     // Select all - no need to inspect input
+    if (no_rejects) {
+      return rec.status !== 'rejected'
+    }
     return true
   }
 

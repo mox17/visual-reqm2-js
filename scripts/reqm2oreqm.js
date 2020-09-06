@@ -100,13 +100,14 @@ export default class ReqM2Specobjects {
     this.fulfilledby = new Map();  // {id:{id}}
     this.excluded_doctypes = excluded_doctypes; // [doctype]
     this.excluded_ids = excluded_ids; // [id]
+    this.no_rejects = true         // skip rejected specobjects
     this.new_reqs = [];            // List of new requirements (from comparison)
     this.updated_reqs = [];        // List of updated requirements (from comparison)
     this.removed_reqs = [];        // List of removed requirements (copies taken from older(?) version of oreqm)
     this.visible_nodes = new Map(); // {doctype:[id]}
     this.problems = []             // [ Str ] problems reports
     this.dot = 'digraph "" {label="Select filter criteria and exclusions, then click\\l                    [update graph]\\l(Unfiltered graphs may be too large to render)"\n  labelloc=b\n  fontsize=24\n  fontcolor=grey\n  fontname="Arial"\n}\n'
-    
+
     // Initialization logic
     this.clear_problems()
     let success = this.process_oreqm_content(content);
@@ -346,8 +347,14 @@ export default class ReqM2Specobjects {
     }
   }
 
+  set_no_rejects(state) {
+    // keep reject state flag in object
+    this.no_rejects = state
+  }
+
   color_down(color, req_id) {
     //Color this id and linksto_rev referenced nodes with color
+    const rec = this.requirements.get(req_id)
     if (!this.color.has(req_id)) {
       return // unknown <id> (bug)
     }
@@ -355,8 +362,12 @@ export default class ReqM2Specobjects {
       return // already visited
     }
     //console.log(this.requirements.get(req_id).doctype)
-    if (this.excluded_doctypes.includes(this.requirements.get(req_id).doctype)) {
+    if (this.excluded_doctypes.includes(rec.doctype)) {
       return // blacklisted doctype
+    }
+    //Is this requirement rejected
+    if (this.no_rejects && rec.status === 'rejected') {
+      return // rejected specobject
     }
     if (this.excluded_ids.includes(req_id)) {
       return // blacklisted id
@@ -373,14 +384,19 @@ export default class ReqM2Specobjects {
 
   color_up(color, req_id) {
     //Color this id and linksto referenced nodes with color
+    const rec = this.requirements.get(req_id)
     if (!this.color.has(req_id)) {
       return // unknown <id> (bug)
     }
     if (this.color.get(req_id).has(color)) {
       return // already visited
     }
-    if (this.excluded_doctypes.includes(this.requirements.get(req_id).doctype)) {
+    if (this.excluded_doctypes.includes(rec.doctype)) {
       return // blacklisted doctype
+    }
+    //Is this requirement rejected
+    if (this.no_rejects && rec.status === 'rejected') {
+      return // rejected specobject
     }
     if (this.excluded_ids.includes(req_id)) {
       return // blacklisted id
@@ -521,6 +537,7 @@ export default class ReqM2Specobjects {
     rec.platform.forEach(element =>
       plat.push('plt:'+element))
     let all_text = 'dt:' + rec.doctype
+          + '\nst:' + rec.status
           + '\nde:' + rec.description
           + '\nfi:' + rec.furtherinfo
           + '\nrt:' + rec.rationale
