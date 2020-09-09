@@ -1,8 +1,41 @@
   "use strict";
 
-  import ReqM2Oreqm from './diagrams.js'
-  import {select_all, select_color, compare_oreqm, COLOR_UP, COLOR_DOWN} from './oreqm.js'
-  import get_color, { load_colors } from './color.js'
+  import ReqM2Oreqm, { xml_escape, load_safety_rules } from './diagrams.js'
+  import get_color, { save_colors, load_colors } from './color.js'
+
+  // ------ utility functions and extensions --------
+  String.prototype.format = function () {
+    var i = 0, args = arguments;
+    return this.replace(/{}/g, function () {
+      return typeof args[i] != 'undefined' ? args[i++] : '';
+    });
+  };
+
+  if (typeof(String.prototype.trim) === "undefined")
+  {
+      String.prototype.trim = function()
+      {
+          return String(this).replace(/^\s+|\s+$/g, '');
+      };
+  }
+
+  if (typeof(Array.prototype.remove) === "undefined")
+  {
+    Array.prototype.remove = function() {
+      var what, a = arguments, L = a.length, ax;
+      while (L && this.length) {
+          what = a[--L];
+          while ((ax = this.indexOf(what)) !== -1) {
+              this.splice(ax, 1);
+          }
+      }
+      return this;
+    };
+  }
+
+  RegExp.prototype.toJSON = function() { return this.source; };
+
+  // ----------------------------------------------------------
 
   var beforeUnloadMessage = null;
 
@@ -27,8 +60,9 @@
   var image_data = ''
   var image_data_url = ''
   var auto_update = true
-  export var search_pattern = '' // regex for matching requirements
-  export var id_checkbox = false // flag for scope of search
+  var no_rejects = true
+  var search_pattern = '' // regex for matching requirements
+  var id_checkbox = false // flag for scope of search
   var dot_source = ''
   var panZoom = null
 
@@ -36,6 +70,18 @@
 
   function viz_working_set() {
     document.getElementById("viz_working").innerHTML = '<span style="color: #ff0000">WORKING</span>'
+  }
+
+  function viz_loading_set() {
+    document.getElementById("viz_working").innerHTML = '<span style="color: #ff0000">LOADING</span>'
+  }
+
+  function viz_parsing_set() {
+    document.getElementById("viz_working").innerHTML = '<span style="color: #ff0000">PARSING</span>'
+  }
+
+  function viz_comparing_set() {
+    document.getElementById("viz_working").innerHTML = '<span style="color: #ff0000">COMPARING</span>'
   }
 
   function viz_working_clear() {
@@ -305,7 +351,15 @@
     return beforeUnloadMessage;
   });
 
-  export function copy_id_node(ffb_format) {
+  document.getElementById('menu_copy_id').addEventListener("click", function() {
+    copy_id_node(false)
+  });
+
+  document.getElementById('menu_copy_ffb').addEventListener("click", function() {
+    copy_id_node(true)
+  });
+
+  function copy_id_node(ffb_format) {
     const ta = document.createElement('textarea');
     if (ffb_format) {
       let rec = oreqm_main.requirements.get(selected_node)
@@ -321,7 +375,7 @@
     document.body.removeChild(ta);
   }
 
-  export function copy_svg() {
+  function copy_svg() {
     // Copy svg image to clipboard as <img src="data:image/svg;base64,..." width="" height="" alt="diagram" />
     let clip_txt = '<img src="data:image/svg;base64,{}" width="{}" height="{}" alt="diagram"/>'.format(
       btoa(result), svg_element.getAttribute('width'), svg_element.getAttribute('height'))
@@ -363,7 +417,7 @@
       document.getElementById('menu_copy_id').classList.remove('custom-menu_disabled')
       document.getElementById('menu_copy_ffb').classList.remove('custom-menu_disabled')
       document.getElementById('menu_exclude').classList.remove('custom-menu_disabled')
-      document.getElementById('menu_raw_txt').classList.remove('custom-menu_disabled')
+      document.getElementById('menu_xml_txt').classList.remove('custom-menu_disabled')
       if (selected_node_check(node_id)) {
         // it is a selected node
         document.getElementById('menu_select').classList.add('custom-menu_disabled')
@@ -379,11 +433,11 @@
       document.getElementById('menu_exclude').classList.add('custom-menu_disabled')
       document.getElementById('menu_copy_id').classList.add('custom-menu_disabled')
       document.getElementById('menu_copy_ffb').classList.add('custom-menu_disabled')
-      document.getElementById('menu_raw_txt').classList.add('custom-menu_disabled')
+      document.getElementById('menu_xml_txt').classList.add('custom-menu_disabled')
     }
   }
 
-  export function set_doctype_count_shown(visible_nodes, selected_nodes) {
+  function set_doctype_count_shown(visible_nodes, selected_nodes) {
     // Update doctype table with counts of nodes actually displayed
     let doctypes = visible_nodes.keys()
     let shown_count = 0
@@ -513,15 +567,27 @@
     }
   }
 
-  export function auto_update_click() {
+  document.getElementById('auto_update').addEventListener("click", function() {
     //console.log("auto_update_click")
     auto_update = document.getElementById("auto_update").checked
     if (auto_update) {
       filter_graph()
     }
-  }
+  });
 
-  export function filter_change() {
+  document.getElementById('id_checkbox_input').addEventListener("change", function() {
+    filter_change()
+  });
+
+  document.getElementById('search_regex').addEventListener("change", function() {
+    filter_change()
+  });
+
+  document.getElementById('excluded_ids').addEventListener("change", function() {
+    filter_change()
+  });
+
+  function filter_change() {
     //console.log("filter_change")
     if (auto_update) {
       filter_graph()
@@ -533,16 +599,16 @@
     auto_update = state
   }
 
-
   function load_file_main(file) {
     clear_diagram()
     clear_doctypes_table()
-    viz_working_set()
+    viz_loading_set()
     // setting up the reader
     let reader = new FileReader();
     reader.readAsText(file,'UTF-8');
     reader.onload = readerEvent => {
       //console.log( file );
+      viz_parsing_set()
       oreqm_main = new ReqM2Oreqm(file.name, readerEvent.target.result, [], [])
       document.getElementById('name').innerHTML = oreqm_main.filename
       document.getElementById('size').innerHTML = (Math.round(file.size/1024))+" KiB"
@@ -552,9 +618,11 @@
         set_auto_update(false)
       }
       if (oreqm_ref) { // if we have a reference do a compare
+        viz_comparing_set()
         let gr = compare_oreqm(oreqm_main, oreqm_ref)
         set_doctype_count_shown(gr.doctype_dict, gr.selected_dict)
       }
+      viz_working_clear()
       display_doctypes_with_count(oreqm_main.get_doctypes())
       if (auto_update) {
         filter_graph()
@@ -562,14 +630,16 @@
         oreqm_main.set_svg_guide()
         updateGraph()
       }
-      let ref_button = document.getElementById('get_ref_oreqm')
-      ref_button.disabled = false
-      let clear_button = document.getElementById('clear_ref_oreqm')
-      clear_button.disabled = false
+      document.getElementById('get_ref_oreqm_file').disabled = false
+      document.getElementById('clear_ref_oreqm').disabled = false
     }
   }
 
-  export function get_main_oreqm_file() {
+  document.getElementById('get_main_oreqm_file').addEventListener("click", function() {
+    get_main_oreqm_file()
+  });
+
+  function get_main_oreqm_file() {
     let input = document.createElement('input');
     input.type = 'file';
     input.accept = '.oreqm'
@@ -586,17 +656,21 @@
   function load_file_ref(file) {
     // Load reference file
     if (oreqm_main) {
+      viz_loading_set();
       let reader = new FileReader();
       reader.readAsText(file,'UTF-8');
       reader.onload = readerEvent => {
         //console.log( file );
         oreqm_main.remove_ghost_requirements()
         update_doctype_table()
+        viz_parsing_set()
         oreqm_ref = new ReqM2Oreqm(file.name, readerEvent.target.result, [], [])
         document.getElementById('ref_name').innerHTML = file.name
         document.getElementById('ref_size').innerHTML = (Math.round(file.size/1024))+" KiB"
         document.getElementById('ref_timestamp').innerHTML = oreqm_ref.get_time()
+        viz_comparing_set()
         let gr = compare_oreqm(oreqm_main, oreqm_ref)
+        viz_working_clear();
         set_doctype_count_shown(gr.doctype_dict, gr.selected_dict)
         display_doctypes_with_count(oreqm_main.get_doctypes())
         if (auto_update) {
@@ -608,7 +682,11 @@
     }
   }
 
-  export function get_ref_oreqm_file() {
+  document.getElementById('get_ref_oreqm_file').addEventListener("click", function() {
+    get_ref_oreqm_file()
+  });
+
+  function get_ref_oreqm_file() {
     let input = document.createElement('input');
     input.type = 'file';
     input.accept = '.oreqm'
@@ -636,7 +714,7 @@
     link.download = "visual_reqm2.{}".format(image_type);
   }
 
-  export function get_excluded_doctypes() {
+  function get_excluded_doctypes() {
     // Get the list of doctypes with checked 'excluded' status
     let excluded_list = []
     if (oreqm_main) {
@@ -673,7 +751,11 @@
     }
   }
 
-  export function invert_exclude() {
+  document.getElementById('invert_exclude').addEventListener("click", function() {
+    invert_exclude()
+  });
+
+  function invert_exclude() {
     // Invert the exclusion status of all doctypes
     if (oreqm_main) {
       toggle_doctype_exclude = true
@@ -714,9 +796,14 @@
     return clean_search
   }
 
-  export function filter_graph() {
+  document.getElementById('filter_graph').addEventListener("click", function() {
+    filter_graph()
+  });
+
+  function filter_graph() {
     reset_selection()
     if (oreqm_main) {
+      oreqm_main.set_no_rejects(no_rejects)
       handle_pruning()
       // Collect filter criteria and generate .dot data
       id_checkbox = document.querySelector("#id_checkbox input").checked
@@ -730,7 +817,8 @@
         }
       } else {
         // no pattern specified
-        const graph = oreqm_main.create_graph(select_all, "reqspec1", oreqm_main.construct_graph_title(true, null, oreqm_ref), [])
+        const graph = oreqm_main.create_graph(select_all, "reqspec1",
+          oreqm_main.construct_graph_title(true, null, oreqm_ref, false, ""), [])
         set_doctype_count_shown(graph.doctype_dict, graph.selected_dict)
       }
       updateGraph();
@@ -795,13 +883,17 @@
     }
   }
 
-  export function select_dropdown() {
+  document.getElementById('nodeSelect').addEventListener("change", function() {
+    // Select node from drop-down
     clear_selection_highlight()
-    selected_index = document.getElementById("nodeSelect").selectedIndex
-    center_node(selected_nodes[selected_index])
-  }
+    center_node(selected_nodes[document.getElementById("nodeSelect").selectedIndex])
+  });
 
-  export function prev_selected() {
+  document.getElementById('prev_selected').addEventListener("click", function() {
+    prev_selected();
+  });
+
+  function prev_selected() {
     // step backwards through nodes and center display
     if (oreqm_main && selected_nodes.length) {
       if (selected_index > selected_nodes.length) selected_index = 0
@@ -812,7 +904,11 @@
     }
   }
 
-  export function next_selected() {
+  document.getElementById('next_selected').addEventListener("click", function() {
+    next_selected()
+  });
+
+  function next_selected() {
     // step forwards through nodes and center display
     if (oreqm_main && selected_nodes.length) {
       if (selected_index > selected_nodes.length) selected_index = 0
@@ -828,7 +924,7 @@
     set_selection(results)
     oreqm_main.clear_colors()
     oreqm_main.color_up_down(results, COLOR_UP, COLOR_DOWN)
-    const graph = oreqm_main.create_graph(select_color, "reqspec1", oreqm_main.construct_graph_title(true, null, oreqm_ref), results)
+    const graph = oreqm_main.create_graph(select_color, "reqspec1", oreqm_main.construct_graph_title(true, null, oreqm_ref, id_checkbox, search_pattern), results)
     set_doctype_count_shown(graph.doctype_dict, graph.selected_dict)
   }
 
@@ -837,11 +933,15 @@
     set_selection(results)
     oreqm_main.clear_colors()
     oreqm_main.color_up_down(results, COLOR_UP, COLOR_DOWN)
-    const graph = oreqm_main.create_graph(select_color, "reqspec1", oreqm_main.construct_graph_title(true, null, oreqm_ref), results)
+    const graph = oreqm_main.create_graph(select_color, "reqspec1", oreqm_main.construct_graph_title(true, null, oreqm_ref, id_checkbox, search_pattern), results)
     set_doctype_count_shown(graph.doctype_dict, graph.selected_dict)
   }
 
-  export function clear_reference()
+  document.getElementById('clear_ref_oreqm').addEventListener("click", function() {
+    clear_reference_oreqm()
+  });
+
+  function clear_reference_oreqm()
   {
     if (oreqm_ref) {
       oreqm_ref = null
@@ -927,8 +1027,7 @@
   }
 
   // Selection/deselection of nodes by right-clicking the diagram
-
-  export function select_node() {
+  document.getElementById('menu_select').addEventListener("click", function() {
     // Add node to the selection criteria (if not already selected)
     let node = selected_node
     let node_select_str = "{}$".format(node)
@@ -944,9 +1043,9 @@
         filter_change()
       }
     }
-  }
+  });
 
-  export function deselect_node() {
+  document.getElementById('menu_deselect').addEventListener("click", function() {
     // Remove node to the selection criteria (if not already selected)
     let node = selected_node
     let node_select_str = new RegExp("(^|\\|){}\\$".format(node))
@@ -965,9 +1064,9 @@
       let alert_text = "'{}' is not a selected node\nPerhaps try 'Exclude'?".format(node)
       alert(alert_text)
     }
-  }
+  });
 
-  export function exclude_node() {
+  document.getElementById('menu_exclude').addEventListener("click", function() {
     // Add node to the exclusion list
     if (oreqm_main && oreqm_main.check_node_id(selected_node)) {
         var excluded_ids = document.getElementById("excluded_ids").value.trim()
@@ -979,14 +1078,22 @@
       document.getElementById("excluded_ids").value = excluded_ids
       filter_change()
     }
-  }
+  });
 
-  export function clear_search_regex() {
+  document.getElementById('clear_search_regex').addEventListener("click", function() {
+    clear_search_regex()
+  });
+
+ function clear_search_regex() {
     document.getElementById("search_regex").value = ""
     filter_change()
   }
 
-  export function clear_excluded_ids() {
+  document.getElementById('clear_excluded_ids').addEventListener("click", function() {
+    clear_excluded_ids()
+  });
+
+  function clear_excluded_ids() {
     document.getElementById("excluded_ids").value = ""
     filter_change()
   }
@@ -1158,7 +1265,11 @@
     }
   }
 
-  export function show_doctypes() {
+  document.getElementById('show_doctypes').addEventListener("click", function() {
+    show_doctypes()
+  });
+
+  function show_doctypes() {
     // Show the graph of doctype relationships
     if (oreqm_main) {
       oreqm_main.scan_doctypes(false)
@@ -1166,7 +1277,11 @@
     }
   }
 
-  export function show_doctypes_safety() {
+  document.getElementById('show_doctypes_safety').addEventListener("click", function() {
+    show_doctypes_safety()
+  });
+
+  function show_doctypes_safety() {
     // Show the graph of doctype relationships
     if (oreqm_main) {
       oreqm_main.scan_doctypes(true)
@@ -1174,9 +1289,9 @@
     }
   }
 
-  export function xml_escape(txt) {
-    return txt.replace(/</g, '&lt;').replace(/>/g, '&gt;')
-  }
+  document.getElementById('load_safety_rules').addEventListener("click", function() {
+    load_safety_rules()
+  });
 
   function src_add_plus_minus(part) {
     // Add git style '+', '-' in front of changed lines.
@@ -1189,7 +1304,11 @@
     return txt + last_char
   }
 
-  export function show_source() {
+  document.getElementById('menu_xml_txt').addEventListener("click", function() {
+    show_source()
+  });
+
+  function show_source() {
     // Show selected node as XML
     if (selected_node.length) {
       var ref = document.getElementById('req_src');
@@ -1228,7 +1347,6 @@
     var ref = document.getElementById('problem_list');
     let header_main = `\
 <h2>Detected problems</h2>
-<button type="button" onclick="window.clear_problems()">clear</button>
 `
     let problem_txt = 'Nothing to see here...'
     if (oreqm_main) {
@@ -1238,7 +1356,11 @@
     problemPopup.style.display = "block";
   }
 
-  export function clear_problems() {
+  document.getElementById('clear_problems').addEventListener("click", function() {
+    clear_problems()
+  });
+
+  function clear_problems() {
     if (oreqm_main) {
       oreqm_main.clear_problems()
       show_problems()
@@ -1254,6 +1376,66 @@
     }
   }
 
-  export function load_color_scheme() {
+  document.getElementById('load_color_scheme').addEventListener("click", function() {
+    load_color_scheme()
+  });
+
+  function load_color_scheme() {
     load_colors(update_doctype_table)
+  }
+
+  document.getElementById('save_colors').addEventListener("click", function() {
+    save_colors()
+  });
+
+  document.getElementById('no_rejects').addEventListener("click", function() {
+    no_rejects_click()
+  });
+
+  function no_rejects_click() {
+    no_rejects = document.getElementById("no_rejects").checked
+    if (auto_update) {
+      filter_graph()
+    }
+  }
+
+  function compare_oreqm(oreqm_main, oreqm_ref) {
+    // Both main and reference oreqm have been read.
+    // Highlight new, changed and removed nodes in main oreqm (removed are added as 'ghosts')
+    let results = oreqm_main.compare_requirements(oreqm_ref)
+    let new_search_array = []
+    let raw_search = document.getElementById("search_regex").value.trim()
+    // This is a hack, these prefixes are a hidden part of 'delta' reqs <id>, and a search term is constructed to find them
+    // Also avoid adding them more than once.
+    if (!raw_search.includes('new:')) new_search_array.push('new:')
+    if (!raw_search.includes('chg:')) new_search_array.push('chg:')
+    if (!raw_search.includes('rem:')) new_search_array.push('rem:')
+    let new_search = new_search_array.join('|')
+    if (new_search.length && raw_search) {
+      raw_search = new_search + '|\n' + raw_search
+    } else if (new_search.length) {
+      raw_search = new_search
+    }
+    document.getElementById("search_regex").value = raw_search
+    //console.log(results)
+    const graph = oreqm_main.create_graph(select_color, "reqspec1", oreqm_main.construct_graph_title(true, null, oreqm_ref, id_checkbox, search_pattern), [])
+    return graph
+  }
+
+  // some ways to select a subset of specobjects
+  // eslint-disable-next-line no-unused-vars
+  function select_all(_node_id, rec, _node_color) {
+    // Select all - no need to inspect input
+    if (no_rejects) {
+      return rec.status !== 'rejected'
+    }
+    return true
+  }
+
+  const COLOR_UP = 1
+  const COLOR_DOWN = 2
+
+  function select_color(node_id, rec, node_color) {
+    // Select colored nodes
+    return node_color.has(COLOR_UP) || node_color.has(COLOR_DOWN)
   }

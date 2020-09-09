@@ -1,18 +1,6 @@
 /* Main class for managing oreqm xml data */
 "use strict";
 
-export var accepted_safety_class_links_re = [
-  /^\w+:>\w+:$/,           // no safetyclass -> no safetyclass
-  /^\w+:QM>\w+:$/,         // QM -> no safetyclass
-  /^\w+:SIL-2>\w+:$/,      // SIL-2 -> no safetyclass
-  /^\w+:QM>\w+:QM$/,       // QM -> QM
-  /^\w+:SIL-2>\w+:QM$/,    // SIL-2 -> QM
-  /^\w+:SIL-2>\w+:SIL-2$/, // SIL-2 -> SIL-2
-  /^impl.*>.*$/,           // impl can cover anything (maybe?)
-  /^swintts.*>.*$/,        // swintts can cover anything (maybe?)
-  /^swuts.*>.*$/           // swuts can cover anything (maybe?)
-]
-
 function tryParseXML(xmlString) {
   var parser = new DOMParser();
   var parsererrorNS = parser.parseFromString('INVALID', 'text/xml').getElementsByTagName("parsererror")[0].namespaceURI;
@@ -112,14 +100,16 @@ export default class ReqM2Specobjects {
     this.fulfilledby = new Map();  // {id:{id}}
     this.excluded_doctypes = excluded_doctypes; // [doctype]
     this.excluded_ids = excluded_ids; // [id]
+    this.no_rejects = true         // skip rejected specobjects
     this.new_reqs = [];            // List of new requirements (from comparison)
     this.updated_reqs = [];        // List of updated requirements (from comparison)
     this.removed_reqs = [];        // List of removed requirements (copies taken from older(?) version of oreqm)
     this.visible_nodes = new Map(); // {doctype:[id]}
     this.problems = []             // [ Str ] problems reports
     this.dot = 'digraph "" {label="Select filter criteria and exclusions, then click\\l                    [update graph]\\l(Unfiltered graphs may be too large to render)"\n  labelloc=b\n  fontsize=24\n  fontcolor=grey\n  fontname="Arial"\n}\n'
-    
+
     // Initialization logic
+    this.clear_problems()
     let success = this.process_oreqm_content(content);
     if (success) {
       this.read_rules();
@@ -357,8 +347,14 @@ export default class ReqM2Specobjects {
     }
   }
 
+  set_no_rejects(state) {
+    // keep reject state flag in object
+    this.no_rejects = state
+  }
+
   color_down(color, req_id) {
     //Color this id and linksto_rev referenced nodes with color
+    const rec = this.requirements.get(req_id)
     if (!this.color.has(req_id)) {
       return // unknown <id> (bug)
     }
@@ -366,8 +362,12 @@ export default class ReqM2Specobjects {
       return // already visited
     }
     //console.log(this.requirements.get(req_id).doctype)
-    if (this.excluded_doctypes.includes(this.requirements.get(req_id).doctype)) {
+    if (this.excluded_doctypes.includes(rec.doctype)) {
       return // blacklisted doctype
+    }
+    //Is this requirement rejected
+    if (this.no_rejects && rec.status === 'rejected') {
+      return // rejected specobject
     }
     if (this.excluded_ids.includes(req_id)) {
       return // blacklisted id
@@ -384,14 +384,19 @@ export default class ReqM2Specobjects {
 
   color_up(color, req_id) {
     //Color this id and linksto referenced nodes with color
+    const rec = this.requirements.get(req_id)
     if (!this.color.has(req_id)) {
       return // unknown <id> (bug)
     }
     if (this.color.get(req_id).has(color)) {
       return // already visited
     }
-    if (this.excluded_doctypes.includes(this.requirements.get(req_id).doctype)) {
+    if (this.excluded_doctypes.includes(rec.doctype)) {
       return // blacklisted doctype
+    }
+    //Is this requirement rejected
+    if (this.no_rejects && rec.status === 'rejected') {
+      return // rejected specobject
     }
     if (this.excluded_ids.includes(req_id)) {
       return // blacklisted id
@@ -532,6 +537,7 @@ export default class ReqM2Specobjects {
     rec.platform.forEach(element =>
       plat.push('plt:'+element))
     let all_text = 'dt:' + rec.doctype
+          + '\nst:' + rec.status
           + '\nde:' + rec.description
           + '\nfi:' + rec.furtherinfo
           + '\nrt:' + rec.rationale
@@ -597,18 +603,6 @@ export default class ReqM2Specobjects {
     this.excluded_ids = ids
   }
 
-  /*
-  get_excluded_doctypes() {
-    // Get excluded doctypes
-    return this.excluded_doctypes
-  }*/
-
-  /*
-  get_excluded_ids() {
-    // Get excluded doctypes
-    return this.excluded_ids
-  } */
-
   get_main_ref_diff() {
     // Return the lists of ids
     let diff = new Object()
@@ -634,18 +628,6 @@ export default class ReqM2Specobjects {
     } else {
       return rec.doctype
     }
-  }
-
-  linksto_safe(from, to) {
-    // permitted safetyclass for providescoverage <from_safetyclass>:<to_safetyclass>
-
-    let combo = "{}>{}".format(from, to)
-    for (const re of accepted_safety_class_links_re) {
-      if (combo.match(re)) {
-        return true
-      }
-    }
-    return false
   }
 
   doctypes_rank() {
@@ -782,56 +764,4 @@ export default class ReqM2Specobjects {
     return xml_txt
   }
 
-}
-
-export function load_safety_rules()
-{
-  let input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.json'
-
-  input.onchange = e => {
-    const file = e.target.files[0];
-    let reader = new FileReader();
-    let pass_test = true
-    let regex_array = []
-    reader.readAsText(file,'UTF-8');
-    reader.onload = readerEvent => {
-      const new_rules = JSON.parse(readerEvent.target.result);
-      console.log(new_rules)
-      if (new_rules.length > 0) {
-        for (let rule of new_rules) {
-          if (!(typeof(rule)==='string')) {
-            alert('Expected an array of rule regex strings')
-            pass_test = false
-            break;
-          }
-          if (!rule.includes('>')) {
-            alert('Expected ">" in regex')
-            pass_test = false
-            break
-          }
-          let regex_rule
-          try {
-            regex_rule = new RegExp(rule)
-          }
-          catch(err) {
-            alert('Malformed regex: {}'.format(err.message))
-            pass_test = false
-            break
-          }
-          regex_array.push(regex_rule)
-        }
-        if (pass_test) {
-          // Update tests
-          accepted_safety_class_links_re = regex_array
-          console.log(accepted_safety_class_links_re)
-        }
-      } else {
-        alert('Expected array of rule regex strings')
-      }
-    }
-  }
-
-  input.click();
 }
