@@ -40,37 +40,63 @@
           </div>
           <p></p>
           <hr>
-          <b>Selection criteria</b>
-          <button id="clear_search_regex" type="button" >clear</button>
+          <span class="tooltip"><b>Selection criteria</b>
+            <span class="tooltiptext">Search qualifiers - use in this order<br/>
+              <b>dt:</b> &lt;doctype&gt;<br/>
+              <b>st:</b> &lt;status&gt;<br/>
+              <b>de:</b> &lt;description&gt;<br/>
+              <b>fi:</b> &lt;furtherinfo&gt;<br/>
+              <b>rt:</b> &lt;rationale&gt;<br/>
+              <b>sr:</b> &lt;safetyrationale&gt;<br/>
+              <b>sc:</b> &lt;safetyclass&gt;<br/>
+              <b>sd:</b> &lt;shortdesc&gt;<br/>
+              <b>uc:</b> &lt;usecase&gt;<br/>
+              <b>vc:</b> &lt;verifycrit&gt;<br/>
+              <b>co:</b> &lt;comment&gt;<br/>
+              <b>ffb:</b> &lt;ffbdoctype&gt;<br/>
+              <b>tag:</b> &lt;tag&gt;<br/>
+              <b>plt:</b> &lt;platform&gt;<br/>
+              <b>id: | rem: | chg: | new:</b> &lt;id&gt;
+            </span>
+            <button id="clear_search_regex" type="button" title="Erase input field below">clear</button>
+          </span>
+
           <textarea class="search_terms" id="search_regex" rows="3" cols="34"
                     wrap="off" placeholder="search regex&#13;&#10;newlines are ignored&#13;&#10;rem:|chg:|new: select changes"
                     spellcheck="false"></textarea>
           <br>
           <label id="id_checkbox">
-            <input type="checkbox" id="id_checkbox_input">Search &lt;id&gt; only
+            <input type="checkbox" id="id_checkbox_input" title="Limit search to &lt;id&gt; fields only">Search &lt;id&gt; only
           </label>
           <p/>
-          <b>Excluded &lt;id&gt;s</b>
-          <button id="clear_excluded_ids" type="button" >clear</button>
+
+          <span class="tooltip"><b>Excluded &lt;id&gt;s</b>
+            <span class="tooltiptext">Excluded &lt;id&gt;s are
+              not shown and break
+              dependency tracing to
+              other nodes.
+            </span>
+            <button id="clear_excluded_ids" type="button" >clear</button>
+          </span>
           <textarea class="search_terms" id="excluded_ids" rows="3" cols="25" spellcheck="false"
           wrap="off" placeholder="excluded <id>s&#13;&#10;separate with ',' or newline" ></textarea>
             <label><input type="checkbox" id="no_rejects" checked>exclude rejected</label>
             <hr>
-            <button type="button" id="filter_graph" >update graph</button>
-            <input type="checkbox" id="auto_update" >auto-update</button>
+            <button type="button" id="filter_graph" title="Do recalculation of graph">update graph</button>
+            <input type="checkbox" id="auto_update" title="enable graph update on any change of criteria">auto-update</button>
           <p/>
           <hr>
           <b>Doctypes</b><br><p/>
-          <button type="button" id="show_doctypes" >hierarchy</button>
-          <button type="button" id="show_doctypes_safety" >safety</button>
+          <button type="button" id="show_doctypes" title="Show doctype relationships">hierarchy</button>
+          <button type="button" id="show_doctypes_safety" title="Show doctype relationships with safetyclass constraints visualized">safety</button>
           <button type="button" id="invert_exclude" >invert exclude</button>
           <p/>
           <div id="doctype_table"></div>
           <p/>
-          <button type="button" id="save_colors" >save colors</button>
-          <button type="button" id="load_color_scheme" >load colors</button>
+          <button type="button" id="save_colors" title="Save current colors as .json file">save colors</button>
+          <button type="button" id="load_color_scheme" title="Load new colors from .json file">load colors</button>
           <hr>
-          <button type="button" id="load_safety_rules" >load safety rules</button>
+          <button type="button" id="load_safety_rules" title="Load set of safetyclass regex checks from .json file">load safety rules</button>
         </div>
         <div id="graph" class="split">
           <div id="options">
