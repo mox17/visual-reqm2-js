@@ -1,3 +1,5 @@
+THIS VERSION IS NO LONGER DEVELOPED - SEE [visual-reqm2-electron](https://github.com/mox17/visual-reqm2-electron) INSTEAD
+
 # Visual ReqM2
 
 Visual ReqM2 is a browser app that generates visualizations of requirements hierarchies.
